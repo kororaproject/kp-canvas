@@ -1,3 +1,4 @@
 canvas.conf
 
 *.pyc
+build/sources

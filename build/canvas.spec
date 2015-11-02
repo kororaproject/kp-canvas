@@ -27,7 +27,7 @@ mkdir -p %{buildroot}%{python3_sitelib}/canvas
 install -m 0755 client/cnvs %{buildroot}%{_bindir}/
 install -m 0755 client/cnvsd %{buildroot}%{_bindir}/
 
-install -m 0644 client/lib/canvas/* %{buildroot}%{python3_sitelib}/canvas/
+cp -a client/lib/canvas/* %{buildroot}%{python3_sitelib}/canvas/
 
 
 %clean
