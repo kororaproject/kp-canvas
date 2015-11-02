@@ -1,0 +1,103 @@
+<!-- CDN sources -->
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.12.1/ui-bootstrap-tpls.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/7.4/highlight.min.js"></script>
+<script src="/js/bootstrap-lightbox.js"></script>
+
+<!-- analytics -->
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-40396854-1', 'kororaproject.org');
+  ga('send', 'pageview');
+</script>
+
+<!-- CANVAS sources -->
+<script src="/js/canvas.js"></script>
+
+<script>
+  $(document).ready(function() {
+    /* configure korobar */
+    var fixed   = true;
+    var korobar = $('#korobar');
+    var page    = $('.page-container');
+    var footer  = $('footer');
+    var start   = 0;
+
+    /* helper function to frob element heights for the layered effect */
+    var resizeHelper = function() {
+      // banner correction
+      if ($('#banner').length) {
+        start = $('#banner').outerHeight();
+      }
+
+      /* calculate korobar position and initial pinning state */
+      if( start - $(window).scrollTop() <= 0 ) {
+        korobar.css({ position: 'fixed', top: 0 });
+        fixed = true;
+      }
+      else {
+        korobar.css({ position: 'absolute', top: start + 'px' });
+        fixed = false;
+      }
+
+      /* frob page-content minimum height to consume immediate window */
+      $('.page-content').css('min-height', ( $(window).height() - 64 )  + 'px');
+
+      /* frob page-container minimum height to at least the footer top */
+      page.css({
+        'min-height': ($(window).height()-footer.outerHeight()) + 'px',
+        'margin-bottom': footer.outerHeight() + 'px'
+      });
+    }
+
+    /* pin korobar to top when it passes */
+    $(window).on('scroll', function() {
+      if( !fixed && (korobar.offset().top - $(window).scrollTop() <= 0) ) {
+        korobar.css({ position: 'fixed', top: 0, });
+        fixed = true;
+      }
+      else if( fixed && $(window).scrollTop() <= start ) {
+        korobar.css({ position: 'absolute', top: start + 'px' });
+        fixed = false;
+      }
+    });
+
+    /* bind to resize events */
+    $(window).on('resize', resizeHelper);
+
+    /* turn on tooltips */
+    $("[data-toggle='tooltip']").tooltip();
+
+    /* smooth scroll targets */
+    $('a[href*=#]:not([href=#]):not([data-toggle])').click(function() {
+      if( location.pathname.replace(/^\//,'') == this.pathname.replace(/^\//,'') || location.hostname == this.hostname ) {
+        var target = $(this.hash);
+        target = target.length ? target : $('[name=' + this.hash.slice(1) +']');
+        if( target.length ) {
+          $('html,body').animate({ scrollTop: target.offset().top - korobar.height() - 16 }, 1000);
+          return false;
+        }
+      }
+    });
+
+    /* initialise highlight blocks */
+    hljs.initHighlightingOnLoad();
+
+    /* resize also on banner load which can ... take time */
+    var banner = document.getElementById('img-banner');
+    if (banner !== null) {
+      banner.onload = function() {
+        resizeHelper();
+      };
+    };
+
+    /* initial call to page resize helper */
+    setTimeout(function() { resizeHelper(); }, 0);
+  });
+</script>

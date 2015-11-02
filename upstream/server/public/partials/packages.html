@@ -1,0 +1,58 @@
+<div class="container">
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="btn-group pagination-toolbar">
+        <button class="btn btn-sm"><span class="icon-plus"></span></button>
+        <button class="btn btn-sm">Install Template</button>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <ul class="pagination pagination-sm pull-right">
+        <li ng-class="{disabled: isFirstPage()}"><a ng-click="firstPage()"><span class="icon-double-angle-left"></span></a></li>
+        <li ng-class="{disabled: isFirstPage()}"><a ng-click="previousPage()"><span class="icon-angle-left"></span></a></li>
+        <li ng-repeat="page in pageList()" ng-class="{active: isPage(page)}"><a ng-click="setPage(page)">{{page+1}}</a></li>
+        <li ng-class="{disabled: isLastPage()}"><a ng-click="nextPage()"><span class="icon-angle-right"></span></a></li>
+        <li ng-class="{disabled: isLastPage()}"><a ng-click="lastPage()"><span class="icon-double-angle-right"></span></a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="container row-table">
+
+    <div class="row row-header">
+      <div class="col-sm-12">
+        <div class="col-sm-4">Name</div>
+        <div class="col-sm-8">Summary</div>
+      </div>
+    </div>
+
+    <div class="row row-entry" ng-repeat="item in data.items" id="details_{{item.id}}">
+      <div class="container">
+        <div class="row">
+          <div class="col-sm-4">
+            <div class="package-actions">
+              <span ng-class="{'icon-check-empty': !isPackageDetailsSelected(item.id), 'icon-check': isPackageDetailsSelected(item.id)}" ng-click="togglePackageDetailsSelected(item.id)"></span>
+            </div>
+            <a href="" ng-click="togglePackageDetails(item.id)" id="package_{{item.id}}">{{item.n}}</a></div>
+          <div class="col-sm-8">{{item.s}}</div>
+        </div>
+        <div class="details" ng-show="isPackageDetailsVisible(item.id)">
+          <div class="row">
+            <div class="col-sm-12">
+              <p>{{data_details[item.id].sx}}</p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <p><span class="label label-default">{{data_details[item.id].c}}</span></p>
+            </div>
+            <div class="col-sm-6">
+              <div class="pull-right">
+                <p><span class="icon-link"> </span><a href="{{data_details[item.id].u}}">{{data_details[item.id].u}}</a></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
