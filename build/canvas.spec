@@ -1,6 +1,6 @@
 Name:           canvas
 Version:        0.1
-Release:        1%{?dist}
+Release:        1%{?dist}.1
 Summary:        User level profile and system management
 
 Group:          System Environment/Base
@@ -9,7 +9,7 @@ URL:            https://github.com/kororaproject/kp-canvas
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  python3-devel
-Requires:       python3
+Requires:       python3 python3-argcomplete python3-prettytable
 
 
 %description
