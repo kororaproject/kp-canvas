@@ -135,7 +135,7 @@ sub startup {
   $self->app->log->info('Loading page helpers.');
   $self->plugin('Canvas::Helpers');
   #$self->plugin('Canvas::Helpers::Profile');
-  #$self->plugin('Canvas::Helpers::User');
+  $self->plugin('Canvas::Helpers::User');
 
   #
   # MODEL

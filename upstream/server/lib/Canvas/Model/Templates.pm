@@ -149,7 +149,6 @@ sub find {
       sub {
         my ($d, $err, $res) = @_;
 
-        warn dumper $err;
         return $cb->('internal server error', undef) if $err;
 
         return $cb->(undef, $res->expand->hashes);
