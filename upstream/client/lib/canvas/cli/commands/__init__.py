@@ -273,8 +273,13 @@ def parseCommandLine(config):
   except:
     # TODO: determine best help instead of general
     args = argparse.Namespace()
-    args.command = sys.argv[1]
-    args.action  = sys.argv[2]
+
+    if len(sys.argv) > 1:
+      args.command = sys.argv[1]
+
+    if len(sys.argv) > 2:
+      args.action  = sys.argv[2]
+
     args.host = config.get('core', 'host', CANVAS_HOST)
     args.username = config.get('user', 'name', CANVAS_USER)
     args.help = True
