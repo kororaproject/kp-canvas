@@ -57,7 +57,7 @@ class RepoCommand(Command):
       command = getattr(self, 'run_{0}'.format(self.args.action))
 
     except:
-      print('command: not implemented')
+      self.help()
       return 1
 
     if not command:
