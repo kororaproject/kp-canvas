@@ -1,0 +1,18 @@
+.\" Manpage for canvasd.
+.\" See GitHub https://github.com/kororaproject/kp-canvas to correct errors or typos.
+.TH man 1 "10 Jan 2016" "1.0" "canvasd man page"
+.SH NAME
+canvasd \- backend for canvas user tool
+.SH SYNOPSIS
+canvasd 
+.SH DESCRIPTION
+canvasd is the backend server that user space canvas will connect to, it holds the backend information for managing the state of packages on a DNF RPM based system (such as Korora and Fedora).
+.SH OPTIONS
+The canvasd command does not take arguments.
+.SH SEE ALSO
+canvas(1)
+.SH BUGS
+Probably lots.
+.SH AUTHOR
+Ian Firns (firnsy@kororaproject.org)
+Chris Smart (csmart@kororaproject.org)
