@@ -157,6 +157,14 @@ sub deauthenticate_any {
   return $c->redirect_to($url);
 };
 
+sub authorised_any {
+  my $c = shift;
+
+  my $status = $c->auth_user ? 200 : 403;
+
+  $c->render(status => $status, json => {});
+}
+
 #
 # TEMPLATES
 #

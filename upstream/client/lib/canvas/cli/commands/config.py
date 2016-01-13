@@ -36,7 +36,7 @@ class ConfigCommand(Command):
   def help(self):
     print("General usage: {0} [--version] [--help] [--verbose] [--unset] name [value]\n"
           "\n"
-          "\n".format(self.PROG_NAME))
+          "\n".format(self.prog_name))
 
   def run(self):
     parts = self.args.name.split('.')

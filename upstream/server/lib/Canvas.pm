@@ -181,6 +181,7 @@ sub startup {
   # authentication and registration
   $r->any('/authenticate')->to('api#authenticate_any');
   $r->any('/deauthenticate')->to('api#deauthenticate_any');
+  $r->any('/authorised')->to('api#authorised_any');
 
   #
   if (0) {

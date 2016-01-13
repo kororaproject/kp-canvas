@@ -20,9 +20,12 @@ import getpass
 import hmac
 import http.cookiejar
 import json
+import logging
 import urllib.request, urllib.parse, urllib.error
 
 from canvas.template import Machine, Template
+
+logger = logging.getLogger('canvas')
 
 class ServiceException(Exception):
   def __init__(self, reason, code=0):
@@ -43,7 +46,7 @@ class Service(object):
 
     self._username = username
 
-    self._cookiejar = http.cookiejar.CookieJar()
+    self._cookiejar = http.cookiejar.LWPCookieJar('/tmp/.canvas-session')
     self._opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self._cookiejar))
 
     self._authenticated = False
@@ -53,6 +56,29 @@ class Service(object):
 
     if self._authenticated and not force:
       return self._authenticated
+
+    # load any saved cookies
+    try:
+      self._cookiejar.load()
+
+    except Exception as e:
+      pass
+
+    # detect if we've got a valid session cookie
+    try:
+      r = urllib.request.Request('{0}/authorised.json'.format(self._urlbase))
+      u = self._opener.open(r)
+
+      self._authenticated = True
+
+      return self._authenticated
+
+    except urllib.error.URLError as e:
+      pass
+    except urllib.error.HTTPError as e:
+      pass
+
+    self._authenticated = False
 
     # set default user
     if username is None:
@@ -66,13 +92,13 @@ class Service(object):
 
     auth = json.dumps({'u':username, 'p':password}, separators=(',',':')).encode('utf-8')
 
-    self._authenticated = False
-
     try:
       r = urllib.request.Request('{0}/authenticate.json'.format(self._urlbase), auth)
       u = self._opener.open(r)
 
+      self._cookiejar.save()
       self._authenticated = True
+
       return self._authenticated
 
     except urllib.error.URLError as e:
