@@ -1,6 +1,6 @@
 Name:           canvas
 Version:        0.1
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        User level profile and system management
 
 Group:          System Environment/Base
@@ -47,6 +47,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Wed Jan 13 2016 Chris Smart <csmart@kororaproject.org> - 0.1-3
+- Support client session
+
 * Sun Jan 10 2016 Chris Smart <csmart@kororaproject.org> - 0.1-2
 - Rename binaries from cnvs to canvas, to make it easier
 - Add basic man pages
