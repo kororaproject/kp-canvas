@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import collections
 import dnf
 import hawkey
 import json
@@ -36,6 +37,8 @@ RE_PACKAGE = re.compile("([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^-]+)-([^:]))?(?::(\
 #
 
 class Package(object):
+  """ A Canvas object that represents an installable Package. """
+
   def __init__(self, *args, **kwargs):
     self.name     = kwargs.get('name', None)
     self.epoch    = kwargs.get('epoch', None)
@@ -56,7 +59,11 @@ class Package(object):
 
   def __eq__(self, other):
     if isinstance(other, Package):
-      return (self.name == other.name) and (self.arch == other.arch)
+      if (self.arch is None) or (other.arch is None):
+        return (self.name == other.name)
+      else:
+        return (self.name == other.name) and (self.arch == other.arch)
+
     else:
       return False
 
@@ -73,7 +80,7 @@ class Package(object):
     return (not self.__eq__(other))
 
   def __repr__(self):
-    return 'Package: %s' % (self.name)
+    return 'Package: %s' % (self.to_pkg_spec())
 
   def __str__(self):
     return 'Package: %s ' % (json.dumps(self.to_object(), separators=(',',':')))
@@ -164,6 +171,64 @@ class Package(object):
     # only build with non-None values
     return {k: v for k, v in o.items() if v != None}
 
+
+class PackageSet(collections.MutableSet):
+  def __init__(self, initvalue=()):
+    self._set = []
+
+    for x in initvalue:
+      self.add(x)
+
+  def __contains__(self, item):
+    return item in self._set
+
+  def __getitem__(self, index):
+    return self._set[index]
+
+  def __iter__(self):
+    return iter(self._set)
+
+  def __len__(self):
+    return len(self._set)
+
+  def __repr__(self):
+    return "%s(%r)" % (type(self).__name__, self._set)
+
+  def add(self, item):
+    if item not in self._set:
+      self._set.append(item)
+
+    # add if new package has more explicit arch definition than existing
+    elif item.arch is not None:
+      for i, x in enumerate(self._set):
+        if x.name == item.name and x.arch is None:
+          self._set[i] = item
+
+  def discard(self, item):
+    try:
+      self._set.remove(item)
+
+    except:
+      pass
+
+  def difference(self, other):
+    if not isinstance(other, PackageSet):
+      raise TypeError('Not a PackageSet.')
+
+    uniq_self = PackageSet()
+    uniq_other = PackageSet()
+
+    # find unique items to self
+    for x in self._set:
+      if not x in other:
+        uniq_self.add(x)
+
+    # find unique items to other
+    for x in other:
+      if not x in self._set:
+        uniq_other.add(x)
+
+    return (uniq_self, uniq_other)
 
 
 class Repository(object):
@@ -301,3 +366,108 @@ class Repository(object):
       r.disable()
 
     return r
+
+
+class RepoSet(set):
+  pass
+
+
+#
+# TESTS
+#
+
+from unittest import TestCase
+
+class PackageTestCase(TestCase):
+
+  def setUp(self):
+    pass
+
+  def test_package_empty(self):
+    p1 = Package({})
+
+    self.assertEqual(None, p1.name)
+    self.assertEqual(None, p1.epoch)
+    self.assertEqual(None, p1.version)
+    self.assertEqual(None, p1.release)
+    self.assertEqual(None, p1.arch)
+
+    # empty packages will have a default action of include
+    self.assertEqual({'z': ACTION_INCLUDE}, p1.to_object())
+
+  def test_package_equality(self):
+    p1 = Package({})
+    p2 = Package({'n': 'foo'})
+    p3 = Package({'n': 'foo', 'a': 'x86_64'})
+    p4 = Package({'n': 'foo', 'a': 'x86_64', 'v': '1.0'})
+    p5 = Package({'n': 'foo', 'a': 'i386'})
+
+    self.assertNotEqual(p1, p2)
+    self.assertEqual(p2, p3)
+    self.assertEqual(p2, p4)
+    self.assertNotEqual(p3, p5)
+
+  def test_packageset_equality(self):
+    p1 = Package({'n': 'foo'})
+    p2 = Package({'n': 'foo', 'a': 'x'})
+    p3 = Package({'n': 'foo', 'a': 'y'})
+
+    l1 = PackageSet()
+    l2 = PackageSet()
+
+    # p1 has a no arch defined is loosely equal to an explict arch being
+    # defined for the same name
+    l1.add(p1)
+    l2.add(p2)
+    self.assertEqual(l1, l2)
+
+    # p3 has an explicit arch which will overwrite the undefined package of
+    # the same name, result in the two lists each having an explicit defined
+    # arch which are not equal
+    l1.add(p3)
+    self.assertNotEqual(l1, l2)
+
+  def test_packageset_uniqueness(self):
+    p1 = Package({'n': 'foo'})
+    p2 = Package({'n': 'foo', 'a': 'x'})
+    p3 = Package({'n': 'foo', 'a': 'y'})
+
+    l1 = PackageSet()
+
+    l1.add(p1)
+    self.assertTrue(len(l1) == 1)
+
+    # adding second package of same name with arch defined should overwrite
+    # existing package with undefined arch
+    l1.add(p2)
+    self.assertTrue(len(l1) == 1)
+    self.assertEqual(l1[0].arch, 'x')
+
+    l1.add(p3)
+    self.assertTrue(len(l1) == 2)
+
+  def test_packageset_difference(self):
+    p1 = Package({'n': 'foo'})
+    p2 = Package({'n': 'foo', 'a': 'x'})
+
+    p3 = Package({'n': 'bar'})
+    p4 = Package({'n': 'bar', 'a': 'y'})
+
+    p5 = Package({'n': 'baz'})
+    p6 = Package({'n': 'car'})
+
+    l1 = PackageSet([p1, p3, p5])
+    l2 = PackageSet([p2, p4, p6])
+
+    (luniq1, luniq2) = l1.difference(l2)
+
+    self.assertEqual(PackageSet([p5]), luniq1)
+    self.assertEqual(PackageSet([p6]), luniq2)
+
+
+if __name__ == "__main__":
+  import unittest
+  from doctest import DocTestSuite
+  suite = unittest.TestLoader().loadTestsFromTestCase(PackageTestCase)
+  suite.addTest(DocTestSuite())
+  unittest.TextTestRunner().run(suite)
