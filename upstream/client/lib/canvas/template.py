@@ -20,7 +20,7 @@ import dnf
 import json
 import yaml
 
-from canvas.package import Package, Repository
+from canvas.package import Package, PackageSet, Repository, RepoSet
 
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
@@ -34,20 +34,20 @@ class Template(object):
     self._title = ''
     self._description = ''
 
-    self._includes = []             # includes in template
-    self._includes_resolved = []    # data structs for all includes in template
+    self._includes = []          # includes in template
+    self._includes_resolved = [] # data structs for all includes in template
     self._meta = {}
 
-    self._repos = set()             # repos in template
-    self._includes_repos = set()    # repos from includes in template
-    self._delta_repos = set()       # repos to add/remove in template
+    self._repos = RepoSet()          # repos in template
+    self._includes_repos = RepoSet() # repos from includes in template
+    self._delta_repos = RepoSet()    # repos to add/remove in template
 
-    self._packages = set()          # packages in template
-    self._includes_packages = set() # packages from includes in template
-    self._delta_packages = set()    # packages to add/remove in template
+    self._packages = PackageSet()          # packages in template
+    self._includes_packages = PackageSet() # packages from includes in template
+    self._delta_packages = PackageSet()    # packages to add/remove in template
 
-    self._stores   = []             # remote stores for machine
-    self._archives = []             # archive definitions in machine
+    self._stores   = [] # remote stores for machine
+    self._archives = [] # archive definitions in machine
 
     self._parse_template(template)
 
@@ -86,7 +86,7 @@ class Template(object):
       self._includes_resolved = template.get('includes_resolved', [])
 
       self._repos = {Repository(r) for r in template.get('repos', [])}
-      self._packages = {Package(p) for p in template.get('packages', [])}
+      self._packages = PackageSet(Package(p) for p in template.get('packages', []))
 
       self._stores   = template.get('stores', [])
       self._archives = template.get('archives', [])
@@ -134,7 +134,7 @@ class Template(object):
 
   @property
   def packages_all(self):
-    return self._packages.union(self._includes_packages).union(self._delta_packages)
+    return self._packages.union(self._includes_packages, self._delta_packages)
 
   @property
   def packages_delta(self):
@@ -179,9 +179,6 @@ class Template(object):
   #
   # PUBLIC METHODS
   def add_package(self, package):
-    if not isinstance(package, Package):
-      raise TypeError('Not a Package object')
-
     if package not in self.packages_all:
       self._delta_packages.add(package)
 
@@ -218,19 +215,13 @@ class Template(object):
       self.add_repo(Repository(r))
 
   def package_diff(self, packages):
-    l_packages = self.packages_all
-    r_packages = set(packages)
-
-    return (
-      l_packages.difference(set(r_packages)),
-      r_packages.difference(set(l_packages))
-    )
+    return self.packages_all.difference(packages)
 
   def parse(self, template):
     self._parse_template(template)
 
   def repo_diff(self, repos):
-    return self.repos_all.difference(set(repos))
+    return self.repos_all.difference(repos)
 
   def repos_to_repodict(self, cache_dir=None):
     rd = dnf.repodict.RepoDict()
@@ -255,11 +246,11 @@ class Template(object):
       raise TypeError('Not a Package object')
 
     if package in self._delta_packages:
-      self._packages.remove(package)
+      self._packages.discard(package)
       return True
 
     elif package in self._packages:
-      self._packages.remove(package)
+      self._packages.discard(package)
       return True
 
     return False
@@ -283,13 +274,11 @@ class Template(object):
       raise TypeError('Not a Package object')
 
     if package in self._delta_packages:
-      self._delta_packages.remove(package)
-      self._delta_packages.add(package)
+      self._delta_packages.update(package)
       return True
 
     elif package in self._packages:
-      self._packages.remove(package)
-      self._packages.add(package)
+      self._packages.update(package)
       return True
 
     return False
