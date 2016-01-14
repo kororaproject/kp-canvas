@@ -160,12 +160,12 @@ class Package(object):
 
   def to_object(self):
     o = {
-      "n": self.name,
-      "e": self.epoch,
-      "v": self.version,
-      "r": self.release,
-      "a": self.arch,
-      "z": self.action,
+      'n': self.name,
+      'e': self.epoch,
+      'v': self.version,
+      'r': self.release,
+      'a': self.arch,
+      'z': self.action,
     }
 
     # only build with non-None values
@@ -195,6 +195,9 @@ class PackageSet(collections.MutableSet):
     return "%s(%r)" % (type(self).__name__, self._set)
 
   def add(self, item):
+    if not isinstance(item, Package):
+      raise TypeError('Not a Package.')
+
     if item not in self._set:
       self._set.append(item)
 
@@ -205,6 +208,9 @@ class PackageSet(collections.MutableSet):
           self._set[i] = item
 
   def discard(self, item):
+    if not isinstance(item, Package):
+      raise TypeError('Not a Package.')
+
     try:
       self._set.remove(item)
 
@@ -229,6 +235,29 @@ class PackageSet(collections.MutableSet):
         uniq_other.add(x)
 
     return (uniq_self, uniq_other)
+
+  def union(self, *args):
+    if len(args) == 0:
+      raise Exception('No PackageSets defined for union.')
+
+    u = PackageSet(self._set)
+
+    for o in args:
+      if not isinstance(o, PackageSet):
+        raise TypeError('Not a PackageSet.')
+
+      # add takes care of uniqueness so let's use it
+      for x in o:
+        u.add(x)
+
+    return u
+
+  def update(self, item):
+    if not isinstance(other, PackageSet):
+      raise TypeError('Not a PackageSet.')
+
+    self.discard(item)
+    self.add(item)
 
 
 class Repository(object):
