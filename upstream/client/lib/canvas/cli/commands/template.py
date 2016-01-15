@@ -20,9 +20,11 @@ import dnf
 import getpass
 import json
 import logging
+import os
 import prettytable
 import yaml
 
+from dnf.cli.progress import MultiFileProgressMeter
 from functools import reduce
 
 from canvas.cli.commands import Command
@@ -360,6 +362,11 @@ class TemplateCommand(Command):
       print('0 templates found.')
 
   def run_pull(self):
+    # am i effectively root
+    if os.geteuid() != 0:
+      print('You need to have root privileges to modify the system.')
+      return 0
+
     t = Template(self.args.template, user=self.args.username)
 
     try:
@@ -374,10 +381,20 @@ class TemplateCommand(Command):
     db = dnf.Base()
 
     # install repos from template
-    for r in t.repos_all:
-      dr = r.to_repo()
-      dr.load()
-      db.repos.add(dr)
+    if len(t.repos_all):
+      for r in t.repos_all:
+        dr = r.to_repo()
+        dr.set_progress_bar(dnf.cli.progress.MultiFileProgressMeter())
+        dr.load()
+        db.repos.add(dr)
+
+    elif True:
+      print('No template repos specified, using available system repos.')
+      db.read_all_repos()
+
+    else:
+      print('No repos defined.')
+      return 0
 
     db.read_comps()
 
@@ -390,42 +407,14 @@ class TemplateCommand(Command):
     multilib_policy = db.conf.multilib_policy
     clean_deps = db.conf.clean_requirements_on_remove
 
+    print('info: preparing transaction ...')
     # process all packages in template
     for p in t.packages_all:
       if p.included():
-        #
-        # stripped from dnf.base install() in full and optimesd
-        # for canvas usage
-
-        subj = dnf.subject.Subject(p.to_pkg_spec())
-        if multilib_policy == "all" or subj.is_arch_specified(db.sack):
-          q = subj.get_best_query(db.sack)
-
-          if not q:
-            continue
-
-          already_inst, available = db._query_matches_installed(q)
-
-          for a in available:
-            db._goal.install(a, optional=False)
-
-        elif multilib_policy == "best":
-          sltrs = subj.get_best_selectors(db.sack)
-          match = reduce(lambda x, y: y.matches() or x, sltrs, [])
-
-          if match:
-            for sltr in sltrs:
-              if sltr.matches():
-                db._goal.install(select=sltr, optional=False)
+        db.install(p.to_pkg_spec())
 
       else:
-        #
-        # stripped from dnf.base remove() in full and optimesd
-        # for canvas usage
-        matches = dnf.subject.Subject(p.to_pkg_spec()).get_best_query(db.sack)
-
-        for pkg in matches.installed():
-          db._goal.erase(pkg, clean_deps=clean_deps)
+        db.remove(p.to_pkg_spec())
 
     print('info: resolving actions ...')
     db.resolve(allow_erasing=True)
@@ -458,10 +447,14 @@ class TemplateCommand(Command):
       print('No action peformed during this dry-run.')
       return 0
 
-    # TODO: progress for download, install and removal
-    print('info: downloading ...')
-    db.download_packages(list(db.transaction.install_set))
+    if len(db.transaction.install_set) == 0 and len(db.transaction.remove_set) == 0:
+      print('Nothing to do.')
+      return 0
 
+    print('info: downloading ...')
+    db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
+
+    print('info: completing ...')
     return db.do_transaction()
 
   def run_push(self):

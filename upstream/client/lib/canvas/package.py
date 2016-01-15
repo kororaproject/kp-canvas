@@ -374,7 +374,8 @@ class Repository(object):
       r.mirrorlist = self.mirrorlist
 
     if self.metalink is not None:
-      r.metalink = self.metalink
+      if len(self.metalink):
+        r.metalink = self.metalink[0]
 
     if self.gpgcheck is not None:
       r.gpgcheck = self.gpgcheck
