@@ -1,0 +1,18 @@
+lang: python
+sudo: required
+services:
+- docker
+before_install:
+- echo "deb http://us.archive.ubuntu.com/ubuntu trusty main universe" | sudo tee -a /etc/apt/sources.list
+- sudo apt-get -y update
+- docker pull fedora:23
+install:
+- sudo apt-get -y install mock
+before_script:
+- docker run -i --privileged -d -v $HOME/build/$TRAVIS_REPO_SLUG:$HOME/build/$TRAVIS_REPO_SLUG --name test_fedora fedora:23 bash
+- docker exec -i test_fedora bash -c "dnf install -y python-copr mock libsolv-devel make gcc gcc-c++ python3-dnf python-devel 'dnf-command(builddep)'"
+- docker exec -i test_fedora bash -c "dnf install -y python-pip python3-nose python3-nose-cov git which"
+- docker exec -i test_fedora bash -c "useradd -g root fedora; usermod -a -G mock fedora"
+script:
+- cd upstream/client/lib/canvas && nosetests-3.4 -v
+
