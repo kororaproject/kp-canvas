@@ -211,16 +211,19 @@ class TemplateCommand(Command):
 
     (l_r, r_l) = t.package_diff(ts.packages_all)
 
-    print("In template not in system:")
+    if len(l_r):
+      print('In template and not marked for install in system:')
 
-    for p in l_r:
-      print(" - {0}".format(p.name))
+      for p in l_r:
+        print(" * {0}".format(p.name))
 
-    print()
-    print("On system not in template:")
+      print()
 
-    for p in r_l:
-      print(" + {0}".format(p.name))
+    if len(r_l):
+      print('Marked for install on system and not in template:')
+
+      for p in r_l:
+        print(" * {0}".format(p.name))
 
     print()
 
@@ -447,15 +450,18 @@ class TemplateCommand(Command):
       print('No action peformed during this dry-run.')
       return 0
 
-    if len(db.transaction.install_set) == 0 and len(db.transaction.remove_set) == 0:
-      print('Nothing to do.')
-      return 0
+    if len(db.transaction.install_set) or len(db.transaction.remove_set):
+      print('info: downloading ...')
+      db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
 
-    print('info: downloading ...')
-    db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
+      print('info: completing ...')
+      db.do_transaction()
 
-    print('info: completing ...')
-    return db.do_transaction()
+    print('info: syncing history ...')
+    for p in t.packages_all:
+      if p.included():
+        db.yumdb.get_package(p.to_pkg()).reason = 'user'
+
 
   def run_push(self):
     t = Template(self.args.template, user=self.args.username)
