@@ -127,6 +127,22 @@ class Package(object):
   def pinned(self):
     return self.action & (ACTION_PIN)
 
+  def to_json(self):
+    return json.dumps(self.to_object(), separators=(',',':'))
+
+  def to_object(self):
+    o = {
+      'n': self.name,
+      'e': self.epoch,
+      'v': self.version,
+      'r': self.release,
+      'a': self.arch,
+      'z': self.action,
+    }
+
+    # only build with non-None values
+    return {k: v for k, v in o.items() if v != None}
+
   def to_pkg_spec(self):
     # return empty string if no name (should never happen)
     if self.name is None:
@@ -155,21 +171,17 @@ class Package(object):
 
     return f
 
-  def to_json(self):
-    return json.dumps(self.to_object(), separators=(',',':'))
+  def to_pkg(self):
+    db = dnf.Base()
+    try:
+      db.fill_sack()
 
-  def to_object(self):
-    o = {
-      'n': self.name,
-      'e': self.epoch,
-      'v': self.version,
-      'r': self.release,
-      'a': self.arch,
-      'z': self.action,
-    }
+    except OSError as e:
+      pass
 
-    # only build with non-None values
-    return {k: v for k, v in o.items() if v != None}
+    p_list = db.sack.query().installed().filter(name=self.name)
+
+    return list(p_list)[0]
 
 
 class PackageSet(collections.MutableSet):

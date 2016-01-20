@@ -203,10 +203,11 @@ class Template(object):
     except OSError as e:
       pass
 
-    p_list = db.iter_userinstalled()
-
     if all:
       p_list = db.sack.query().installed()
+
+    else:
+      p_list = db.iter_userinstalled()
 
     for p in p_list:
       self.add_package(Package(p, evr=False))
