@@ -14,4 +14,4 @@ before_script:
 - docker exec -i test_fedora bash -c "dnf install -y python-pip python3-nose python3-nose-cov git which"
 - docker exec -i test_fedora bash -c "useradd -g root fedora; usermod -a -G mock fedora"
 script:
-  - docker exec -i test_fedora bash -c "cd upstream/client/lib/canvas && nosetests-3.4 -v"
+  - docker exec -i test_fedora bash -c "cd $HOME/build/$TRAVIS_REPO_SLUG/upstream/client/lib/canvas && nosetests-3.4 -v"
