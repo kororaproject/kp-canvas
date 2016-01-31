@@ -18,9 +18,15 @@
 
 import dnf
 import json
+import sys
 import yaml
 
 from canvas.package import Package, PackageSet, Repository, RepoSet
+
+import pykickstart
+import pykickstart.parser
+from pykickstart.i18n import _
+from pykickstart.version import DEVEL, makeVersion
 
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
@@ -60,6 +66,143 @@ class Template(object):
 
       self._includes_repos.update(t.repos_all)
       self._includes_packages.update(t.packages_all)
+
+  def _parse_kickstart(self, path):
+    """
+    Loads the template with information from the supplied kickstart path.
+
+    Kickstarts currently populate the meta tag, similar to the following:
+      'kickstart': {
+        'platform': '',
+        'version':  'DEVEL',
+        'language': 'en_US.UTF-8',
+        'keyboard': 'us'
+        'timezone': 'US/Eastern'
+        'auth':     '--useshadow --passalgo=sha512
+        'selinux':  '--enforcing'
+        'firewall': '--enabled --service=mdns
+        'xconfig':  '--startxonboot'
+        'part':     '/ --size 4096 --fstype ext4',
+        'services': '--enabled=NetworkManager,ModemManager --disabled=network,sshd'
+        'commands': [
+        ],
+        'scripts': [
+        ]
+        'packages': [
+        ]
+      },
+    }
+
+    Args:
+      path: Path to existing kickstart file.
+
+    Returns:
+      Nothing.
+
+    Raises:
+      IOError: An error occurred accessing the kickstart file.
+    """
+
+    ksversion = makeVersion(DEVEL)
+    ksparser = pykickstart.parser.KickstartParser(ksversion)
+
+    try:
+      ksparser.readKickstart(path)
+
+    except IOError as msg:
+      print("Failed to read kickstart file '%(filename)s' : %(error_msg)s" % {"filename": path, "error_msg": msg}, file=sys.stderr)
+      return
+
+    except pykickstart.errors.KickstartError as e:
+      print("Failed to parse kickstart file '%(filename)s' : %(error_msg)s" % {"filename": opts.kscfg, "error_msg": e}, file=sys.stderr)
+      return
+
+    handler = ksparser.handler
+
+    meta = {}
+
+    if handler.platform != '':
+      meta['platform'] = handler.platform
+      meta['version'] = versionToString(handler.version)
+
+    lst = list(handler._writeOrder.keys())
+    lst.sort()
+
+    if len(lst):
+      meta['commands'] = []
+      for prio in lst:
+        for c in handler._writeOrder[prio]:
+          # we don't store null commands (why pykickstart? why?)
+          if c.currentCmd == '':
+            continue
+
+          elif c.currentCmd == 'repo':
+            for r in c.__str__().split('\n'):
+              # ignore blank lines
+              if len(r.strip()) == 0:
+                continue
+
+              self._repos.add(Repository(r))
+
+          else:
+            meta['commands'].append({
+              'command':  c.currentCmd,
+              'priority': c.writePriority,
+              'data':     c.__str__()
+            })
+
+    # parse pykickstart script
+    if len(handler.scripts):
+      meta['scripts'] = []
+
+      for s in handler.scripts:
+        meta['scripts'].append({
+          'data':          s.script,
+          'type':          s.type,
+          'interp':        s.interp,
+          'in_chroot':     s.inChroot,
+          'line_no':       s.lineno,
+          'error_on_fail': s.errorOnFail,
+        })
+
+    # parse pykickstart packages
+    packages = handler.packages
+
+    meta['packages'] = {
+      'default':        packages.default,
+      'exclude_docs':   packages.excludeDocs,
+      'no_base':        not packages.addBase,
+      'no_core':        packages.nocore,
+      'handle_missing': (packages.handleMissing == pykickstart.constants.KS_MISSING_IGNORE),
+      'install_langs':  packages.instLangs,
+      'multi_lib':      packages.multiLib
+    }
+
+    if not packages.default:
+      if packages.environment:
+        meta['package']['environment'] = "@^{0}".format(packages.environment)
+
+      grps = packages.groupList
+      grps.sort()
+      for g in grps:
+        self._packages.add(Package({'n': g.__str__(), 'z': 1}))
+
+      pkgs = packages.packageList
+      pkgs.sort()
+      for p in pkgs:
+        self._packages.add(Package({'n': p.__str__(), 'z': 1}))
+
+      grps = packages.excludedGroupList
+      grps.sort()
+      for g in grps:
+        self._packages.add(Package({'n': g.__str__(), 'z': 0}))
+
+      pkgs = packages.excludedList
+      pkgs.sort()
+      for p in pkgs:
+        self._packages.add(Package({'n': p.__str__(), 'z': 0}))
+
+    self._meta['kickstart'] = meta
 
   def _parse_template(self, template):
     # parse the string short form
@@ -195,6 +338,9 @@ class Template(object):
   def find_repo(self, repo_id):
     return [r for r in self.repos if r.stub == repo_id]
 
+  def from_kickstart(self, path):
+    self._parse_kickstart(path)
+
   def from_system(self, all=False):
     db = dnf.Base()
     try:
@@ -318,6 +464,89 @@ class Template(object):
 
   def to_json(self):
     return json.dumps(self.to_object(), separators=(',',':'))
+
+  def to_kickstart(self):
+    """
+    Represent the template as a kickstart file.
+
+    Args:
+      None
+
+    Returns:
+      Kickstart formatted file.
+    """
+    ksversion = makeVersion(DEVEL)
+    ksparser = pykickstart.parser.KickstartParser(ksversion)
+
+    handler = ksparser.handler
+    packages = handler.packages
+
+    if 'kickstart' in self._meta:
+      # populate general
+
+      # populate commands
+      if 'commands' in self._meta['kickstart']:
+        for c in self._meta['kickstart']['commands']:
+          ksparser.readKickstartFromString(c['data'], reset=False)
+
+      # populate scripts
+      if 'scripts' in self._meta['kickstart']:
+        for s in self._meta['kickstart']['scripts']:
+          handler.scripts.append(
+            pykickstart.parser.Script(s['data'], interp=s['interp'], inChroot=s['in_chroot'], type=s['type'],
+              lineno=s['line_no'], errorOnFail=s['error_on_fail'])
+          )
+
+      # populate general package parameters
+      if 'packages' in self._meta['kickstart']:
+        mp = self._meta['kickstart']['packages']
+
+        if 'default' in mp:
+          packages.default = mp['default']
+
+        if 'exclude_docs' in mp:
+          packages.excludeDocs = mp['exclude_docs']
+
+        if 'no_base' in mp:
+          packages.addBase = not mp['no_base']
+
+        if 'no_core' in mp:
+          packages.nocore = mp['no_core']
+
+#      if 'handle_missing' in mp:
+#        packages.handleMissing = pykickstart.constants.KS_MISSING_IGNORE
+
+        if 'install_langs' in mp:
+          packages.instLangs = mp['install_langs']
+
+        if 'multi_lib' in mp:
+          packages.multiLib = mp['multi_lib']
+
+    # populate repos (technically commands)
+    for r in self.repos:
+      ksparser.readKickstartFromString(r.to_kickstart(), reset=False)
+
+    # process packages
+    for p in self.packages:
+      if p.action == 1:
+        packages.packageList.append(p.name)
+
+      else:
+        packages.excludedList.append(p.name)
+
+
+    template = ('# Canvas generated template - {1}\n'
+      '# UUID: {0}\n'
+      '# Author: {2}\n'
+      '# Title: {3}\n'
+      '# Description:\n'
+      "# {4}\n\n").format(
+        self._uuid, self._name, self._user, self._title, self._description
+      )
+
+    template += ksparser.handler.__str__()
+
+    return template
 
   def to_object(self):
     # sort packages and repos

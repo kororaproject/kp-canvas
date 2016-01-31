@@ -85,7 +85,7 @@ The following commands are available for the management of Canvas templates:
 canvas template add [user:]template [--name] [--title] [--description] [--includes] [--public]
 canvas template update [user:]template [--name] [--title] [--description] [--includes] [--public]
 canvas template rm [user:]template
-canvas template push [user:]template [--all]
+canvas template push [user:]template [--all] [--kickstart]
 canvas template pull [user:]template [--clean]
 canvas template diff [user_from:][template_from|path_from] [[user_to:]template_to|path_to] [--output=path]
 canvas template copy [user_from:]template_from [[user_to:]template_to]
@@ -138,7 +138,7 @@ canvas template rm firnsy:htpc
 #### Synchronising Templates
 The general usage for synchronising an existing template of a Canvas user is described as:
 ```
-canvas template push [user:]template [--all]
+canvas template push [user:]template [--all] [--kickstart]
 canvas template pull [user:]template [--clean]
 ```
 
@@ -160,6 +160,11 @@ canvas template push firnsy:htpc
 Alternatively if you want to include all packages on the system (including dependencies of user installed packages) then simply add the `--all` option:
 ```
 canvas template push firnsy:htpc --all
+```
+
+Another option is pushing the contents of a kickstart file. Just specify the `--kickstart` option with the path to the kickstart file, such as:
+```
+canvas template push firnsy:htpc --kickstart ~/kickstarts/htpc.ks
 ```
 
 #### Diff Templates
@@ -236,10 +241,10 @@ canvas template list kororaproject --filter-name=*workstation* --filter-descript
 #### Dumping Templates
 The general usage for dumping (or viewing) templates that are currently accessible is described as:
 ```
-canvas template dump [user:]template [--json|--yaml]
+canvas template dump [user:]template [--json|--yaml|--kickstart]
 ```
 
-By default the template will be dumped in a human readable format. You dump to a machine readable `json` or `yaml` encoded format by adding the `--json` or `--yaml` options respectively.
+By default the template will be dumped in a human readable format. You can dump to a machine readable `json` or `yaml` encoded format by adding the `--json` or `--yaml` options respectively. You can also dump a compliant kickstart file for automating ISO creation or anaconda installs via the `--kickstart` option.
 
 ### Template Packages
 The following commands allow management of packages from specified Templates.

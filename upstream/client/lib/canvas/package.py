@@ -286,6 +286,10 @@ class Repository(object):
     self.gpgcheck   = kwargs.get('gpgcheck', None)
     self.cost       = kwargs.get('cost', None)
     self.exclude    = kwargs.get('exclude', None)
+    self.install    = kwargs.get('install', None)
+
+    self.exclude_packages = kwargs.get('exclude_packages', None)
+    self.include_packages = kwargs.get('include_packages', None)
 
     self.priority   = kwargs.get('priority', None)
 
@@ -311,7 +315,25 @@ class Repository(object):
 
   def parse(self, data):
     if isinstance(data, str):
-      self.stub = data
+      # check are we a kickstart formatted repo
+      data.strip()
+
+      if data.startswith('repo '):
+        for a in data.split():
+          if a == 'repo' or a == '':
+            continue
+
+          elif a.startswith('--name='):
+            self.stub = a[7:].strip('"')
+
+          elif a.startswith('--baseurl='):
+            self.baseurl = a[10:]
+
+          elif a.startswith('--mirrorlist='):
+            self.mirrorlist = a[13:]
+
+      else:
+        self.stub = data
 
     elif isinstance(data, dnf.repo.Repo):
       self.name     = data.name
@@ -344,8 +366,41 @@ class Repository(object):
       self.cost       = data.get('c', self.cost)
       self.priority   = data.get('p', self.priority)
       self.exclude    = data.get('x', self.exclude)
+      self.install    = data.get('i', self.install)
+
+      self.exclude_packages = data.get('xp', self.exclude_packages)
+      self.include_packages = data.get('ip', self.include_packages)
 
       self.meta_expired = data.get('me', self.meta_expired)
+
+  def to_kickstart(self):
+    r = 'repo'
+
+    if self.name is not None:
+      r += ' --name="{0}"'.format(self.stub)
+
+    if self.baseurl is not None and len(self.baseurl):
+      r += ' --baseurl={0}'.format(self.baseurl[0])
+
+    elif self.mirrorlist is not None:
+      r += ' --mirrorlist={0}'.format(self.mirrorlist)
+
+    elif self.metalink is not None:
+      r += ' --mirrorlist={0}'.format(self.metalink)
+
+    if self.cost is not None:
+      r += ' --cost={0}'.format(self.cost)
+
+    if self.exclude_packages is not None:
+      r += ' --exclude_packages={0}'.format(self.exclude_packages.join(','))
+
+    if self.include_packages is not None:
+      r += ' --exclude_packages={0}'.format(self.include_packages.join(','))
+
+    if self.install is not None:
+      r += ' --install'
+
+    return r
 
   def to_json(self):
     return json.dumps(self.to_object(), separators=(',',':'))
@@ -364,6 +419,9 @@ class Repository(object):
       'c':  self.cost,
       'p':  self.priority,
       'x':  self.exclude,
+      'i':  self.install,
+      'xp':  self.exclude_packages,
+      'ip':  self.include_packages,
     }
 
     # only build with non-None values
