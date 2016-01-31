@@ -107,6 +107,7 @@ def buildCommandLineParser(config):
   template_push_parser = subparsers_template.add_parser('push', add_help=False, parents=[general_parser])
   template_push_parser.add_argument('template', type=str)
   template_push_parser.add_argument('--all', action='store_true', dest='push_all')
+  template_push_parser.add_argument('--kickstart', type=str)
 
   # template diff arguments
   template_diff_parser = subparsers_template.add_parser('diff', add_help=False, parents=[general_parser])
@@ -124,6 +125,7 @@ def buildCommandLineParser(config):
   template_dump_parser.add_argument('template', type=str)
   template_dump_parser.add_argument('--json', action='store_true')
   template_dump_parser.add_argument('--yaml', action='store_true')
+  template_dump_parser.add_argument('--kickstart', action='store_true')
 
   #
   # PACKAGE COMMANDS

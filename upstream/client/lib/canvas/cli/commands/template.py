@@ -237,7 +237,11 @@ class TemplateCommand(Command):
       print(e)
       return 1
 
-    if self.args.yaml:
+    if self.args.kickstart:
+      print(t.to_kickstart())
+      return 0
+
+    elif self.args.yaml:
       print(yaml.dump(t.to_object(), indent=4))
       return 0
 
@@ -474,37 +478,42 @@ class TemplateCommand(Command):
       print(e)
       return 1
 
-    # prepare dnf
-    print('info: analysing system ...')
-    db = dnf.Base()
-    db.read_all_repos()
-    db.read_comps()
+    if self.args.kickstart is not None:
+      print('info: parsing kickstart ...')
+      t.from_kickstart(self.args.kickstart)
 
-    try:
-      db.fill_sack()
+    else:
+      # prepare dnf
+      print('info: analysing system ...')
+      db = dnf.Base()
+      db.read_all_repos()
+      db.read_comps()
 
-    except OSError as e:
-      pass
+      try:
+        db.fill_sack()
 
-    db_list = db.iter_userinstalled()
+      except OSError as e:
+        pass
 
-    if self.args.push_all:
-      db_list = db.sack.query().installed()
+      db_list = db.iter_userinstalled()
 
-    # add our user installed packages
-    for p in db_list:
-      # no need to store versions
-      t.add_package(Package(p, evr=False))
+      if self.args.push_all:
+        db_list = db.sack.query().installed()
 
-    # add only enabled repos
-    for r in db.repos.enabled():
-      t.add_repo(Repository(r))
+      # add our user installed packages
+      for p in db_list:
+        # no need to store versions
+        t.add_package(Package(p, evr=False))
 
-    packages = list(t.packages_delta)
-    packages.sort(key=lambda x: x.name)
+      # add only enabled repos
+      for r in db.repos.enabled():
+        t.add_repo(Repository(r))
 
-    repos = list(t.repos_delta)
-    repos.sort(key=lambda x: x.name)
+      packages = list(t.packages_delta)
+      packages.sort(key=lambda x: x.name)
+
+      repos = list(t.repos_delta)
+      repos.sort(key=lambda x: x.name)
 
     # describe process for dry runs
     if self.args.dry_run:
@@ -529,7 +538,7 @@ class TemplateCommand(Command):
       print('No action peformed during this dry-run.')
       return 0
 
-    if not len(packages) and not len(repos):
+    if self.args.kickstart is None and not len(packages) and not len(repos):
       print('info: no changes detected, template up to date.')
       return 0
 
