@@ -416,52 +416,6 @@ class Template(object):
 
     return False
 
-  def update_package(self, package):
-    if not isinstance(package, Package):
-      raise TypeError('Not a Package object')
-
-    if package in self._delta_packages:
-      self._delta_packages.update(package)
-      return True
-
-    elif package in self._packages:
-      self._packages.update(package)
-      return True
-
-    return False
-
-  def update_repo(self, repo):
-    if not isinstance(repo, Repository):
-      raise TypeError('Not a Repository object')
-
-    if repo in self._delta_repos:
-      self._delta_repos.remove(repo)
-      self._delta_repos.add(repo)
-      return True
-
-    elif repo in self._repos:
-      self._repos.remove(repo)
-      self._repos.add(repo)
-      return True
-
-    return False
-
-  def union(self, template):
-    if not isinstance(template, Template):
-      TypeError('template is not of type Template')
-
-    if self._name is None:
-      self._name = template.name
-
-    if self._user is None:
-      self._user = template.user
-
-    if self._description is None:
-      self._description = template.description
-
-    self._repos.update(template.repos)
-    self._packages.update(template.packages)
-
   def to_json(self):
     return json.dumps(self.to_object(), separators=(',',':'))
 
@@ -572,6 +526,52 @@ class Template(object):
 
   def to_yaml(self):
     return yaml.dump(self.to_object())
+
+  def update_package(self, package):
+    if not isinstance(package, Package):
+      raise TypeError('Not a Package object')
+
+    if package in self._delta_packages:
+      self._delta_packages.update(package)
+      return True
+
+    elif package in self._packages:
+      self._packages.update(package)
+      return True
+
+    return False
+
+  def update_repo(self, repo):
+    if not isinstance(repo, Repository):
+      raise TypeError('Not a Repository object')
+
+    if repo in self._delta_repos:
+      self._delta_repos.remove(repo)
+      self._delta_repos.add(repo)
+      return True
+
+    elif repo in self._repos:
+      self._repos.remove(repo)
+      self._repos.add(repo)
+      return True
+
+    return False
+
+  def union(self, template):
+    if not isinstance(template, Template):
+      TypeError('template is not of type Template')
+
+    if self._name is None:
+      self._name = template.name
+
+    if self._user is None:
+      self._user = template.user
+
+    if self._description is None:
+      self._description = template.description
+
+    self._repos.update(template.repos)
+    self._packages.update(template.packages)
 
 
 
