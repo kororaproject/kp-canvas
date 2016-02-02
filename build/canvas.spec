@@ -1,6 +1,6 @@
 Name:           canvas
-Version:        0.1
-Release:        3%{?dist}
+Version:        0.2
+Release:        1%{?dist}
 Summary:        User level profile and system management
 
 Group:          System Environment/Base
@@ -47,6 +47,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Tue Feb  2 2016 Ian Firns <firnsy@kororaproject.org> - 0.2-1
+- Initial kickstart import and export support
+
 * Wed Jan 13 2016 Chris Smart <csmart@kororaproject.org> - 0.1-3
 - Support client session
 
