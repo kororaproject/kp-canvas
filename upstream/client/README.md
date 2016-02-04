@@ -541,3 +541,17 @@ canvas machine cmd firnsy:odin ls /home
 canvas machine cmd firnsy:odin shutdown -h now
 canvas machine cmd firnsy:odin bash
 ```
+
+## Unit tests
+Running the unit tests requires python3 nose:
+
+```
+dnf install python3-nose
+```
+
+Unit tests should be run from the lib/canvas/test directory:
+
+```
+cd lib/canvas/test/
+python3 -m "nose"
+```
