@@ -50,11 +50,30 @@ class PackageTestCase(TestCase):
     l2.add(p2)
     self.assertEqual(l1, l2)
 
-    # p3 has an explicit arch which will overwrite the undefined package of
-    # the same name, result in the two lists each having an explicit defined
-    # arch which are not equal
+    # p3 has an explicit arch which will overwrite the undefined arch for the
+    # package of the same name, result in the two lists each having an explicit
+    # defined arch which are not equal
     l1.add(p3)
     self.assertNotEqual(l1, l2)
+
+  def test_packageset_update(self):
+    p1 = Package({'n': 'foo'})
+    p2 = Package({'n': 'foo', 'a': 'x'})
+    p3 = Package({'n': 'foo', 'a': 'y'})
+
+    l1 = PackageSet()
+    l2 = PackageSet()
+
+    l1.add(p2)
+    l1.add(p3)
+
+    self.assertEqual(PackageSet([p2, p3]), l1)
+
+    l2.add(p1)
+    self.assertEqual(PackageSet([p1]), l2)
+
+    l2.update(l1)
+    self.assertEqual(PackageSet([p2, p3]), l2)
 
   def test_packageset_uniqueness(self):
     p1 = Package({'n': 'foo'})

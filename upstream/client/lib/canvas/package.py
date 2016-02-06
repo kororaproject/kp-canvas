@@ -264,12 +264,14 @@ class PackageSet(collections.MutableSet):
 
     return u
 
-  def update(self, item):
-    if not isinstance(other, PackageSet):
-      raise TypeError('Not a PackageSet.')
+  def update(self, *args):
+    for o in args:
+      if not isinstance(o, PackageSet):
+        raise TypeError('Not a PackageSet.')
 
-    self.discard(item)
-    self.add(item)
+      # add takes care of uniqueness so let's use it
+      for x in o:
+        self.add(x)
 
 
 class Repository(object):
