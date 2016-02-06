@@ -65,15 +65,11 @@ class PackageCommand(Command):
           "\n".format(self.prog_name))
 
   def help_add(self):
-    print("Usage: {0} template add [user:]template [--name] [--title] [--description]\n"
-          "                           [--includes] [--public]\n"
+    print("Usage: {0} package add [user:]template [--nodeps]\n"
+          "           package1 packagelist1 package2 ... packageN\n"
           "\n"
           "Options:\n"
-          "  --name         NAME      Define the pretty NAME of template\n"
-          "  --title        TITLE     Define the pretty TITLE of template\n"
-          "  --description  TEXT      Define descriptive TEXT of the template\n"
-          "  --includes     TEMPLATE  Define descriptive TEXT of the template\n"
-          "\n"
+          "  --nodeps       Do not automatically remove dependencies\n"
           "\n".format(self.prog_name))
 
   def run(self):
