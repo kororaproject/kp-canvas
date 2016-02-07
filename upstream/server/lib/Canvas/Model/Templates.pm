@@ -220,9 +220,11 @@ sub remove {
         return $cb->('internal server error', undef) if $err;
         return $cb->('template doesn\'t exist', undef) if $res->rows == 0;
 
+        my $id = $res->hash->{id};
+
         # insert if we're the owner or member of owner's group
-        $self->pg->db->query('DELETE FROM templatemeta WHERE template_id=$1' => ($args->{id}) => $d->begin);
-        $self->pg->db->query('DELETE FROM templates WHERE id=$1' => ($args->{id}) => $d->begin);
+        $self->pg->db->query('DELETE FROM templatemeta WHERE template_id=$1' => ($id) => $d->begin);
+        $self->pg->db->query('DELETE FROM templates WHERE id=$1' => ($id) => $d->begin);
       },
       sub {
         my ($d, $err_meta, $res_meta, $err, $res) = @_;
