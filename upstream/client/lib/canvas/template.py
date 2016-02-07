@@ -322,14 +322,14 @@ class Template(object):
   #
   # PUBLIC METHODS
   def add_package(self, package):
-    if package not in self.packages_all:
+    if package not in self.packages:
       self._delta_packages.add(package)
 
   def add_repo(self, repo):
     if not isinstance(repo, Repository):
       raise TypeError('Not a Repository object')
 
-    if repo not in self.repos_all:
+    if repo not in self.repos:
       self._delta_repos.add(repo)
 
   def find_package(self, name):
