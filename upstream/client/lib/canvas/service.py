@@ -341,16 +341,18 @@ class Service(object):
     if not isinstance(template, Template):
       TypeError('template is not of type Template')
 
+    if not self.authenticate():
+      raise ServiceException('unable to authenticate')
+
     query = {'user': template.user, 'name': template.name}
+    r = urllib.request.Request('%s/api/templates.json?%s' % (self._urlbase, urllib.parse.urlencode(query)))
 
     try:
-      r = urllib.request.Request('%s/api/templates.json?%s' % (self._urlbase, urllib.parse.urlencode(query)))
       u = self._opener.open(r)
-
       template_summary = json.loads(u.read().decode('utf-8'))
 
       if len(template_summary):
-        r = urllib.request.Request('%s/api/template/%s.json' % (self._urlbase, template_summary[0]['id']))
+        r = urllib.request.Request('%s/api/template/%s.json' % (self._urlbase, template_summary[0]['uuid']))
         r.get_method = lambda: 'DELETE'
         u = self._opener.open(r)
         res = json.loads(u.read().decode('utf-8'))
