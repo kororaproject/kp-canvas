@@ -251,13 +251,16 @@ class TemplateCommand(Command):
 
     # pretty general information
     print('Name: {0} ({1})'.format(t.name, t.user))
-    print('Description:\n{0}\n'.format(t.description))
+
+    if t.description is not None and len(t.description):
+      print('Description:\n{0}\n'.format(t.description))
 
     # pretty print includes
     if len(t.includes):
       print('Includes:')
       for i in t.includes:
         print(' - {0}'.format(i))
+      print()
 
     # pretty print packages
     repos = list(t.repos_all)
