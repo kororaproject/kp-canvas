@@ -87,7 +87,7 @@ class TemplateCommand(Command):
           "{0} template pull [user:]template [--clean]\n"
           "{0} template diff [user:]template\n"
           "{0} template copy [user_from:]template_from [[user_to:]template_to]\n"
-          "{0} template list\n"
+          "{0} template list [--public]\n"
           "\n".format(self.prog_name))
 
   def help_add(self):
