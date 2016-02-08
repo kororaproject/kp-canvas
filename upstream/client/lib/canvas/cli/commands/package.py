@@ -21,7 +21,7 @@ import logging
 import prettytable
 
 from canvas.cli.commands import Command
-from canvas.package import Package, Repository
+from canvas.package import Package
 from canvas.service import Service, ServiceException
 from canvas.template import Template
 

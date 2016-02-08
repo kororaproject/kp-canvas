@@ -21,7 +21,8 @@ import json
 import sys
 import yaml
 
-from canvas.package import Package, PackageSet, Repository, RepoSet
+from canvas.package import Package, PackageSet
+from canvas.repository import Repository, RepoSet
 
 import pykickstart
 import pykickstart.parser
@@ -228,7 +229,7 @@ class Template(object):
       self._includes = template.get('includes', [])
       self._includes_resolved = template.get('includes_resolved', [])
 
-      self._repos = {Repository(r) for r in template.get('repos', [])}
+      self._repos    = RepoSet(Repository(r) for r in template.get('repos', []))
       self._packages = PackageSet(Package(p) for p in template.get('packages', []))
 
       self._stores   = template.get('stores', [])

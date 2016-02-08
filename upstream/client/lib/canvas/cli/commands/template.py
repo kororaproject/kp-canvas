@@ -28,7 +28,8 @@ from dnf.cli.progress import MultiFileProgressMeter
 from functools import reduce
 
 from canvas.cli.commands import Command
-from canvas.package import Package, Repository
+from canvas.package import Package
+from canvas.repository import Repository
 from canvas.service import Service, ServiceException
 from canvas.template import Template
 
