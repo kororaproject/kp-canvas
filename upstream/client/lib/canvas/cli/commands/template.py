@@ -87,7 +87,7 @@ class TemplateCommand(Command):
           "{0} template pull [user:]template [--clean]\n"
           "{0} template diff [user:]template\n"
           "{0} template copy [user_from:]template_from [[user_to:]template_to]\n"
-          "{0} template list\n"
+          "{0} template list [--public]\n"
           "\n".format(self.prog_name))
 
   def help_add(self):
@@ -131,11 +131,6 @@ class TemplateCommand(Command):
 
   def run_add(self):
     t = Template(self.args.template, user=self.args.username)
-
-    if self.args.username:
-      if not self.cs.authenticate(self.args.username, getpass.getpass('Password ({0}): '.format(self.args.username))):
-        print('error: unable to authenticate with canvas service.')
-        return 1
 
     # add template bits that are specified
     if self.args.title is not None:
@@ -332,21 +327,14 @@ class TemplateCommand(Command):
     return 0
 
   def run_list(self):
-    # don't auth if looking for public only
-    if not self.args.public_only:
-      try:
-        self.cs.authenticate()
-
-      except ServiceException as e:
-        print(e)
-        return 1
 
     # fetch all accessible/available templates
     try:
       templates = self.cs.template_list(
         user=self.args.filter_user,
         name=self.args.filter_name,
-        description=self.args.filter_description
+        description=self.args.filter_description,
+        public=self.args.public_only
       )
 
     except ServiceException as e:

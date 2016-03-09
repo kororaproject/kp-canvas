@@ -258,6 +258,8 @@ class Service(object):
     m = nonce + uuid
     h = hmac.new(codecs.decode(key, 'hex'), msg=m.encode('utf-8'), digestmod='sha512')
 
+    # always auth
+    self.authenticate()
 
     try:
       r = urllib.request.Request('{0}/api/machine/{1}/sync.json'.format(self._urlbase, uuid))
@@ -317,8 +319,8 @@ class Service(object):
     if not isinstance(template, Template):
       TypeError('template is not of type Template')
 
-    if not self.authenticate():
-      raise ServiceException('unable to authenticate')
+    # always auth
+    self.authenticate()
 
     try:
       r = urllib.request.Request('{0}/api/templates.json'.format(self._urlbase), template.to_json().encode('utf-8'))
@@ -341,8 +343,8 @@ class Service(object):
     if not isinstance(template, Template):
       TypeError('template is not of type Template')
 
-    if not self.authenticate():
-      raise ServiceException('unable to authenticate')
+    # always auth
+    self.authenticate()
 
     query = {'user': template.user, 'name': template.name}
     r = urllib.request.Request('%s/api/templates.json?%s' % (self._urlbase, urllib.parse.urlencode(query)))
@@ -411,12 +413,16 @@ class Service(object):
       print(e)
       raise ServiceException('unknown service response')
 
-  def template_list(self, user=None, name=None, description=None):
+  def template_list(self, user=None, name=None, description=None, public=False):
     params = {
       'user': user,
       'name': name,
       'description': description
     }
+
+    # Public templates do not require authentication
+    if not public:
+      self.authenticate()
 
     params = urllib.parse.urlencode({k: v for k, v in params.items() if v != None})
     print(params)
@@ -443,8 +449,8 @@ class Service(object):
     if not isinstance(template, Template):
       TypeError('template is not of type Template')
 
-    if not self.authenticate():
-      raise ServiceException('unable to authenticate')
+    # always auth
+    self.authenticate()
 
     try:
       r = urllib.request.Request('{0}/api/template/{1}.json'.format(self._urlbase, template.uuid), template.to_json().encode('utf-8'))
