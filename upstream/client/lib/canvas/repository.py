@@ -294,7 +294,7 @@ class RepoSet(collections.MutableSet):
     return u
 
   def update(self, item):
-    for o in args:
+    for o in item:
       if not isinstance(o, RepoSet):
         raise TypeError('Not a RepoSet.')
 
