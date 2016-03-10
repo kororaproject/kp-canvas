@@ -22,13 +22,6 @@ import hawkey
 import json
 import re
 
-#
-# CONSTANTS
-#
-
-ACTION_PIN     = 0x80
-ACTION_EXCLUDE = 0x02
-ACTION_INCLUDE = 0x01
 
 RE_PACKAGE = re.compile("([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^-]+)-([^:]))?(?::(\w+))?")
 
@@ -39,13 +32,21 @@ RE_PACKAGE = re.compile("([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^-]+)-([^:]))?(?::(\
 class Package(object):
   """ A Canvas object that represents an installable Package. """
 
+  # CONSTANTS
+  ACTION_PIN              = 0x80
+  ACTION_GROUP_OPTIONAL   = 0x40
+  ACTION_GROUP_NODEFAULTS = 0x20
+  ACTION_GROUP            = 0x10
+  ACTION_EXCLUDE          = 0x02
+  ACTION_INCLUDE          = 0x01
+
   def __init__(self, *args, **kwargs):
     self.name     = kwargs.get('name', None)
     self.epoch    = kwargs.get('epoch', None)
     self.version  = kwargs.get('version', None)
     self.release  = kwargs.get('release', None)
     self.arch     = kwargs.get('arch', None)
-    self.action   = kwargs.get('action', ACTION_INCLUDE)
+    self.action   = kwargs.get('action', self.ACTION_INCLUDE)
 
     # parse all args package defined objects
     for arg in args:
@@ -83,13 +84,13 @@ class Package(object):
     return 'Package: %s' % (self.to_pkg_spec())
 
   def __str__(self):
-    return 'Package: %s ' % (json.dumps(self.to_object(), separators=(',',':')))
+    return 'Package: %s' % (json.dumps(self.to_object(), separators=(',',':')))
 
   def excluded(self):
-    return self.action & (ACTION_EXCLUDE)
+    return self.action & (self.ACTION_EXCLUDE)
 
   def included(self):
-    return self.action & (ACTION_INCLUDE)
+    return self.action & (self.ACTION_INCLUDE)
 
   def parse(self, data):
     if isinstance(data, dnf.package.Package) or \
@@ -106,17 +107,17 @@ class Package(object):
       self.version = data.get('v', self.version)
       self.release = data.get('r', self.release)
       self.arch    = data.get('a', self.arch)
-      self.action  = data.get('z', ACTION_INCLUDE)
+      self.action  = data.get('z', self.ACTION_INCLUDE)
 
     elif isinstance(data, str):
       m = RE_PACKAGE.match(data)
 
       if m is not None:
         if m.group(1) == '~':
-          self.action  = ACTION_EXCLUDE
+          self.action = self.ACTION_EXCLUDE
 
         else:
-          self.action  = ACTION_INCLUDE
+          self.action = self.ACTION_INCLUDE
 
         self.name    = m.group(2)
         self.epoch   = m.group(3)
@@ -124,8 +125,12 @@ class Package(object):
         self.release = m.group(5)
         self.arch    = m.group(6)
 
+    # detect group packages
+    if isinstance(self.name, str) and self.name.startswith('@'):
+      self.action |= self.ACTION_GROUP
+
   def pinned(self):
-    return self.action & (ACTION_PIN)
+    return self.action & (self.ACTION_PIN)
 
   def to_json(self):
     return json.dumps(self.to_object(), separators=(',',':'))
@@ -171,13 +176,14 @@ class Package(object):
 
     return f
 
-  def to_pkg(self):
-    db = dnf.Base()
-    try:
-      db.fill_sack()
+  def to_pkg(self, db=None):
+    if not isinstance(db, dnf.Base):
+      db = dnf.Base()
+      try:
+        db.fill_sack()
 
-    except OSError as e:
-      pass
+      except OSError as e:
+        pass
 
     p_list = db.sack.query().installed().filter(name=self.name)
 

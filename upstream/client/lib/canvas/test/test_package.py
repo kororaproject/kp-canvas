@@ -1,4 +1,3 @@
-
 #
 # TESTS
 #
@@ -32,9 +31,17 @@ class PackageTestCase(TestCase):
     p5 = Package({'n': 'foo', 'a': 'i386'})
 
     self.assertNotEqual(p1, p2)
+    self.assertEqual(p1.action, Package.ACTION_INCLUDE)
     self.assertEqual(p2, p3)
     self.assertEqual(p2, p4)
     self.assertNotEqual(p3, p5)
+
+  def test_package_group(self):
+    p1 = Package({})
+    p2 = Package({'n': '@foo'})
+
+    self.assertNotEqual(p1.action, Package.ACTION_INCLUDE | Package.ACTION_GROUP)
+    self.assertEqual(p2.action, Package.ACTION_INCLUDE | Package.ACTION_GROUP)
 
   def test_packageset_equality(self):
     p1 = Package({'n': 'foo'})
