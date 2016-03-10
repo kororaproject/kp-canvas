@@ -21,7 +21,7 @@ import logging
 import prettytable
 
 from canvas.cli.commands import Command
-from canvas.package import Package
+from canvas.package import Package, ErrorInvalidPackage
 from canvas.service import Service, ServiceException
 from canvas.template import Template
 
@@ -100,7 +100,13 @@ class PackageCommand(Command):
             return 1
 
         for p in self.args.package:
-            t.add_package(Package(p))
+            try:
+                pkg = Package(p)
+            except ErrorInvalidPackage as e:
+                print (e)
+                return 1
+
+            t.add_package(pkg)
 
         packages = list(t.packages_delta)
         packages.sort(key=lambda x: x.name)
