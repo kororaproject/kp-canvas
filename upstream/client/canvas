@@ -37,44 +37,44 @@ import canvas.cli.commands.repo
 import canvas.cli.commands.template
 
 def signal_handler(signal, frame):
-  print()
-  sys.exit(1)
+    print()
+    sys.exit(1)
 
 
 if __name__ == '__main__':
-  # trap ctrl+c, it's polish
-  signal.signal(signal.SIGINT, signal_handler)
+    # trap ctrl+c, it's polish
+    signal.signal(signal.SIGINT, signal_handler)
 
-  # read config file
-  config = canvas.config.Config()
+    # read config file
+    config = canvas.config.Config()
 
-  args, args_extra = canvas.cli.commands.parseCommandLine(config)
+    args, args_extra = canvas.cli.commands.parseCommandLine(config)
 
-  cli = None
+    cli = None
 
-  # processCommandLine
-  if args.command == 'config':
-    cli = canvas.cli.commands.config.ConfigCommand()
+    # processCommandLine
+    if args.command == 'config':
+        cli = canvas.cli.commands.config.ConfigCommand()
 
-  elif args.command == 'template':
-    cli = canvas.cli.commands.template.TemplateCommand()
+    elif args.command == 'template':
+        cli = canvas.cli.commands.template.TemplateCommand()
 
-  elif args.command == 'package':
-    cli = canvas.cli.commands.package.PackageCommand()
+    elif args.command == 'package':
+        cli = canvas.cli.commands.package.PackageCommand()
 
-  elif args.command == 'repo':
-    cli = canvas.cli.commands.repo.RepoCommand()
+    elif args.command == 'repo':
+        cli = canvas.cli.commands.repo.RepoCommand()
 
-  elif args.command == 'machine':
-    cli = canvas.cli.commands.machine.MachineCommand()
+    elif args.command == 'machine':
+        cli = canvas.cli.commands.machine.MachineCommand()
 
-  # print general usage if no command found
-  if cli is None:
-    canvas.cli.commands.general_usage()
-    sys.exit(1)
+    # print general usage if no command found
+    if cli is None:
+        canvas.cli.commands.general_usage()
+        sys.exit(1)
 
-  if not cli.configure(config, args, args_extra):
-    cli.help()
-    sys.exit(1)
+    if not cli.configure(config, args, args_extra):
+        cli.help()
+        sys.exit(1)
 
-  sys.exit(cli.run())
+    sys.exit(cli.run())

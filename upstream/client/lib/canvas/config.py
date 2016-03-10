@@ -20,46 +20,46 @@ import configparser
 import os
 
 class Config(object):
-  def __init__(self):
-    self.config = configparser.ConfigParser()
+    def __init__(self):
+        self.config = configparser.ConfigParser()
 
-    # look for local user config
-    self.home_config_path = os.path.join(os.path.expanduser('~'), '.config', 'canvas.conf')
-    if os.path.exists(self.home_config_path):
-      self.config.read(self.home_config_path)
+        # look for local user config
+        self.home_config_path = os.path.join(os.path.expanduser('~'), '.config', 'canvas.conf')
+        if os.path.exists(self.home_config_path):
+            self.config.read(self.home_config_path)
 
-    # also check for system config
-    elif os.path.exists("/etc/canvas/canvas.conf"):
-      self.config.read("/etc/canvas/canvas.conf")
+        # also check for system config
+        elif os.path.exists("/etc/canvas/canvas.conf"):
+            self.config.read("/etc/canvas/canvas.conf")
 
-  def __repr__(self):
-    print(self.config)
+    def __repr__(self):
+        print(self.config)
 
-  def __str__(self):
-    print(self.config)
+    def __str__(self):
+        print(self.config)
 
-  def get(self, section, key, default=None):
-    if not section in self.config.sections():
-      return default
+    def get(self, section, key, default=None):
+        if not section in self.config.sections():
+            return default
 
-    return self.config[section].get(key, default)
+        return self.config[section].get(key, default)
 
-  def save(self):
-    # always write to local config
-    with open(self.home_config_path, 'w+') as configfile:
-      self.config.write(configfile)
+    def save(self):
+        # always write to local config
+        with open(self.home_config_path, 'w+') as configfile:
+            self.config.write(configfile)
 
-  def sections(self):
-    return self.config.sections()
+    def sections(self):
+        return self.config.sections()
 
-  def set(self, section, key, value):
-    if not section in self.config.sections():
-      self.config[section] = {}
+    def set(self, section, key, value):
+        if not section in self.config.sections():
+            self.config[section] = {}
 
-    self.config[section][key] = value
+        self.config[section][key] = value
 
-  def unset(self, section, key):
-    if not section in self.config.sections():
-      return False
+    def unset(self, section, key):
+        if not section in self.config.sections():
+            return False
 
-    return self.config.remove_option(section, key)
+        return self.config.remove_option(section, key)
