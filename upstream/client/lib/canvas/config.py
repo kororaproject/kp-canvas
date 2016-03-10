@@ -21,17 +21,18 @@ import os
 
 
 class Config(object):
-    def __init__(self):
+    def __init__(self, path=None):
         self.config = configparser.ConfigParser()
 
         # look for local user config
-        self.home_config_path = os.path.join(os.path.expanduser('~'), '.config', 'canvas.conf')
-        if os.path.exists(self.home_config_path):
-            self.config.read(self.home_config_path)
+        if path is None:
+            self.home_config_path = os.path.join(os.path.expanduser('~'), '.config', 'canvas.conf')
+            if os.path.exists(self.home_config_path):
+                self.config.read(self.home_config_path)
 
-        # also check for system config
-        elif os.path.exists("/etc/canvas/canvas.conf"):
-            self.config.read("/etc/canvas/canvas.conf")
+            # also check for system config
+            elif os.path.exists("/etc/canvas/canvas.conf"):
+                self.config.read("/etc/canvas/canvas.conf")
 
     def __repr__(self):
         print(self.config)
