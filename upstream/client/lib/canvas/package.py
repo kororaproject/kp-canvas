@@ -25,6 +25,17 @@ import re
 
 RE_PACKAGE = re.compile("([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^-]+)-([^:]))?(?::(\w+))?")
 
+class ErrorInvalidPackage(Exception):
+  def __init__(self, reason, code=0):
+    self.reason = reason.lower()
+    self.code = code
+
+  def __repr__(self):
+    return str(self)
+
+  def __str__(self):
+    return 'error: {0}'.format(str(self.reason))
+
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
 #

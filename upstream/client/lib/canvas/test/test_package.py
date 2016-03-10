@@ -5,7 +5,7 @@
 
 from unittest import TestCase
 
-from canvas.package import Package, PackageSet
+from canvas.package import Package, PackageSet, ErrorInvalidPackage
 
 
 class PackageTestCase(TestCase):
@@ -13,7 +13,7 @@ class PackageTestCase(TestCase):
     def setUp(self):
         pass
 
-    def test_package_empty(self):
+    def test_package_parse_empty(self):
         p1 = Package({})
 
         self.assertEqual(None, p1.name)
@@ -24,6 +24,185 @@ class PackageTestCase(TestCase):
 
         # empty packages will have a default action of include
         self.assertEqual({'z': 1}, p1.to_object())
+
+    # https://fedoraproject.org/wiki/Packaging:NamingGuidelines
+    # [a-zA-Z0-9-._+]
+    def test_package_parse_str_valid_name(self):
+
+        # Hyphen is acceptable
+        try:
+            p = Package("abc-xyz")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package name")
+
+        # Numbers are acceptable
+        try:
+            p = Package("foobar3")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package name")
+
+        try:
+            p = Package("lemon3.3")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package name")
+
+        # Underscore is acceptable
+        try:
+            p = Package("foo_bar")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package name")
+
+        # Plus is acceptable
+        try:
+            p = Package("pie++")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package name")
+
+        # Groups are acceptable
+        try:
+            p = Package("@Development Tools")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package name")
+
+
+
+    def test_package_parse_str_valid_version(self):
+        # Standard format
+        try:
+            p = Package("bar@1-2")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package version")
+
+        # Point releases are acceptable
+        try:
+            p = Package("bar@1.3-2")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package version")
+
+        # Large version numbers
+        try:
+            p = Package("bar@1234-2")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid package version")
+
+    def test_package_parse_str_invalid_version(self):
+        # Release is required
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar@1")
+
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar@1-")
+
+        # Must have version, release is not enough
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar@-2")
+
+        # Multiple release specifiers
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar@1.2-3-2")
+
+    def test_package_parse_str_valid_arch(self):
+        # Standard format
+        try:
+            p = Package("bar:i386")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid arch")
+
+    def test_package_parse_str_invalid_arch(self):
+        # Must have arch string
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar:")
+
+
+    def test_package_parse_str_valid_epoc(self):
+        # Standard format
+        try:
+            p = Package("bar#1@1.2-3")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid epoc")
+
+        # Multiple digits are acceptable
+        try:
+            p = Package("bar#13@1.2-3")
+        except ErrorInvalidPackage:
+            self.fail("Package raised ErrorInvalidPackage on valid epoc")
+
+
+    def test_package_parse_str_invalid_epoc(self):
+        # Must have version/release
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar#1")
+
+        # Must have version/release
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar#@1.2-4")
+
+        # Adding arch, we still need version and release
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar#1:i586")
+
+        # Must be numeric
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar#a@1.2-4")
+
+        # Must be integer
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar#1.1@1.2-3")
+
+
+# TODO:
+#  def test_package_parse_str_invalid_name(self):
+
+    def test_package_parse_str_invalid_format(self):
+        # Dangling separators
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar#@1.2-3")
+        # Dangling epoc sign
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar#@")
+
+        # Cannot have version without release
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar@2.3.4")
+        # Epoc requires version to be specified
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("bar#1")
+
+    def test_package_parse_str(self):
+
+        p1 = Package("foo")
+        p2 = Package("~foo:x86_64")
+        p3 = Package("bar@2.1.4-0")
+        p4 = Package("baz#1@2.1-3:x86_64")
+
+        self.assertEqual("foo", p1.name)
+        self.assertEqual(Package.ACTION_INCLUDE, p1.action)
+        self.assertEqual(None, p1.epoch)
+        self.assertEqual(None, p1.version)
+        self.assertEqual(None, p1.release)
+        self.assertEqual(None, p1.arch)
+
+        self.assertEqual("foo", p2.name)
+        self.assertEqual(Package.ACTION_EXCLUDE, p2.action)
+        self.assertEqual(None, p2.epoch)
+        self.assertEqual(None, p2.version)
+        self.assertEqual(None, p2.release)
+        self.assertEqual("x86_64", p2.arch)
+
+        self.assertEqual("bar", p3.name)
+        self.assertEqual(Package.ACTION_INCLUDE, p3.action)
+        self.assertEqual(None, p3.epoch)
+        self.assertEqual("2.1.4", p3.version)
+        self.assertEqual("0", p3.release)
+        self.assertEqual(None, p3.arch)
+
+        self.assertEqual("baz", p4.name)
+        self.assertEqual(Package.ACTION_INCLUDE, p4.action)
+        self.assertEqual("1", p4.epoch)
+        self.assertEqual("2.1", p4.version)
+        self.assertEqual("3", p4.release)
+        self.assertEqual("x86_64", p4.arch)
+
 
     def test_package_equality(self):
         p1 = Package({})
