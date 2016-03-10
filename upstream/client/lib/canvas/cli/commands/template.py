@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2015   Ian Firns   <firnsy@kororaproject.org>
+# Copyright (C) 2013-2016   Ian Firns   <firnsy@kororaproject.org>
 #                           Chris Smart <csmart@kororaproject.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -35,558 +35,558 @@ from canvas.template import Template
 
 logger = logging.getLogger('canvas')
 
+
 class TemplateCommand(Command):
-  def configure(self, config, args, args_extra):
-    # store loaded config
-    self.config = config
+    def configure(self, config, args, args_extra):
+        # store loaded config
+        self.config = config
 
-    # create our canvas service object
-    self.cs = Service(host=args.host, username=args.username)
+        # create our canvas service object
+        self.cs = Service(host=args.host, username=args.username)
 
-    try:
-      # expand includes
-      if args.includes is not None:
-        args.includes = args.includes.split(',')
-    except:
-      pass
+        try:
+            # expand includes
+            if args.includes is not None:
+                args.includes = args.includes.split(',')
+        except:
+            pass
 
-    # eval public
-    try:
-      if args.public is not None:
-        args.public = (args.public.lower() in ['1', 'true'])
-    except:
-      pass
+        # eval public
+        try:
+            if args.public is not None:
+                args.public = (args.public.lower() in ['1', 'true'])
+        except:
+            pass
 
-    # store args for additional processing
-    self.args = args
+        # store args for additional processing
+        self.args = args
 
-    # return false if any error, help, or usage needs to be shown
-    return not args.help
+        # return false if any error, help, or usage needs to be shown
+        return not args.help
 
-  def help(self):
-    # check for action specific help first
-    if self.args.action is not None:
-      try:
-        command = getattr(self, 'help_{0}'.format(self.args.action))
+    def help(self):
+        # check for action specific help first
+        if self.args.action is not None:
+            try:
+                command = getattr(self, 'help_{0}'.format(self.args.action))
 
-        # show action specific if available
-        if command:
-          return command()
+                # show action specific if available
+                if command:
+                    return command()
 
-      except:
-        pass
+            except:
+                pass
 
-    # fall back to general usage
-    print("General usage: {0} [--version] [--help] [--verbose] template [<args>]\n"
-          "\n"
-          "Specific usage:\n"
-          "{0} template add [user:]template [--title] [--description] [--includes] [--public]\n"
-          "{0} template update [user:]template [--title] [--description] [--includes] [--public]\n"
-          "{0} template rm [user:]template\n"
-          "{0} template push [user:]template [--all]\n"
-          "{0} template pull [user:]template [--clean]\n"
-          "{0} template diff [user:]template\n"
-          "{0} template copy [user_from:]template_from [[user_to:]template_to]\n"
-          "{0} template list [--public]\n"
-          "\n".format(self.prog_name))
+        # fall back to general usage
+        print("General usage: {0} [--version] [--help] [--verbose] template [<args>]\n"
+              "\n"
+              "Specific usage:\n"
+              "{0} template add [user:]template [--title] [--description] [--includes] [--public]\n"
+              "{0} template update [user:]template [--title] [--description] [--includes] [--public]\n"
+              "{0} template rm [user:]template\n"
+              "{0} template push [user:]template [--all]\n"
+              "{0} template pull [user:]template [--clean]\n"
+              "{0} template diff [user:]template\n"
+              "{0} template copy [user_from:]template_from [[user_to:]template_to]\n"
+              "{0} template list [--public]\n"
+              "\n".format(self.prog_name))
 
-  def help_add(self):
-    print("Usage: {0} template add [user:]template [--title] [--description]\n"
-          "                           [--includes] [--public]\n"
-          "\n"
-          "Options:\n"
-          "  --title        TITLE     Define the pretty TITLE of template\n"
-          "  --description  TEXT      Define descriptive TEXT of the template\n"
-          "  --includes     TEMPLATE  Define descriptive TEXT of the template\n"
-          "\n"
-          "\n".format(self.prog_name))
+    def help_add(self):
+        print("Usage: {0} template add [user:]template [--title] [--description]\n"
+              "                           [--includes] [--public]\n"
+              "\n"
+              "Options:\n"
+              "  --title        TITLE     Define the pretty TITLE of template\n"
+              "  --description  TEXT      Define descriptive TEXT of the template\n"
+              "  --includes     TEMPLATE  Define descriptive TEXT of the template\n"
+              "\n"
+              "\n".format(self.prog_name))
 
-  def help_update(self):
-    print("Usage: {0} template update [user:]template [--title] [--description]\n"
-          "                           [--includes] [--public]\n"
-          "\n"
-          "Options:\n"
-          "  --title        TITLE     Define the pretty TITLE of template\n"
-          "  --description  TEXT      Define descriptive TEXT of the template\n"
-          "  --includes     TEMPLATE  Define descriptive TEXT of the template\n"
-          "\n"
-          "\n".format(self.prog_name))
+    def help_update(self):
+        print("Usage: {0} template update [user:]template [--title] [--description]\n"
+              "                           [--includes] [--public]\n"
+              "\n"
+              "Options:\n"
+              "  --title        TITLE     Define the pretty TITLE of template\n"
+              "  --description  TEXT      Define descriptive TEXT of the template\n"
+              "  --includes     TEMPLATE  Define descriptive TEXT of the template\n"
+              "\n"
+              "\n".format(self.prog_name))
 
-  def run(self):
-    command = None
+    def run(self):
+        command = None
 
-    # search for our function based on the specified action
-    try:
-      command = getattr(self, 'run_{0}'.format(self.args.action))
+        # search for our function based on the specified action
+        try:
+            command = getattr(self, 'run_{0}'.format(self.args.action))
 
-    except:
-      self.help()
-      return 1
+        except:
+            self.help()
+            return 1
 
-    if not command:
-      print('error: action is not reachable.')
-      return
+        if not command:
+            print('error: action is not reachable.')
+            return
 
-    return command()
+        return command()
 
-  def run_add(self):
-    t = Template(self.args.template, user=self.args.username)
+    def run_add(self):
+        t = Template(self.args.template, user=self.args.username)
 
-    # add template bits that are specified
-    if self.args.title is not None:
-      t.title = self.args.title
+        # add template bits that are specified
+        if self.args.title is not None:
+            t.title = self.args.title
 
-    if self.args.description is not None:
-      t.description = self.args.description
+        if self.args.description is not None:
+            t.description = self.args.description
 
-    if self.args.includes is not None:
-      t.includes = self.args.includes
+        if self.args.includes is not None:
+            t.includes = self.args.includes
 
-    if self.args.public is not None:
-      t.public = self.args.public
+        if self.args.public is not None:
+            t.public = self.args.public
 
-    try:
-      res = self.cs.template_create(t)
+        try:
+            res = self.cs.template_create(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    print('info: template added.')
-    return 0
+        print('info: template added.')
+        return 0
 
-  def run_copy(self):
-    t = Template(self.args.template_from, user=self.args.username)
+    def run_copy(self):
+        t = Template(self.args.template_from, user=self.args.username)
 
-    try:
-      t = self.cs.template_get(t)
+        try:
+            t = self.cs.template_get(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    # reparse for template destination
-    t.parse(self.args.template_to)
+        # reparse for template destination
+        t.parse(self.args.template_to)
 
-    try:
-      res = self.cs.template_create(t)
+        try:
+            res = self.cs.template_create(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    print('info: template copied.')
-    return 0
+        print('info: template copied.')
+        return 0
 
-  def run_diff(self):
-    t = Template(self.args.template_from, user=self.args.username)
+    def run_diff(self):
+        t = Template(self.args.template_from, user=self.args.username)
 
-    # grab the template we're pushing to
-    try:
-      t = self.cs.template_get(t)
+        # grab the template we're pushing to
+        try:
+            t = self.cs.template_get(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    # fetch template to compare to
-    if self.args.template_to is not None:
-      ts = Template(self.args.template_to, user=self.args.username)
+        # fetch template to compare to
+        if self.args.template_to is not None:
+            ts = Template(self.args.template_to, user=self.args.username)
 
-      try:
-        ts = self.cs.template_get(ts)
+            try:
+                ts = self.cs.template_get(ts)
 
-      except ServiceException as e:
-        print(e)
-        return 1
+            except ServiceException as e:
+                print(e)
+                return 1
 
-    # otherwise build from system
-    else:
-      ts = Template('system')
-      ts.from_system()
+        # otherwise build from system
+        else:
+            ts = Template('system')
+            ts.from_system()
 
-    (l_r, r_l) = t.package_diff(ts.packages_all)
+        (l_r, r_l) = t.package_diff(ts.packages_all)
 
-    if len(l_r):
-      print('In template and not marked for install in system:')
+        if len(l_r):
+            print('In template and not marked for install in system:')
 
-      for p in l_r:
-        print(" * {0}".format(p.name))
+            for p in l_r:
+                print(" * {0}".format(p.name))
 
-      print()
+            print()
 
-    if len(r_l):
-      print('Marked for install on system and not in template:')
+        if len(r_l):
+            print('Marked for install on system and not in template:')
 
-      for p in r_l:
-        print(" * {0}".format(p.name))
+            for p in r_l:
+                print(" * {0}".format(p.name))
 
-    print()
+        print()
 
-  def run_dump(self):
-    t = Template(self.args.template, user=self.args.username)
+    def run_dump(self):
+        t = Template(self.args.template, user=self.args.username)
 
-    try:
-      t = self.cs.template_get(t)
+        try:
+            t = self.cs.template_get(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    if self.args.kickstart:
-      print(t.to_kickstart())
-      return 0
+        if self.args.kickstart:
+            print(t.to_kickstart())
+            return 0
 
-    elif self.args.yaml:
-      print(yaml.dump(t.to_object(), indent=4))
-      return 0
+        elif self.args.yaml:
+            print(yaml.dump(t.to_object(), indent=4))
+            return 0
 
-    elif self.args.json:
-      print(json.dumps(t.to_object(), indent=4))
-      return 0
+        elif self.args.json:
+            print(json.dumps(t.to_object(), indent=4))
+            return 0
 
-    # pretty general information
-    print('Name: {0} ({1})'.format(t.name, t.user))
+        # pretty general information
+        print('Name: {0} ({1})'.format(t.name, t.user))
 
-    if t.description is not None and len(t.description):
-      print('Description:\n{0}\n'.format(t.description))
+        if t.description is not None and len(t.description):
+            print('Description:\n{0}\n'.format(t.description))
 
-    # pretty print includes
-    if len(t.includes):
-      print('Includes:')
-      for i in t.includes:
-        print(' - {0}'.format(i))
-      print()
+        # pretty print includes
+        if len(t.includes):
+            print('Includes:')
+            for i in t.includes:
+                print(' - {0}'.format(i))
+            print()
 
-    # pretty print packages
-    repos = list(t.repos_all)
-    repos.sort(key=lambda x: x.stub)
+        # pretty print packages
+        repos = list(t.repos_all)
+        repos.sort(key=lambda x: x.stub)
 
-    if len(repos):
-      l = prettytable.PrettyTable(['repo', 'name', 'priority', 'cost', 'enabled'])
-      l.min_table_width=120
-      l.hrules = prettytable.HEADER
-      l.vrules = prettytable.NONE
-      l.align = 'l'
-      l.padding_witdth = 1
+        if len(repos):
+            l = prettytable.PrettyTable(['repo', 'name', 'priority', 'cost', 'enabled'])
+            l.min_table_width = 120
+            l.hrules = prettytable.HEADER
+            l.vrules = prettytable.NONE
+            l.align = 'l'
+            l.padding_witdth = 1
 
-      for r in repos:
-        if r.cost is None:
-          r.cost = '-'
+            for r in repos:
+                if r.cost is None:
+                    r.cost = '-'
 
-        if r.priority is None:
-          r.priority = '-'
+                if r.priority is None:
+                    r.priority = '-'
 
-        if r.enabled:
-          r.enabled = 'Y'
+                if r.enabled:
+                    r.enabled = 'Y'
+
+                else:
+                    r.enabled = 'N'
+
+                l.add_row([r.stub, r.name, r.priority, r.cost, r.enabled])
+
+            print(l)
+            print()
+
+        # pretty print packages
+        packages = list(t.packages_all)
+        packages.sort(key=lambda x: x.name)
+
+        if len(packages):
+            l = prettytable.PrettyTable(['package', 'epoch', 'version', 'release', 'arch', 'action'])
+            l.min_table_width = 120
+            l.hrules = prettytable.HEADER
+            l.vrules = prettytable.NONE
+            l.align = 'l'
+            l.padding_witdth = 1
+
+            for p in packages:
+                if p.epoch is None:
+                    p.epoch = '-'
+
+                if p.version is None:
+                    p.version = '-'
+
+                if p.release is None:
+                    p.release = '-'
+
+                if p.arch is None:
+                    p.arch = '-'
+
+                if p.included():
+                    p.action = '+'
+
+                else:
+                    p.action = '-'
+
+                l.add_row([p.name, p.epoch, p.version, p.release, p.arch, p.action])
+
+            print(l)
+            print()
+
+        return 0
+
+    def run_list(self):
+
+        # fetch all accessible/available templates
+        try:
+            templates = self.cs.template_list(
+                user=self.args.filter_user,
+                name=self.args.filter_name,
+                description=self.args.filter_description,
+                public=self.args.public_only
+            )
+
+        except ServiceException as e:
+            print(e)
+            return 1
+
+        if len(templates):
+            l = prettytable.PrettyTable(["user:name", "title"])
+            l.hrules = prettytable.HEADER
+            l.vrules = prettytable.NONE
+            l.align = 'l'
+            l.padding_witdth = 1
+
+            # add table items and print
+            for t in templates:
+                l.add_row(["{0}:{1}".format(t['username'], t['stub']), t['name']])
+
+            print(l)
+
+            # print summary
+            print('\n{0} template(s) found.'.format(len(templates)))
 
         else:
-          r.enabled = 'N'
+            print('0 templates found.')
 
-        l.add_row([r.stub, r.name, r.priority, r.cost, r.enabled])
+    def run_pull(self):
+        # am i effectively root
+        if os.geteuid() != 0:
+            print('You need to have root privileges to modify the system.')
+            return 0
 
-      print(l)
-      print()
+        t = Template(self.args.template, user=self.args.username)
 
-    # pretty print packages
-    packages = list(t.packages_all)
-    packages.sort(key=lambda x: x.name)
+        try:
+            t = self.cs.template_get(t)
 
-    if len(packages):
-      l = prettytable.PrettyTable(['package', 'epoch', 'version', 'release', 'arch', 'action'])
-      l.min_table_width=120
-      l.hrules = prettytable.HEADER
-      l.vrules = prettytable.NONE
-      l.align = 'l'
-      l.padding_witdth = 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-      for p in packages:
-        if p.epoch is None:
-          p.epoch = '-'
+        # prepare dnf
+        print('info: analysing system ...')
+        db = dnf.Base()
 
-        if p.version is None:
-          p.version = '-'
+        # install repos from template
+        if len(t.repos_all):
+            for r in t.repos_all:
+                dr = r.to_repo()
+                dr.set_progress_bar(dnf.cli.progress.MultiFileProgressMeter())
+                dr.load()
+                db.repos.add(dr)
 
-        if p.release is None:
-          p.release = '-'
-
-        if p.arch is None:
-          p.arch = '-'
-
-        if p.included():
-          p.action = '+'
+        elif True:
+            print('No template repos specified, using available system repos.')
+            db.read_all_repos()
 
         else:
-          p.action = '-'
+            print('No repos defined.')
+            return 0
 
-        l.add_row([p.name, p.epoch, p.version, p.release, p.arch, p.action])
+        db.read_comps()
 
-      print(l)
-      print()
+        try:
+            db.fill_sack()
 
-    return 0
+        except OSError as e:
+            pass
 
-  def run_list(self):
+        multilib_policy = db.conf.multilib_policy
+        clean_deps = db.conf.clean_requirements_on_remove
 
-    # fetch all accessible/available templates
-    try:
-      templates = self.cs.template_list(
-        user=self.args.filter_user,
-        name=self.args.filter_name,
-        description=self.args.filter_description,
-        public=self.args.public_only
-      )
+        print('info: preparing transaction ...')
+        # process all packages in template
+        for p in t.packages_all:
+            if p.included():
+                db.install(p.to_pkg_spec())
 
-    except ServiceException as e:
-      print(e)
-      return 1
+            else:
+                db.remove(p.to_pkg_spec())
 
-    if len(templates):
-      l = prettytable.PrettyTable(["user:name", "title"])
-      l.hrules = prettytable.HEADER
-      l.vrules = prettytable.NONE
-      l.align = 'l'
-      l.padding_witdth = 1
+        print('info: resolving actions ...')
+        db.resolve(allow_erasing=True)
 
-      # add table items and print
-      for t in templates:
-        l.add_row(["{0}:{1}".format(t['username'], t['stub']), t['name']])
+        # describe process for dry runs
+        if self.args.dry_run:
+            packages_install = list(db.transaction.install_set)
+            packages_install.sort(key=lambda x: x.name)
 
-      print(l)
+            packages_remove = list(db.transaction.remove_set)
+            packages_remove.sort(key=lambda x: x.name)
 
-      # print summary
-      print('\n{0} template(s) found.'.format(len(templates)))
+            if len(packages_install) or len(packages_remove):
+                print('The following would be installed to (+) and removed from (-) the system:')
 
-    else:
-      print('0 templates found.')
+                for p in packages_install:
+                    print('  + ' + str(p))
 
-  def run_pull(self):
-    # am i effectively root
-    if os.geteuid() != 0:
-      print('You need to have root privileges to modify the system.')
-      return 0
+                for p in packages_remove:
+                    print('  - ' + str(p))
 
-    t = Template(self.args.template, user=self.args.username)
+                print()
+                print('Summary:')
+                print('  - Package(s): %d' % (len(packages_install)+len(packages_remove)))
+                print()
 
-    try:
-      t = self.cs.template_get(t)
+            else:
+                print('No system changes required.')
 
-    except ServiceException as e:
-      print(e)
-      return 1
+            print('No action peformed during this dry-run.')
+            return 0
 
-    # prepare dnf
-    print('info: analysing system ...')
-    db = dnf.Base()
+        if len(db.transaction.install_set) or len(db.transaction.remove_set):
+            print('info: downloading ...')
+            db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
 
-    # install repos from template
-    if len(t.repos_all):
-      for r in t.repos_all:
-        dr = r.to_repo()
-        dr.set_progress_bar(dnf.cli.progress.MultiFileProgressMeter())
-        dr.load()
-        db.repos.add(dr)
+            print('info: completing ...')
+            db.do_transaction()
 
-    elif True:
-      print('No template repos specified, using available system repos.')
-      db.read_all_repos()
+        print('info: syncing history ...')
+        for p in t.packages_all:
+            if p.included():
+                db.yumdb.get_package(p.to_pkg()).reason = 'user'
 
-    else:
-      print('No repos defined.')
-      return 0
+    def run_push(self):
+        t = Template(self.args.template, user=self.args.username)
 
-    db.read_comps()
+        # grab the template we're pushing to
+        try:
+            t = self.cs.template_get(t)
 
-    try:
-      db.fill_sack()
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    except OSError as e:
-      pass
+        if self.args.kickstart is not None:
+            print('info: parsing kickstart ...')
+            t.from_kickstart(self.args.kickstart)
 
-    multilib_policy = db.conf.multilib_policy
-    clean_deps = db.conf.clean_requirements_on_remove
+        else:
+            # prepare dnf
+            print('info: analysing system ...')
+            db = dnf.Base()
+            db.read_all_repos()
+            db.read_comps()
 
-    print('info: preparing transaction ...')
-    # process all packages in template
-    for p in t.packages_all:
-      if p.included():
-        db.install(p.to_pkg_spec())
+            try:
+                db.fill_sack()
 
-      else:
-        db.remove(p.to_pkg_spec())
+            except OSError as e:
+                pass
 
-    print('info: resolving actions ...')
-    db.resolve(allow_erasing=True)
+            db_list = db.iter_userinstalled()
 
-    # describe process for dry runs
-    if self.args.dry_run:
-      packages_install = list(db.transaction.install_set)
-      packages_install.sort(key=lambda x: x.name)
+            if self.args.push_all:
+                db_list = db.sack.query().installed()
 
-      packages_remove = list(db.transaction.remove_set)
-      packages_remove.sort(key=lambda x: x.name)
+            # add our user installed packages
+            for p in db_list:
+                # no need to store versions
+                t.add_package(Package(p, evr=False))
 
-      if len(packages_install) or len(packages_remove):
-        print('The following would be installed to (+) and removed from (-) the system:')
+            # add only enabled repos
+            for r in db.repos.enabled():
+                t.add_repo(Repository(r))
 
-        for p in packages_install:
-          print('  + ' + str(p))
+            packages = list(t.packages_delta)
+            packages.sort(key=lambda x: x.name)
 
-        for p in packages_remove:
-          print('  - ' + str(p))
+            repos = list(t.repos_delta)
+            repos.sort(key=lambda x: x.name)
 
-        print()
-        print('Summary:')
-        print('  - Package(s): %d' % (len(packages_install)+len(packages_remove)))
-        print()
+        # describe process for dry runs
+        if self.args.dry_run:
+            if len(packages) or len(repos):
+                print('The following would be added to the template: {0}'.format(t.name))
 
-      else:
-        print('No system changes required.')
+                for p in packages:
+                    print('  - ' + str(p))
 
-      print('No action peformed during this dry-run.')
-      return 0
+                for r in repos:
+                    print('  - ' + str(r))
 
-    if len(db.transaction.install_set) or len(db.transaction.remove_set):
-      print('info: downloading ...')
-      db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
+                print()
+                print('Summary:')
+                print('  - Package(s): %d' % (len(packages)))
+                print('  - Repo(s): %d' % (len(repos)))
+                print()
 
-      print('info: completing ...')
-      db.do_transaction()
+            else:
+                print('No template changes required.')
 
-    print('info: syncing history ...')
-    for p in t.packages_all:
-      if p.included():
-        db.yumdb.get_package(p.to_pkg()).reason = 'user'
+            print('No action peformed during this dry-run.')
+            return 0
 
+        if self.args.kickstart is None and not len(packages) and not len(repos):
+            print('info: no changes detected, template up to date.')
+            return 0
 
-  def run_push(self):
-    t = Template(self.args.template, user=self.args.username)
+        # push our updated template
+        try:
+            res = self.cs.template_update(t)
 
-    # grab the template we're pushing to
-    try:
-      t = self.cs.template_get(t)
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        print('info: template pushed.')
+        return 0
 
-    if self.args.kickstart is not None:
-      print('info: parsing kickstart ...')
-      t.from_kickstart(self.args.kickstart)
+    def run_rm(self):
+        t = Template(self.args.template, user=self.args.username)
 
-    else:
-      # prepare dnf
-      print('info: analysing system ...')
-      db = dnf.Base()
-      db.read_all_repos()
-      db.read_comps()
+        try:
+            res = self.cs.template_delete(t)
 
-      try:
-        db.fill_sack()
+        except ServiceException as e:
+            print(e)
+            return 1
 
-      except OSError as e:
-        pass
+        print('info: template removed.')
+        return 0
 
-      db_list = db.iter_userinstalled()
+    def run_update(self):
+        t = Template(self.args.template, user=self.args.username)
 
-      if self.args.push_all:
-        db_list = db.sack.query().installed()
+        try:
+            t = self.cs.template_get(t)
 
-      # add our user installed packages
-      for p in db_list:
-        # no need to store versions
-        t.add_package(Package(p, evr=False))
+        except ServiceException as e:
+            print(e)
+            return 1
 
-      # add only enabled repos
-      for r in db.repos.enabled():
-        t.add_repo(Repository(r))
+        # add template bits that are specified for update
+        if self.args.title is not None:
+            t.title = self.args.title
 
-      packages = list(t.packages_delta)
-      packages.sort(key=lambda x: x.name)
+        if self.args.description is not None:
+            t.description = self.args.description
 
-      repos = list(t.repos_delta)
-      repos.sort(key=lambda x: x.name)
+        if self.args.includes is not None:
+            t.includes = self.args.includes
 
-    # describe process for dry runs
-    if self.args.dry_run:
-      if len(packages) or len(repos):
-        print('The following would be added to the template: {0}'.format(t.name))
+        if self.args.public is not None:
+            t.public = self.args.public
 
-        for p in packages:
-          print('  - ' + str(p))
+        try:
+            res = self.cs.template_update(t)
 
-        for r in repos:
-          print('  - ' + str(r))
+        except ServiceException as e:
+            print(e)
+            return 1
 
-        print()
-        print('Summary:')
-        print('  - Package(s): %d' % ( len(packages) ))
-        print('  - Repo(s): %d' % ( len(repos) ))
-        print()
-
-      else:
-        print('No template changes required.')
-
-      print('No action peformed during this dry-run.')
-      return 0
-
-    if self.args.kickstart is None and not len(packages) and not len(repos):
-      print('info: no changes detected, template up to date.')
-      return 0
-
-    # push our updated template
-    try:
-      res = self.cs.template_update(t)
-
-    except ServiceException as e:
-      print(e)
-      return 1
-
-    print('info: template pushed.')
-    return 0
-
-  def run_rm(self):
-    t = Template(self.args.template, user=self.args.username)
-
-    try:
-      res = self.cs.template_delete(t)
-
-    except ServiceException as e:
-      print(e)
-      return 1
-
-    print('info: template removed.')
-    return 0
-
-  def run_update(self):
-    t = Template(self.args.template, user=self.args.username)
-
-    try:
-      t = self.cs.template_get(t)
-
-    except ServiceException as e:
-      print(e)
-      return 1
-
-    # add template bits that are specified for update
-    if self.args.title is not None:
-      t.title = self.args.title
-
-    if self.args.description is not None:
-      t.description = self.args.description
-
-    if self.args.includes is not None:
-      t.includes = self.args.includes
-
-    if self.args.public is not None:
-      t.public = self.args.public
-
-    try:
-      res = self.cs.template_update(t)
-
-    except ServiceException as e:
-      print(e)
-      return 1
-
-    print('info: template updated.')
-    return 0
+        print('info: template updated.')
+        return 0

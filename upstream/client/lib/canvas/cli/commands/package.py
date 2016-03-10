@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2015   Ian Firns   <firnsy@kororaproject.org>
+# Copyright (C) 2013-2016   Ian Firns   <firnsy@kororaproject.org>
 #                           Chris Smart <csmart@kororaproject.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -27,251 +27,251 @@ from canvas.template import Template
 
 logger = logging.getLogger('canvas')
 
+
 class PackageCommand(Command):
-  def configure(self, config, args, args_extra):
-    # store loaded config
-    self.config = config
+    def configure(self, config, args, args_extra):
+        # store loaded config
+        self.config = config
 
-    # create our canvas service object
-    self.cs = Service(host=args.host, username=args.username)
+        # create our canvas service object
+        self.cs = Service(host=args.host, username=args.username)
 
-    # store args for additional processing
-    self.args = args
+        # store args for additional processing
+        self.args = args
 
-    # return false if any error, help, or usage needs to be shown
-    return not args.help
+        # return false if any error, help, or usage needs to be shown
+        return not args.help
 
-  def help(self):
-    # check for action specific help first
-    if self.args.action is not None:
-      try:
-        command = getattr(self, 'help_{0}'.format(self.args.action))
+    def help(self):
+        # check for action specific help first
+        if self.args.action is not None:
+            try:
+                command = getattr(self, 'help_{0}'.format(self.args.action))
 
-        # show action specific if available
-        if command:
-          return command()
+                # show action specific if available
+                if command:
+                    return command()
 
-      except:
-        pass
+            except:
+                pass
 
-    # fall back to general usage
-    print("General usage: {0} [--version] [--help] [--verbose] package [<args>]\n"
-          "\n"
-          "Specific usage:\n"
-          "{0} package add [user:]template [--nodeps] package1 packagelist1 package2 ... packageN\n"
-          "{0} package list [user:]template [--filter-name] [--filter-summary] [--filter-description] [--filter-arch] [--filter-repo] [--output=path]\n"
-          "{0} package rm [user:]template [--nodeps] package1 package2 ... packageN\n"
-          "{0} template list\n"
-          "\n".format(self.prog_name))
+        # fall back to general usage
+        print("General usage: {0} [--version] [--help] [--verbose] package [<args>]\n"
+              "\n"
+              "Specific usage:\n"
+              "{0} package add [user:]template [--nodeps] package1 packagelist1 package2 ... packageN\n"
+              "{0} package list [user:]template [--filter-name] [--filter-summary] [--filter-description] [--filter-arch] [--filter-repo] [--output=path]\n"
+              "{0} package rm [user:]template [--nodeps] package1 package2 ... packageN\n"
+              "{0} template list\n"
+              "\n".format(self.prog_name))
 
-  def help_add(self):
-    print("Usage: {0} package add [user:]template [--nodeps]\n"
-          "           package1 packagelist1 package2 ... packageN\n"
-          "\n"
-          "Options:\n"
-          "  --nodeps       Do not automatically remove dependencies\n"
-          "\n".format(self.prog_name))
+    def help_add(self):
+        print("Usage: {0} package add [user:]template [--nodeps]\n"
+              "           package1 packagelist1 package2 ... packageN\n"
+              "\n"
+              "Options:\n"
+              "  --nodeps       Do not automatically remove dependencies\n"
+              "\n".format(self.prog_name))
 
-  def run(self):
-    command = None
-    # search for our function based on the specified action
-    try:
-      command = getattr(self, 'run_{0}'.format(self.args.action))
+    def run(self):
+        command = None
+        # search for our function based on the specified action
+        try:
+            command = getattr(self, 'run_{0}'.format(self.args.action))
 
-    except:
-      self.help()
-      return 1
+        except:
+            self.help()
+            return 1
 
-    if not command:
-      print('error: action is not reachable.')
-      return
+        if not command:
+            print('error: action is not reachable.')
+            return
 
-    return command()
+        return command()
 
-  def run_add(self):
-    t = Template(self.args.template, user=self.args.username)
+    def run_add(self):
+        t = Template(self.args.template, user=self.args.username)
 
-    try:
-      t = self.cs.template_get(t)
+        try:
+            t = self.cs.template_get(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    for p in self.args.package:
-      t.add_package(Package(p))
+        for p in self.args.package:
+            t.add_package(Package(p))
 
-    packages = list(t.packages_delta)
-    packages.sort(key=lambda x: x.name)
+        packages = list(t.packages_delta)
+        packages.sort(key=lambda x: x.name)
 
-    # describe process for dry runs
-    if self.args.dry_run:
-      if len(packages):
-        print('The following would be added to the template: {0}'.format(t.name))
+        # describe process for dry runs
+        if self.args.dry_run:
+            if len(packages):
+                print('The following would be added to the template: {0}'.format(t.name))
 
-        for p in packages:
-          print('  - ' + str(p))
+                for p in packages:
+                    print('  - ' + str(p))
 
-        print()
-        print('Summary:')
-        print('  - Package(s): %d' % ( len(packages) ))
-        print()
+                print()
+                print('Summary:')
+                print('  - Package(s): %d' % (len(packages)))
+                print()
 
-      else:
-        print('No template changes required.')
+            else:
+                print('No template changes required.')
 
-      print('No action peformed during this dry-run.')
-      return 0
+            print('No action peformed during this dry-run.')
+            return 0
 
-    if not len(packages):
-      print('info: no changes detected, template up to date.')
-      return 0
+        if not len(packages):
+            print('info: no changes detected, template up to date.')
+            return 0
 
-    # push our updated template
-    try:
-      res = self.cs.template_update(t)
+        # push our updated template
+        try:
+            res = self.cs.template_update(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-  def run_list(self):
-    t = Template(self.args.template, user=self.args.username)
+    def run_list(self):
+        t = Template(self.args.template, user=self.args.username)
 
-    try:
-      t = self.cs.template_get(t)
+        try:
+            t = self.cs.template_get(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    packages = list(t.packages_all)
-    packages.sort(key=lambda x: x.name)
+        packages = list(t.packages_all)
+        packages.sort(key=lambda x: x.name)
 
-    if len(packages):
-      l = prettytable.PrettyTable(['package', 'epoch', 'version', 'release', 'arch', 'action'])
-      l.hrules = prettytable.HEADER
-      l.vrules = prettytable.NONE
-      l.align = 'l'
-      l.padding_witdth = 1
+        if len(packages):
+            l = prettytable.PrettyTable(['package', 'epoch', 'version', 'release', 'arch', 'action'])
+            l.hrules = prettytable.HEADER
+            l.vrules = prettytable.NONE
+            l.align = 'l'
+            l.padding_witdth = 1
 
-      for p in packages:
-        if p.epoch is None:
-          p.epoch = '-'
+            for p in packages:
+                if p.epoch is None:
+                    p.epoch = '-'
 
-        if p.version is None:
-          p.version = '-'
+                if p.version is None:
+                    p.version = '-'
 
-        if p.release is None:
-          p.release = '-'
+                if p.release is None:
+                    p.release = '-'
 
-        if p.arch is None:
-          p.arch = '-'
+                if p.arch is None:
+                    p.arch = '-'
 
-        if p.included():
-          p.action = '+'
+                if p.included():
+                    p.action = '+'
+
+                else:
+                    p.action = '-'
+
+                l.add_row([p.name, p.epoch, p.version, p.release, p.arch, p.action])
+
+            print(l)
+            print()
 
         else:
-          p.action = '-'
+            print('0 packages defined.')
 
-        l.add_row([p.name, p.epoch, p.version, p.release, p.arch, p.action])
+    def run_rm(self):
+        t = Template(self.args.template, user=self.args.username)
 
-      print(l)
-      print()
+        try:
+            t = self.cs.template_get(t)
 
-    else:
-      print('0 packages defined.')
+        except ServiceException as e:
+            print(e)
+            return 1
 
-  def run_rm(self):
-    t = Template(self.args.template, user=self.args.username)
+        packages = []
 
-    try:
-      t = self.cs.template_get(t)
+        for p in self.args.package:
+            p = Package(p)
+            if t.remove_package(p):
+                packages.append(p)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        packages.sort(key=lambda x: x.name)
 
-    packages = []
+        # describe process for dry runs
+        if self.args.dry_run:
+            if len(packages):
+                print('The following would be removed from the template: {0}'.format(t.name))
 
-    for p in self.args.package:
-      p = Package(p)
-      if t.remove_package(p):
-        packages.append(p)
+                for p in packages:
+                    print('  - ' + str(p))
 
-    packages.sort(key=lambda x: x.name)
+                print()
+                print('Summary:')
+                print('  - Package(s): %d' % (len(packages)))
+                print()
 
-    # describe process for dry runs
-    if self.args.dry_run:
-      if len(packages):
-        print('The following would be removed from the template: {0}'.format(t.name))
+            else:
+                print('No template changes required.')
 
-        for p in packages:
-          print('  - ' + str(p))
+            print('No action peformed during this dry-run.')
+            return 0
 
-        print()
-        print('Summary:')
-        print('  - Package(s): %d' % ( len(packages) ))
-        print()
+        if not len(packages):
+            print('info: no changes detected, template up to date.')
+            return 0
 
-      else:
-        print('No template changes required.')
+        # push our updated template
+        try:
+            res = self.cs.template_update(t)
 
-      print('No action peformed during this dry-run.')
-      return 0
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    if not len(packages):
-      print('info: no changes detected, template up to date.')
-      return 0
+    def run_update(self):
+        t = Template(self.args.template, user=self.args.username)
 
-    # push our updated template
-    try:
-      res = self.cs.template_update(t)
+        try:
+            t = self.cs.template_get(t)
 
-    except ServiceException as e:
-      print(e)
-      return 1
+        except ServiceException as e:
+            print(e)
+            return 1
 
-  def run_update(self):
-    t = Template(self.args.template, user=self.args.username)
+        # track updates to determine server update
+        updated = False
 
-    try:
-      t = self.cs.template_get(t)
+        for p in self.args.package:
 
-    except ServiceException as e:
-      print(e)
-      return 1
+            # parse new and find old
+            pn = Package(p)
 
-    # track updates to determine server update
-    updated = False
+            print(pn)
 
-    for p in self.args.package:
+            if pn not in t.packages:
+                print('warn: package is not defined in template.')
+                continue
 
-      # parse new and find old
-      pn = Package(p)
+            # update with new and track
+            if t.update_package(pn):
+                updated = True
 
-      print(pn)
+        if not updated:
+            print('info: no changes detected.')
+            return 0
 
-      if pn not in t.packages:
-        print('warn: package is not defined in template.')
-        continue
+        # push our updated template
+        try:
+            res = self.cs.template_update(t)
 
-      # update with new and track
-      if t.update_package(pn):
-        updated = True
+        except ServiceException as e:
+            print(e)
+            return 1
 
-    if not updated:
-      print('info: no changes detected.')
-      return 0
-
-    # push our updated template
-    try:
-      res = self.cs.template_update(t)
-
-    except ServiceException as e:
-      print(e)
-      return 1
-
-    print('info: package(s) updated.')
-    return 0
-
+        print('info: package(s) updated.')
+        return 0

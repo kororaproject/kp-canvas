@@ -33,61 +33,61 @@ import canvas.config
 from canvas.service import Service, ServiceException
 from canvas.template import Machine, Template
 
-CANVAS_HOST='https://canvas.kororaproject.org'
+CANVAS_HOST = 'https://canvas.kororaproject.org'
 CANVAS_USER = os.environ.get('SUDO_USER', os.getlogin())
 
+
 class Daemon():
-  def __init__(self):
-    self.config = canvas.config.Config()
+    def __init__(self):
+        self.config = canvas.config.Config()
 
-    # create our canvas service object
-    self.cs = Service(
-        host     = self.config.get('core','host', CANVAS_HOST),
-        username = self.config.get('core','user', CANVAS_USER)
-      )
+        # create our canvas service object
+        self.cs = Service(
+            host=self.config.get('core', 'host', CANVAS_HOST),
+            username=self.config.get('core', 'user', CANVAS_USER)
+        )
 
-    self.uuid = self.config.get('machine', 'uuid')
-    self.key  = self.config.get('machine', 'key')
+        self.uuid = self.config.get('machine', 'uuid')
+        self.key = self.config.get('machine', 'key')
 
-    self.machine = None
-    self.template_uuid = True
-    self.template = None
+        self.machine = None
+        self.template_uuid = True
+        self.template = None
 
-  def loop(self):
-    while True:
-      print('Syncing ... {0}'.format(time.ctime()))
+    def loop(self):
+        while True:
+            print('Syncing ... {0}'.format(time.ctime()))
 
-      try:
-        res = self.cs.machine_sync(self.uuid, self.key, template=self.template_uuid)
+            try:
+                res = self.cs.machine_sync(self.uuid, self.key, template=self.template_uuid)
 
-      except ServiceException as e:
-        print(e)
-        return 1
+            except ServiceException as e:
+                print(e)
+                return 1
 
-      print(res)
+            print(res)
 
-      self.machine = Machine(res['machine'])
+            self.machine = Machine(res['machine'])
 
-      self.template_uuid = self.machine.template
+            self.template_uuid = self.machine.template
 
-      if res['template'] is not None:
-        self.template = Template(res['template'])
+            if res['template'] is not None:
+                self.template = Template(res['template'])
 
-      print('info: machine synced.')
-      print(self.machine, self.template)
+            print('info: machine synced.')
+            print(self.machine, self.template)
 
-      time.sleep(10)
+            time.sleep(10)
 
 
 def signal_handler(signal, frame):
-  print()
-  sys.exit(1)
+    print()
+    sys.exit(1)
 
 if __name__ == '__main__':
-  # trap ctrl+c, it's polish
-  signal.signal(signal.SIGINT, signal_handler)
+    # trap ctrl+c, it's polish
+    signal.signal(signal.SIGINT, signal_handler)
 
-  d = Daemon()
+    d = Daemon()
 
-  d.loop()
-
+    d.loop()
