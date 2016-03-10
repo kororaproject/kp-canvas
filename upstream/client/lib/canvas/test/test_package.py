@@ -1,3 +1,4 @@
+
 #
 # TESTS
 #
@@ -5,6 +6,7 @@
 from unittest import TestCase
 
 from canvas.package import Package, PackageSet
+
 
 class PackageTestCase(TestCase):
 

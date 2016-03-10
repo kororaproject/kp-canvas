@@ -27,6 +27,7 @@ from canvas.template import Template
 
 logger = logging.getLogger('canvas')
 
+
 class PackageCommand(Command):
     def configure(self, config, args, args_extra):
         # store loaded config
@@ -114,7 +115,7 @@ class PackageCommand(Command):
 
                 print()
                 print('Summary:')
-                print('  - Package(s): %d' % ( len(packages) ))
+                print('  - Package(s): %d' % (len(packages)))
                 print()
 
             else:
@@ -211,7 +212,7 @@ class PackageCommand(Command):
 
                 print()
                 print('Summary:')
-                print('  - Package(s): %d' % ( len(packages) ))
+                print('  - Package(s): %d' % (len(packages)))
                 print()
 
             else:

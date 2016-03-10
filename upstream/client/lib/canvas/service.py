@@ -27,6 +27,7 @@ from canvas.template import Machine, Template
 
 logger = logging.getLogger('canvas')
 
+
 class ServiceException(Exception):
     def __init__(self, reason, code=0):
         self.reason = reason.lower()
@@ -52,7 +53,7 @@ class Service(object):
         self._authenticated = False
 
     def authenticate(self, username=None, password=None, prompt=None, force=False):
-        #print('debug: authenticating to {0}'.format(self._urlbase))
+        # print('debug: authenticating to {0}'.format(self._urlbase))
 
         if self._authenticated and not force:
             return self._authenticated
@@ -90,7 +91,7 @@ class Service(object):
 
             password = getpass.getpass(prompt)
 
-        auth = json.dumps({'u':username, 'p':password}, separators=(',',':')).encode('utf-8')
+        auth = json.dumps({'u':username, 'p':password}, separators=(',', ':')).encode('utf-8')
 
         try:
             r = urllib.request.Request('{0}/authenticate.json'.format(self._urlbase), auth)
@@ -223,9 +224,9 @@ class Service(object):
 
     def machine_list(self, user=None, name=None, description=None):
         params = {
-          'user': user,
-          'name': name,
-          'description': description
+            'user': user,
+            'name': name,
+            'description': description
         }
 
         params = urllib.parse.urlencode({k: v for k, v in params.items() if v != None})
@@ -397,7 +398,7 @@ class Service(object):
             if len(template_summary):
                 # we only have one returned since template names are unique per account
                 r = urllib.request.Request('{0}/api/template/{1}.json'.format(self._urlbase,
-                  template_summary[0]['uuid']))
+                        template_summary[0]['uuid']))
                 u = self._opener.open(r)
                 data = json.loads(u.read().decode('utf-8'))
 
@@ -415,9 +416,9 @@ class Service(object):
 
     def template_list(self, user=None, name=None, description=None, public=False):
         params = {
-          'user': user,
-          'name': name,
-          'description': description
+            'user': user,
+            'name': name,
+            'description': description
         }
 
         # Public templates do not require authentication

@@ -33,6 +33,7 @@ from pykickstart.version import DEVEL, makeVersion
 # CLASS DEFINITIONS / IMPLEMENTATIONS
 #
 
+
 class Template(object):
     def __init__(self, template=None, user=None):
         self._name = None
@@ -41,20 +42,20 @@ class Template(object):
         self._title = ''
         self._description = ''
 
-        self._includes = []          # includes in template
-        self._includes_resolved = [] # data structs for all includes in template
+        self._includes = []           # includes in template
+        self._includes_resolved = []  # data structs for all includes in template
         self._meta = {}
 
-        self._repos = RepoSet()          # repos in template
-        self._includes_repos = RepoSet() # repos from includes in template
-        self._delta_repos = RepoSet()    # repos to add/remove in template
+        self._repos = RepoSet()           # repos in template
+        self._includes_repos = RepoSet()  # repos from includes in template
+        self._delta_repos = RepoSet()     # repos to add/remove in template
 
-        self._packages = PackageSet()          # packages in template
-        self._includes_packages = PackageSet() # packages from includes in template
-        self._delta_packages = PackageSet()    # packages to add/remove in template
+        self._packages = PackageSet()           # packages in template
+        self._includes_packages = PackageSet()  # packages from includes in template
+        self._delta_packages = PackageSet()     # packages to add/remove in template
 
-        self._stores   = [] # remote stores for machine
-        self._archives = [] # archive definitions in machine
+        self._stores   = []  # remote stores for machine
+        self._archives = []  # archive definitions in machine
 
         self._parse_template(template)
 
@@ -147,9 +148,9 @@ class Template(object):
 
                     else:
                         meta['commands'].append({
-                          'command':  c.currentCmd,
-                          'priority': c.writePriority,
-                          'data':     c.__str__()
+                            'command':  c.currentCmd,
+                            'priority': c.writePriority,
+                            'data':     c.__str__()
                         })
 
         # parse pykickstart script
@@ -158,25 +159,25 @@ class Template(object):
 
             for s in handler.scripts:
                 meta['scripts'].append({
-                  'data':          s.script,
-                  'type':          s.type,
-                  'interp':        s.interp,
-                  'in_chroot':     s.inChroot,
-                  'line_no':       s.lineno,
-                  'error_on_fail': s.errorOnFail,
+                    'data':          s.script,
+                    'type':          s.type,
+                    'interp':        s.interp,
+                    'in_chroot':     s.inChroot,
+                    'line_no':       s.lineno,
+                    'error_on_fail': s.errorOnFail,
                 })
 
         # parse pykickstart packages
         packages = handler.packages
 
         meta['packages'] = {
-          'default':        packages.default,
-          'exclude_docs':   packages.excludeDocs,
-          'no_base':        not packages.addBase,
-          'no_core':        packages.nocore,
-          'handle_missing': (packages.handleMissing == pykickstart.constants.KS_MISSING_IGNORE),
-          'install_langs':  packages.instLangs,
-          'multi_lib':      packages.multiLib
+            'default':        packages.default,
+            'exclude_docs':   packages.excludeDocs,
+            'no_base':        not packages.addBase,
+            'no_core':        packages.nocore,
+            'handle_missing': (packages.handleMissing == pykickstart.constants.KS_MISSING_IGNORE),
+            'install_langs':  packages.instLangs,
+            'multi_lib':      packages.multiLib
         }
 
         if not packages.default:
@@ -418,7 +419,7 @@ class Template(object):
         return False
 
     def to_json(self):
-        return json.dumps(self.to_object(), separators=(',',':'))
+        return json.dumps(self.to_object(), separators=(',', ':'))
 
     def to_kickstart(self):
         """
@@ -448,8 +449,8 @@ class Template(object):
             if 'scripts' in self._meta['kickstart']:
                 for s in self._meta['kickstart']['scripts']:
                     handler.scripts.append(
-                      pykickstart.parser.Script(s['data'], interp=s['interp'], inChroot=s['in_chroot'], type=s['type'],
-                        lineno=s['line_no'], errorOnFail=s['error_on_fail'])
+                        pykickstart.parser.Script(s['data'], interp=s['interp'], inChroot=s['in_chroot'], type=s['type'],
+                            lineno=s['line_no'], errorOnFail=s['error_on_fail'])
                     )
 
             # populate general package parameters
@@ -468,8 +469,8 @@ class Template(object):
                 if 'no_core' in mp:
                     packages.nocore = mp['no_core']
 
-#      if 'handle_missing' in mp:
-#        packages.handleMissing = pykickstart.constants.KS_MISSING_IGNORE
+        #       if 'handle_missing' in mp:
+        #           packages.handleMissing = pykickstart.constants.KS_MISSING_IGNORE
 
                 if 'install_langs' in mp:
                     packages.instLangs = mp['install_langs']
@@ -489,15 +490,14 @@ class Template(object):
             else:
                 packages.excludedList.append(p.name)
 
-
         template = ('# Canvas generated template - {1}\n'
-          '# UUID: {0}\n'
-          '# Author: {2}\n'
-          '# Title: {3}\n'
-          '# Description:\n'
-          "# {4}\n\n").format(
-            self._uuid, self._name, self._user, self._title, self._description
-          )
+                    '# UUID: {0}\n'
+                    '# Author: {2}\n'
+                    '# Title: {3}\n'
+                    '# Description:\n'
+                    "# {4}\n\n").format(
+                        self._uuid, self._name, self._user, self._title, self._description
+                    )
 
         template += ksparser.handler.__str__()
 
@@ -512,17 +512,17 @@ class Template(object):
         repos.sort(key=lambda x: x.stub)
 
         return {
-          'uuid':        self._uuid,
-          'name':        self._name,
-          'user':        self._user,
-          'title':       self._title,
-          'description': self._description,
-          'includes':    self._includes,
-          'packages':    [p.to_object() for p in packages],
-          'repos':       [r.to_object() for r in repos],
-          'stores':      self._stores,
-          'archives':    self._archives,
-          'meta':        self._meta
+            'uuid':        self._uuid,
+            'name':        self._name,
+            'user':        self._user,
+            'title':       self._title,
+            'description': self._description,
+            'includes':    self._includes,
+            'packages':    [p.to_object() for p in packages],
+            'repos':       [r.to_object() for r in repos],
+            'stores':      self._stores,
+            'archives':    self._archives,
+            'meta':        self._meta
         }
 
     def to_yaml(self):
@@ -574,8 +574,6 @@ class Template(object):
         self._repos.update(template.repos)
         self._packages.update(template.packages)
 
-
-
 class Machine(object):
     def __init__(self, machine=None, user=None, key=None):
         self._name        = None
@@ -600,7 +598,7 @@ class Machine(object):
             len(self._stores),
             len(self._archives),
             len(self._history)
-          )
+            )
 
     def _parse_machine(self, machine):
         # parse the string short form
@@ -694,20 +692,20 @@ class Machine(object):
     # PUBLIC METHODS
 
     def to_json(self):
-        return json.dumps(self.to_object(), separators=(',',':'))
+        return json.dumps(self.to_object(), separators=(',', ':'))
 
     def to_object(self):
         return {
-          'uuid':        self._uuid,
-          'template':    self._template,
-          'name':        self._name,
-          'user':        self._user,
-          'title':       self._title,
-          'description': self._description,
-          'stores':      self._stores,
-          'archives':    self._archives,
-          'history':     self._history,
-          'meta':        self._meta,
+            'uuid':        self._uuid,
+            'template':    self._template,
+            'name':        self._name,
+            'user':        self._user,
+            'title':       self._title,
+            'description': self._description,
+            'stores':      self._stores,
+            'archives':    self._archives,
+            'history':     self._history,
+            'meta':        self._meta,
         }
 
     def to_yaml(self):

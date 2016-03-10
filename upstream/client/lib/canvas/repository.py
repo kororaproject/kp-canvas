@@ -20,6 +20,7 @@ import collections
 import dnf
 import json
 
+
 class Repository(object):
     def __init__(self, *args, **kwargs):
         self.name     = kwargs.get('name', None)
@@ -62,7 +63,7 @@ class Repository(object):
         return self.__str__()
 
     def __str__(self):
-        return 'Repository: %s ' % (json.dumps(self.to_object(), separators=(',',':')))
+        return 'Repository: %s ' % (json.dumps(self.to_object(), separators=(',', ':')))
 
     def parse(self, data):
         if isinstance(data, str):
@@ -154,25 +155,25 @@ class Repository(object):
         return r
 
     def to_json(self):
-        return json.dumps(self.to_object(), separators=(',',':'))
+        return json.dumps(self.to_object(), separators=(',', ':'))
 
     def to_object(self):
         o = {
-          's':  self.stub,
-          'n':  self.name,
-          'bu': self.baseurl,
-          'ml': self.mirrorlist,
-          'ma': self.metalink,
-          'e':  self.enabled,
-          'gc': self.gpgcheck,
-          'gk': self.gpgkey,
-          'me': self.meta_expired,
-          'c':  self.cost,
-          'p':  self.priority,
-          'x':  self.exclude,
-          'i':  self.install,
-          'xp':  self.exclude_packages,
-          'ip':  self.include_packages,
+            's':  self.stub,
+            'n':  self.name,
+            'bu': self.baseurl,
+            'ml': self.mirrorlist,
+            'ma': self.metalink,
+            'e':  self.enabled,
+            'gc': self.gpgcheck,
+            'gk': self.gpgkey,
+            'me': self.meta_expired,
+            'c':  self.cost,
+            'p':  self.priority,
+            'x':  self.exclude,
+            'i':  self.install,
+            'xp':  self.exclude_packages,
+            'ip':  self.include_packages,
         }
 
         # only build with non-None values

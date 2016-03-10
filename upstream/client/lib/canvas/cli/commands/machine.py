@@ -30,6 +30,7 @@ from canvas.template import Machine, Template
 
 logger = logging.getLogger('canvas')
 
+
 class MachineCommand(Command):
     def configure(self, config, args, args_extra):
         # store loaded config
@@ -166,9 +167,9 @@ class MachineCommand(Command):
         # fetch all accessible/available templates
         try:
             machines = self.cs.machine_list(
-              user=self.args.filter_user,
-              name=self.args.filter_name,
-              description=self.args.filter_description
+                user=self.args.filter_user,
+                name=self.args.filter_name,
+                description=self.args.filter_description
             )
 
         except ServiceException as e:

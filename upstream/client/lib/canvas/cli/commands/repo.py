@@ -27,6 +27,7 @@ from canvas.template import Template
 
 logger = logging.getLogger('canvas')
 
+
 class RepoCommand(Command):
     def configure(self, config, args, args_extra):
         # store loaded config
@@ -81,17 +82,17 @@ class RepoCommand(Command):
             self.args.enabled = True
 
         r = Repository(
-          stub        = self.args.repo,
-          name        = self.args.name,
-          baseurl     = self.args.baseurl,
-          mirrorlist  = self.args.mirrorlist,
-          metalink    = self.args.metalink,
-          enabled     = self.args.enabled,
-          cost        = self.args.cost,
-          priority    = self.args.priority,
-          gpgkey      = self.args.gpgkey,
-          gpgcheck    = self.args.gpgcheck,
-          exclude     = self.args.exclude
+            stub        = self.args.repo,
+            name        = self.args.name,
+            baseurl     = self.args.baseurl,
+            mirrorlist  = self.args.mirrorlist,
+            metalink    = self.args.metalink,
+            enabled     = self.args.enabled,
+            cost        = self.args.cost,
+            priority    = self.args.priority,
+            gpgkey      = self.args.gpgkey,
+            gpgcheck    = self.args.gpgcheck,
+            exclude     = self.args.exclude
         )
 
         t.add_repo(r)
@@ -106,7 +107,6 @@ class RepoCommand(Command):
 
         print('info: repo added.')
         return 0
-
 
     def run_update(self):
         t = Template(self.args.template, user=self.args.username)
@@ -126,17 +126,17 @@ class RepoCommand(Command):
 
         r = r[0]
         o = {
-          'n':  self.args.name,
-          'bu': self.args.baseurl,
-          'ml': self.args.mirrorlist,
-          'ma': self.args.metalink,
-          'e':  self.args.enabled,
-          'c':  self.args.cost,
-          'p':  self.args.priority,
-          'gc': self.args.gpgcheck,
-          'gk': self.args.gpgkey,
-          'sk': self.args.skip,
-          'x':  self.args.exclude
+            'n':  self.args.name,
+            'bu': self.args.baseurl,
+            'ml': self.args.mirrorlist,
+            'ma': self.args.metalink,
+            'e':  self.args.enabled,
+            'c':  self.args.cost,
+            'p':  self.args.priority,
+            'gc': self.args.gpgcheck,
+            'gk': self.args.gpgkey,
+            'sk': self.args.skip,
+            'x':  self.args.exclude
         }
 
         o = {k: v for k, v in o.items() if v != None}
@@ -228,7 +228,7 @@ class RepoCommand(Command):
 
                 print()
                 print('Summary:')
-                print('  - Repo(s): %d' % ( len(repos) ))
+                print('  - Repo(s): %d' % (len(repos)))
                 print()
 
             else:

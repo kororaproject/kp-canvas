@@ -19,6 +19,7 @@
 import configparser
 import os
 
+
 class Config(object):
     def __init__(self):
         self.config = configparser.ConfigParser()

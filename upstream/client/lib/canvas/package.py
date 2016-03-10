@@ -29,6 +29,7 @@ RE_PACKAGE = re.compile("([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^-]+)-([^:]))?(?::(\
 # CLASS DEFINITIONS / IMPLEMENTATIONS
 #
 
+
 class Package(object):
     """ A Canvas object that represents an installable Package. """
 
@@ -84,7 +85,7 @@ class Package(object):
         return 'Package: %s' % (self.to_pkg_spec())
 
     def __str__(self):
-        return 'Package: %s' % (json.dumps(self.to_object(), separators=(',',':')))
+        return 'Package: %s' % (json.dumps(self.to_object(), separators=(',', ':')))
 
     def excluded(self):
         return self.action & (self.ACTION_EXCLUDE)
@@ -94,7 +95,7 @@ class Package(object):
 
     def parse(self, data):
         if isinstance(data, dnf.package.Package) or \
-            isinstance(data, hawkey.Package):
+                isinstance(data, hawkey.Package):
             self.name    = data.name
             self.epoch   = data.epoch
             self.version = data.version
@@ -133,16 +134,16 @@ class Package(object):
         return self.action & (self.ACTION_PIN)
 
     def to_json(self):
-        return json.dumps(self.to_object(), separators=(',',':'))
+        return json.dumps(self.to_object(), separators=(',', ':'))
 
     def to_object(self):
         o = {
-          'n': self.name,
-          'e': self.epoch,
-          'v': self.version,
-          'r': self.release,
-          'a': self.arch,
-          'z': self.action,
+            'n': self.name,
+            'e': self.epoch,
+            'v': self.version,
+            'r': self.release,
+            'a': self.arch,
+            'z': self.action,
         }
 
         # only build with non-None values

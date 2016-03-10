@@ -36,6 +36,7 @@ import canvas.cli.commands.package
 import canvas.cli.commands.repo
 import canvas.cli.commands.template
 
+
 def signal_handler(signal, frame):
     print()
     sys.exit(1)

@@ -22,6 +22,7 @@ from canvas.cli.commands import Command
 
 logger = logging.getLogger('canvas')
 
+
 class ConfigCommand(Command):
     def configure(self, config, args, args_extra):
         # store loaded config

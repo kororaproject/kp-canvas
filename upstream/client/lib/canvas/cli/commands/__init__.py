@@ -24,14 +24,15 @@ import sys
 
 logger = logging.getLogger('canvas')
 
-PROG_VERSION='1.0'
-PROG_NAME='Canvas';
+PROG_VERSION = '1.0'
+PROG_NAME = 'Canvas'
 
-CANVAS_HOST='https://canvas.kororaproject.org'
-#CANVAS_HOST='http://localhost:3000'
+CANVAS_HOST = 'https://canvas.kororaproject.org'
+# CANVAS_HOST='http://localhost:3000'
 
 # establish invoking user
 CANVAS_USER = os.environ.get('SUDO_USER', os.getlogin())
+
 
 class ArgumentParserError(Exception):
     pass
@@ -40,6 +41,7 @@ class ArgumentParserError(Exception):
 class ErrorRaisingArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         raise ArgumentParserError(message)
+
 
 def buildCommandLineParser(config):
     parser = ErrorRaisingArgumentParser(prog='cnvs', add_help=False)
@@ -260,6 +262,7 @@ def buildCommandLineParser(config):
 
     return parser
 
+
 def parseCommandLine(config):
     parser = buildCommandLineParser(config)
 
@@ -279,7 +282,7 @@ def parseCommandLine(config):
             args.command = sys.argv[1]
 
         if len(sys.argv) > 2:
-            args.action  = sys.argv[2]
+            args.action = sys.argv[2]
 
         args.host = config.get('core', 'host', CANVAS_HOST)
         args.username = config.get('user', 'name', CANVAS_USER)

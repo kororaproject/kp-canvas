@@ -7,6 +7,7 @@ from unittest import TestCase
 
 from canvas.repository import Repository, RepoSet
 
+
 class RepoTestCase(TestCase):
 
     def setUp(self):

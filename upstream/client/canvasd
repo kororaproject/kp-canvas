@@ -33,8 +33,9 @@ import canvas.config
 from canvas.service import Service, ServiceException
 from canvas.template import Machine, Template
 
-CANVAS_HOST='https://canvas.kororaproject.org'
+CANVAS_HOST = 'https://canvas.kororaproject.org'
 CANVAS_USER = os.environ.get('SUDO_USER', os.getlogin())
+
 
 class Daemon():
     def __init__(self):
@@ -42,12 +43,12 @@ class Daemon():
 
         # create our canvas service object
         self.cs = Service(
-            host     = self.config.get('core','host', CANVAS_HOST),
-            username = self.config.get('core','user', CANVAS_USER)
-          )
+            host=self.config.get('core', 'host', CANVAS_HOST),
+            username=self.config.get('core', 'user', CANVAS_USER)
+        )
 
         self.uuid = self.config.get('machine', 'uuid')
-        self.key  = self.config.get('machine', 'key')
+        self.key = self.config.get('machine', 'key')
 
         self.machine = None
         self.template_uuid = True

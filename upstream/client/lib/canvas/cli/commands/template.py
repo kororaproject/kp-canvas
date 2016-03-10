@@ -35,6 +35,7 @@ from canvas.template import Template
 
 logger = logging.getLogger('canvas')
 
+
 class TemplateCommand(Command):
     def configure(self, config, args, args_extra):
         # store loaded config
@@ -264,7 +265,7 @@ class TemplateCommand(Command):
 
         if len(repos):
             l = prettytable.PrettyTable(['repo', 'name', 'priority', 'cost', 'enabled'])
-            l.min_table_width=120
+            l.min_table_width = 120
             l.hrules = prettytable.HEADER
             l.vrules = prettytable.NONE
             l.align = 'l'
@@ -294,7 +295,7 @@ class TemplateCommand(Command):
 
         if len(packages):
             l = prettytable.PrettyTable(['package', 'epoch', 'version', 'release', 'arch', 'action'])
-            l.min_table_width=120
+            l.min_table_width = 120
             l.hrules = prettytable.HEADER
             l.vrules = prettytable.NONE
             l.align = 'l'
@@ -331,10 +332,10 @@ class TemplateCommand(Command):
         # fetch all accessible/available templates
         try:
             templates = self.cs.template_list(
-              user=self.args.filter_user,
-              name=self.args.filter_name,
-              description=self.args.filter_description,
-              public=self.args.public_only
+                user=self.args.filter_user,
+                name=self.args.filter_name,
+                description=self.args.filter_description,
+                public=self.args.public_only
             )
 
         except ServiceException as e:
@@ -458,7 +459,6 @@ class TemplateCommand(Command):
             if p.included():
                 db.yumdb.get_package(p.to_pkg()).reason = 'user'
 
-
     def run_push(self):
         t = Template(self.args.template, user=self.args.username)
 
@@ -520,8 +520,8 @@ class TemplateCommand(Command):
 
                 print()
                 print('Summary:')
-                print('  - Package(s): %d' % ( len(packages) ))
-                print('  - Repo(s): %d' % ( len(repos) ))
+                print('  - Package(s): %d' % (len(packages)))
+                print('  - Repo(s): %d' % (len(repos)))
                 print()
 
             else:
