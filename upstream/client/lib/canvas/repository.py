@@ -268,12 +268,12 @@ class RepoSet(collections.MutableSet):
 
         # find unique items to self
         for x in self._set:
-            if not x in other:
+            if x not in other:
                 uniq_self.add(x)
 
         # find unique items to other
         for x in other:
-            if not x in self._set:
+            if x not in self._set:
                 uniq_other.add(x)
 
         return (uniq_self, uniq_other)

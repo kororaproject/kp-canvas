@@ -40,7 +40,7 @@ class Config(object):
         print(self.config)
 
     def get(self, section, key, default=None):
-        if not section in self.config.sections():
+        if section not in self.config.sections():
             return default
 
         return self.config[section].get(key, default)
@@ -54,13 +54,13 @@ class Config(object):
         return self.config.sections()
 
     def set(self, section, key, value):
-        if not section in self.config.sections():
+        if section not in self.config.sections():
             self.config[section] = {}
 
         self.config[section][key] = value
 
     def unset(self, section, key):
-        if not section in self.config.sections():
+        if section not in self.config.sections():
             return False
 
         return self.config.remove_option(section, key)
