@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2015   Ian Firns   <firnsy@kororaproject.org>
+# Copyright (C) 2013-2016   Ian Firns   <firnsy@kororaproject.org>
 #                           Chris Smart <csmart@kororaproject.org>
 #
 # This program is free software: you can redistribute it and/or modify
