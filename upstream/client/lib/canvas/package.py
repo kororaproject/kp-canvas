@@ -23,7 +23,9 @@ import json
 import re
 
 
-RE_PACKAGE = re.compile("([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^-]+)-([^:]))?(?::(\w+))?")
+# name[[#epoch]@version-release][:arch]
+RE_PACKAGE = re.compile("^([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))?(?::(\w+))?$")
+RE_GROUP = re.compile("^([+~])?(@[\w ]+)$")
 
 class ErrorInvalidPackage(Exception):
   def __init__(self, reason, code=0):
@@ -123,19 +125,26 @@ class Package(object):
 
         elif isinstance(data, str):
             m = RE_PACKAGE.match(data)
+            g = RE_GROUP.match(data)
 
             if m is not None:
-                if m.group(1) == '~':
-                    self.action = self.ACTION_EXCLUDE
+                regex = m
+            elif g is not None:
+                regex = g
+            else:
+                raise ErrorInvalidPackage("package format invalid")
 
-                else:
-                    self.action = self.ACTION_INCLUDE
+            if regex.group(1) == '~':
+                self.action = self.ACTION_EXCLUDE
+            else:
+                self.action = self.ACTION_INCLUDE
 
-                self.name    = m.group(2)
-                self.epoch   = m.group(3)
-                self.version = m.group(4)
-                self.release = m.group(5)
-                self.arch    = m.group(6)
+            self.name    = regex.group(2)
+            if regex is m:
+                self.epoch   = regex.group(3)
+                self.version = regex.group(4)
+                self.release = regex.group(5)
+                self.arch    = regex.group(6)
 
         # detect group packages
         if isinstance(self.name, str) and self.name.startswith('@'):
