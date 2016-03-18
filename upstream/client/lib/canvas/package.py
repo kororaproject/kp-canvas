@@ -208,6 +208,9 @@ class Package(object):
 
         p_list = db.sack.query().installed().filter(name=self.name)
 
+        if not p_list:
+            return None
+
         return list(p_list)[0]
 
 
