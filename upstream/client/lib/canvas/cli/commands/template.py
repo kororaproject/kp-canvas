@@ -411,7 +411,11 @@ class TemplateCommand(Command):
         # process all packages in template
         for p in t.packages_all:
             if p.included():
-                db.install(p.to_pkg_spec())
+                try:
+                    db.install(p.to_pkg_spec())
+                except:
+                    print ("error: Package does not exist " + str(p))
+                    pass
 
             else:
                 db.remove(p.to_pkg_spec())
@@ -457,7 +461,9 @@ class TemplateCommand(Command):
         print('info: syncing history ...')
         for p in t.packages_all:
             if p.included():
-                db.yumdb.get_package(p.to_pkg()).reason = 'user'
+                pkg = p.to_pkg();
+                if pkg is not None:
+                    db.yumdb.get_package(pkg).reason = 'user'
 
     def run_push(self):
         t = Template(self.args.template, user=self.args.username)

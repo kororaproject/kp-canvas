@@ -94,10 +94,10 @@ class Package(object):
     def __ne__(self, other):
         return (not self.__eq__(other))
 
-    def __repr__(self):
+    def __str__(self):
         return 'Package: %s' % (self.to_pkg_spec())
 
-    def __str__(self):
+    def __repr__(self):
         return 'Package: %s' % (json.dumps(self.to_object(), separators=(',', ':')))
 
     def excluded(self):
@@ -207,6 +207,9 @@ class Package(object):
                 pass
 
         p_list = db.sack.query().installed().filter(name=self.name)
+
+        if not p_list:
+            return None
 
         return list(p_list)[0]
 
