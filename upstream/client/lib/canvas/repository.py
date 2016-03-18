@@ -22,6 +22,12 @@ import json
 
 
 class Repository(object):
+    """ A Canvas object that represents a Repository of packages. """
+
+    # CONSTANTS
+    ACTION_EXCLUDE          = 0x02
+    ACTION_INCLUDE          = 0x01
+
     def __init__(self, *args, **kwargs):
         self.name     = kwargs.get('name', None)
         self.stub     = kwargs.get('stub', None)
@@ -43,6 +49,8 @@ class Repository(object):
         self.priority   = kwargs.get('priority', None)
 
         self.meta_expired = kwargs.get('meta_expired', None)
+
+        self.action   = kwargs.get('action', self.ACTION_INCLUDE)
 
         for arg in args:
             self.parse(arg)
@@ -125,6 +133,8 @@ class Repository(object):
 
             self.meta_expired = data.get('me', self.meta_expired)
 
+            self.action  = data.get('z', self.ACTION_INCLUDE)
+
     def to_kickstart(self):
         r = 'repo'
 
@@ -172,8 +182,9 @@ class Repository(object):
             'p':  self.priority,
             'x':  self.exclude,
             'i':  self.install,
-            'xp':  self.exclude_packages,
-            'ip':  self.include_packages,
+            'xp': self.exclude_packages,
+            'ip': self.include_packages,
+            'z':  self.action,
         }
 
         # only build with non-None values
