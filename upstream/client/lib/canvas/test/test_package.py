@@ -217,6 +217,41 @@ class PackageTestCase(TestCase):
         self.assertEqual(p2, p4)
         self.assertNotEqual(p3, p5)
 
+# http://dnf.readthedocs.org/en/latest/command_ref.html#specifying-packages-label
+# Release in this case includes the fc23
+# Valid formats for pkg_spec:
+#   name
+#   name.arch
+#   name-[epoc:]version-release.arch
+#   name-[epoc:]version-release
+
+# Not valid in canvas:
+#   name-[epoc:]version
+
+    def test_package_to_pkg_spec(self):
+        p1 = Package('foo')
+        p2 = Package('foo:x86_64')
+        p3 = Package('foo@1.0-1:x86_64')
+        p4 = Package('foo_bar@1.2.3-1')
+        p5 = Package('the_silver_searcher#0@0.31.0-1:x86_64')
+
+        # Basic "name"
+        self.assertEqual(p1.to_pkg_spec(), "foo")
+
+        # "name.arch"
+        self.assertEqual(p2.to_pkg_spec(), "foo.x86_64")
+
+        # "name-version-release.arch"
+        self.assertRegexpMatches(p3.to_pkg_spec(), r'^foo-1.0-1.fc\d{2}.x86_64$')
+
+        # "name-version-release"
+        self.assertRegexpMatches(p4.to_pkg_spec(), r'^foo_bar-1.2.3-1.fc\d{2}$')
+
+        # "name-epoc:version-release.arch"
+        self.assertRegexpMatches(p5.to_pkg_spec(),
+                                 r'^the_silver_searcher-0:0.31.0-1.fc\d{2}.x86_64$')
+
+
     def test_package_group(self):
         p1 = Package({})
         p2 = Package({'n': '@foo'})
