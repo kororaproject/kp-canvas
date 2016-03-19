@@ -116,14 +116,14 @@ class Template(object):
             return
 
         except pykickstart.errors.KickstartError as e:
-            print("Failed to parse kickstart file '%(filename)s' : %(error_msg)s" % {"filename": opts.kscfg, "error_msg": e}, file=sys.stderr)
+            print("Failed to parse kickstart file '%(filename)s' : %(error_msg)s" % {"filename": path, "error_msg": e}, file=sys.stderr)
             return
 
         handler = ksparser.handler
 
         meta = {}
 
-        if handler.platform != '':
+        if handler.platform:
             meta['platform'] = handler.platform
             meta['version'] = versionToString(handler.version)
 
