@@ -177,18 +177,23 @@ class Package(object):
         f = self.name
 
         # calculate evr
-        evr = None
+        evr = ''
+
+        if self.epoch is not None or self.version is not None:
+            f += '-'
 
         if self.epoch is not None:
             evr = self.epoch + ':'
 
         if self.version is not None and self.release is not None:
-            evr += '{0}-{1}'.format(self.version, self.release)
+            db = dnf.Base()
+            conf = db.conf.substitutions
+            evr += '{0}-{1}.fc{2}'.format(self.version, self.release, conf['releasever'])
         elif self.version is not None:
             evr += self.version
 
         # append evr if appropriate
-        if evr is not None:
+        if evr:
             f += evr
 
         # append arch if appropriate
