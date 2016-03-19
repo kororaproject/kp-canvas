@@ -31,51 +31,53 @@ class PackageTestCase(TestCase):
 
         # Hyphen is acceptable
         try:
-            p = Package("abc-xyz")
+            Package("abc-xyz")
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package name")
 
         # Numbers are acceptable
         try:
-            p = Package("foobar3")
+            Package("foobar3")
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package name")
 
         try:
-            p = Package("lemon3.3")
+            Package("lemon3.3")
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package name")
 
         # Underscore is acceptable
         try:
-            p = Package("foo_bar")
+            Package("foo_bar")
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package name")
 
         # Plus is acceptable
         try:
-            p = Package("pie++")
+            Package("pie++")
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package name")
 
         # Groups are acceptable
         try:
-            p = Package("@Development Tools")
+            Package("@Development Tools")
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package name")
 
+# TODO:
+#  def test_package_parse_str_invalid_name(self):
 
 
     def test_package_parse_str_valid_version(self):
         # Standard format
         try:
-            p = Package("bar@1-2")
+            Package("bar@1-2")
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package version")
 
         # Point releases are acceptable
         try:
-            p = Package("bar@1.3-2")
+            Package("bar@1.3-2")
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package version")
 
@@ -150,8 +152,6 @@ class PackageTestCase(TestCase):
             Package("bar#1.1@1.2-3")
 
 
-# TODO:
-#  def test_package_parse_str_invalid_name(self):
 
     def test_package_parse_str_invalid_format(self):
         # Dangling separators
