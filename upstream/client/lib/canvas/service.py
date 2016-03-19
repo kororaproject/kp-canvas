@@ -110,7 +110,7 @@ class Service(object):
         raise ServiceException('unable to authenticate')
 
     def deauthenticate(self, username='', password='', force=False):
-        if not self._authenticated and not self._force:
+        if not self._authenticated and not force:
             return self._authenticated
 
         try:
