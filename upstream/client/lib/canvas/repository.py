@@ -52,6 +52,7 @@ class Repository(object):
 
         self.action   = kwargs.get('action', self.ACTION_INCLUDE)
 
+        # parse all args package defined objects
         for arg in args:
             self.parse(arg)
 
@@ -305,8 +306,8 @@ class RepoSet(collections.MutableSet):
 
         return u
 
-    def update(self, item):
-        for o in item:
+    def update(self, *args):
+        for o in args:
             if not isinstance(o, RepoSet):
                 raise TypeError('Not a RepoSet.')
 

@@ -28,15 +28,12 @@ RE_PACKAGE = re.compile("^([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))
 RE_GROUP = re.compile("^([+~])?(@[\w ]+)$")
 
 class ErrorInvalidPackage(Exception):
-  def __init__(self, reason, code=0):
-    self.reason = reason.lower()
-    self.code = code
+    def __init__(self, reason, code=0):
+        self.reason = reason.lower()
+        self.code = code
 
-  def __repr__(self):
-    return str(self)
-
-  def __str__(self):
-    return 'error: {0}'.format(str(self.reason))
+    def __str__(self):
+        return 'error: {0}'.format(str(self.reason))
 
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
@@ -273,12 +270,12 @@ class PackageSet(collections.MutableSet):
 
         # find unique items to self
         for x in self._set:
-            if not x in other:
+            if x not in other:
                 uniq_self.add(x)
 
         # find unique items to other
         for x in other:
-            if not x in self._set:
+            if x not in self._set:
                 uniq_other.add(x)
 
         return (uniq_self, uniq_other)
