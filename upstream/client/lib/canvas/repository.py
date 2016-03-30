@@ -93,8 +93,16 @@ class Repository(object):
                     elif a.startswith('--mirrorlist='):
                         self.mirrorlist = a[13:]
 
+                self.action = self.ACTION_INCLUDE
+
             else:
-                self.stub = data
+                if data.startswith('~'):
+                    self.stub = data[1:]
+                    self.action = self.ACTION_EXCLUDE
+
+                else:
+                    self.stub = data
+                    self.action = self.ACTION_INCLUDE
 
         elif isinstance(data, dnf.repo.Repo):
             self.name     = data.name
@@ -112,6 +120,8 @@ class Repository(object):
             self.exclude    = data.exclude
 
 #        self.meta_expired = data.meta_expired
+
+            self.action     = self.ACTION_INCLUDE
 
         elif isinstance(data, dict):
             self.name     = data.get('n', self.name)

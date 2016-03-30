@@ -30,6 +30,14 @@ class RepoTestCase(TestCase):
         self.assertEqual(None, r1.meta_expired)
         self.assertEqual(Repository.ACTION_INCLUDE, r1.action)
 
+    def test_repo_action(self):
+        r1 = Repository('foo')
+        r2 = Repository('~foo')
+
+        self.assertEqual(Repository.ACTION_INCLUDE, r1.action)
+        self.assertEqual(Repository.ACTION_EXCLUDE, r2.action)
+
+
     def test_repo_equality(self):
         r1 = Repository({'s': 'foo'})
         r2 = Repository({'s': 'foo', 'bu': 'foo'})

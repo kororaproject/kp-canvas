@@ -290,7 +290,7 @@ canvas package add firnsy:htpc buz@2.1-3 ~/templates/htpc.packages /tmp/foo.pack
 ```
 
 ##### Included and Excluded Packages
-By default a package is assumed to be an `included` package for at template. That is it will be installed (i.e. `included`) when synchronised to a system. You can specify that a package should be `excluded` by prefixing the package definition with `~`. This will ensure that a package is removed (if installed) from a system when synchronised with the template.
+By default a package is assumed to be an `included` package for a template. That is it will be installed (i.e. `included`) when synchronised to a system. You can specify that a package should be `excluded` by prefixing the package definition with `~`. This will ensure that a package is removed (if installed) from a system when synchronised with the template.
 
 For example:
 ```
@@ -404,6 +404,14 @@ The following commands would add the `rpmfusion` repo to the `htpc` template of 
 ```
 canvas repo add firnsy:htpc rpmfusion --mirrorlist='http://mirrors.rpmfusion.org/mirrorlist?repo=nonfree-fedora-$releasever&arch=$basearch'
 canvas repo add firnsy:htpc rpmfusion --repofile=/etc/yum.repos.d/rpmfusion.repo
+```
+
+##### Included and Excluded Repos
+By default a repository is assumed to be an `included` repository for a template. That is it will be configured (i.e. `included`) when synchronising packages to a system. You can specify that a repository should be `excluded` by prefixing the package definition with `~`. This will ensure that a repository is not configured (if defined for inclusion in a parent template) on a system when synchronised with the template.
+
+For example:
+```
+canvas repo add firnsy:htpc ~fedora ~fedora-updates
 ```
 
 #### Updating Repos

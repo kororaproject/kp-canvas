@@ -91,11 +91,11 @@ class Package(object):
     def __ne__(self, other):
         return (not self.__eq__(other))
 
-    def __str__(self):
-        return 'Package: %s' % (self.to_pkg_spec())
-
     def __repr__(self):
         return 'Package: %s' % (json.dumps(self.to_object(), separators=(',', ':')))
+
+    def __str__(self):
+        return 'Package: %s' % (self.to_pkg_spec())
 
     def excluded(self):
         return self.action & (self.ACTION_EXCLUDE)
