@@ -50,6 +50,9 @@ class Config(object):
         if section not in self.config.sections():
             return default
 
+        if not key:
+            return default
+
         return self.config[section].get(key, default)
 
     def save(self):
@@ -68,6 +71,9 @@ class Config(object):
 
     def unset(self, section, key):
         if section not in self.config.sections():
+            return False
+
+        if not key:
             return False
 
         return self.config.remove_option(section, key)
