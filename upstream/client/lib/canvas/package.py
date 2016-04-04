@@ -27,6 +27,7 @@ import re
 RE_PACKAGE = re.compile("^([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))?(?::(\w+))?$")
 RE_GROUP = re.compile("^([+~])?(@[\w ]+)$")
 
+
 class ErrorInvalidPackage(Exception):
     def __init__(self, reason, code=0):
         self.reason = reason.lower()
@@ -98,10 +99,10 @@ class Package(object):
         return 'Package: %s' % (self.to_pkg_spec())
 
     def excluded(self):
-        return self.action & (self.ACTION_EXCLUDE)
+        return self.action & (self.ACTION_EXCLUDE) == self.ACTION_EXCLUDE
 
     def included(self):
-        return self.action & (self.ACTION_INCLUDE)
+        return self.action & (self.ACTION_INCLUDE) == self.ACTION_INCLUDE
 
     def parse(self, data):
         if isinstance(data, dnf.package.Package) or \
@@ -148,7 +149,7 @@ class Package(object):
             self.action |= self.ACTION_GROUP
 
     def pinned(self):
-        return self.action & (self.ACTION_PIN)
+        return self.action & (self.ACTION_PIN) == self.ACTION_PIN
 
     def to_json(self):
         return json.dumps(self.to_object(), separators=(',', ':'))

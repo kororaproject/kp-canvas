@@ -25,6 +25,35 @@ class PackageTestCase(TestCase):
         # empty packages will have a default action of include
         self.assertEqual({'z': 1}, p1.to_object())
 
+    def test_package_kwargs(self):
+        p1 = Package(name='foo', epoch='1', version='1.2.3', release='1', arch='x86_64')
+
+        self.assertEqual('foo', p1.name)
+        self.assertEqual('1', p1.epoch)
+        self.assertEqual('1.2.3', p1.version)
+        self.assertEqual('1', p1.release)
+        self.assertEqual('x86_64', p1.arch)
+
+    def test_package_kwargs_strip_evr(self):
+        p1 = Package(name='foo', epoch='1', version='1.2.3', release='1', arch='x86_64', evr=False)
+
+        self.assertEqual('foo', p1.name)
+        self.assertEqual(None, p1.epoch)
+        self.assertEqual(None, p1.version)
+        self.assertEqual(None, p1.release)
+        self.assertEqual('x86_64', p1.arch)
+
+
+    def test_package_parse_dict(self):
+        p1 = Package({'n': 'foo', 'e': '1', 'v': '1.2.3', 'r': '2', 'a': 'x86_64', 'z': Package.ACTION_EXCLUDE})
+
+        self.assertEqual('foo', p1.name)
+        self.assertEqual('1', p1.epoch)
+        self.assertEqual('1.2.3', p1.version)
+        self.assertEqual('2', p1.release)
+        self.assertEqual('x86_64', p1.arch)
+        self.assertEqual(p1.action, Package.ACTION_EXCLUDE)
+
     # https://fedoraproject.org/wiki/Packaging:NamingGuidelines
     # [a-zA-Z0-9-._+]
     def test_package_parse_str_valid_name(self):
@@ -64,9 +93,10 @@ class PackageTestCase(TestCase):
         except ErrorInvalidPackage:
             self.fail("Package raised ErrorInvalidPackage on valid package name")
 
-# TODO:
-#  def test_package_parse_str_invalid_name(self):
-
+    def test_package_parse_str_invalid_name(self):
+        # Release is required
+        with self.assertRaises(ErrorInvalidPackage):
+            Package("foo##")
 
     def test_package_parse_str_valid_version(self):
         # Standard format
@@ -203,6 +233,24 @@ class PackageTestCase(TestCase):
         self.assertEqual("3", p4.release)
         self.assertEqual("x86_64", p4.arch)
 
+    def test_package_excluded(self):
+        # Release is required
+        p1 = Package("~foo")
+        self.assertEqual(True, p1.excluded())
+        self.assertEqual(False, p1.included())
+
+    def test_package_included(self):
+        # Release is required
+        p1 = Package("foo")
+        self.assertEqual(False, p1.excluded())
+        self.assertEqual(True, p1.included())
+
+    def test_package_pinned(self):
+        # Release is required
+        p1 = Package("foo")
+        self.assertEqual(False, p1.pinned())
+        p1.action |= Package.ACTION_PIN
+        self.assertEqual(True, p1.pinned())
 
     def test_package_equality(self):
         p1 = Package({})
@@ -216,6 +264,7 @@ class PackageTestCase(TestCase):
         self.assertEqual(p2, p3)
         self.assertEqual(p2, p4)
         self.assertNotEqual(p3, p5)
+
 
 # http://dnf.readthedocs.org/en/latest/command_ref.html#specifying-packages-label
 # Release in this case includes the fc23
@@ -250,6 +299,36 @@ class PackageTestCase(TestCase):
         # "name-epoc:version-release.arch"
         self.assertRegexpMatches(p5.to_pkg_spec(),
                                  r'^the_silver_searcher-0:0.31.0-1.fc\d{2}.x86_64$')
+
+    def test_package_to_json(self):
+        # TODO
+        pass
+
+    # String representation is the dnf pkg_spec format
+    def test_package___str__(self):
+        p1 = Package('foo:x86_64')
+        self.assertEqual(str(p1), 'Package: foo.x86_64')
+
+    # Representation format is to_json format
+    def test_package___repr__(self):
+        p1 = Package('foo:x86_64')
+        self.assertEqual(repr(p1), 'Package: {"a":"x86_64","n":"foo","z":1}')
+
+    def test_package_to_object(self):
+        p1 = Package({'n': 'foo', 'e': '1', 'v': '1.2.3', 'r': '2', 'a': 'x86_64', 'z': Package.ACTION_EXCLUDE})
+        p2 = Package({'n': 'foo', 'a': 'x86_64', 'z': Package.ACTION_EXCLUDE})
+        self.assertEqual(p1.to_object(),
+                         {'n': 'foo',
+                          'e': '1',
+                          'v': '1.2.3',
+                          'r': '2',
+                          'a': 'x86_64',
+                          'z': Package.ACTION_EXCLUDE})
+
+        self.assertEqual(p2.to_object(),
+                         {'n': 'foo',
+                          'a': 'x86_64',
+                          'z': Package.ACTION_EXCLUDE})
 
 
     def test_package_group(self):
