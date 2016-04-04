@@ -93,7 +93,7 @@ class Package(object):
         return (not self.__eq__(other))
 
     def __repr__(self):
-        return 'Package: %s' % (json.dumps(self.to_object(), separators=(',', ':')))
+        return 'Package: %s' % (self.to_json())
 
     def __str__(self):
         return 'Package: %s' % (self.to_pkg_spec())
@@ -152,7 +152,7 @@ class Package(object):
         return self.action & (self.ACTION_PIN) == self.ACTION_PIN
 
     def to_json(self):
-        return json.dumps(self.to_object(), separators=(',', ':'))
+        return json.dumps(self.to_object(), separators=(',', ':'), sort_keys=True)
 
     def to_object(self):
         o = {
