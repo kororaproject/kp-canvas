@@ -69,10 +69,10 @@ class Repository(object):
         return (not self.__eq__(other))
 
     def __repr__(self):
-        return self.__str__()
+        return 'Repository: %s ' % (self.to_json())
 
     def __str__(self):
-        return 'Repository: %s ' % (json.dumps(self.to_object(), separators=(',', ':')))
+        return 'Repository: %s ' % (self.to_kickstart())
 
     def parse(self, data):
         if isinstance(data, str):
@@ -176,7 +176,7 @@ class Repository(object):
         return r
 
     def to_json(self):
-        return json.dumps(self.to_object(), separators=(',', ':'))
+        return json.dumps(self.to_object(), separators=(',', ':'), sort_keys=True)
 
     def to_object(self):
         o = {
