@@ -149,10 +149,10 @@ class Repository(object):
         r = 'repo'
 
         if self.name is not None:
-            r += ' --name="{0}"'.format(self.stub)
+            r += ' --name="{0}"'.format(self.name)
 
         if self.baseurl is not None and len(self.baseurl):
-            r += ' --baseurl={0}'.format(self.baseurl[0])
+            r += ' --baseurl={0}'.format(self.baseurl)
 
         elif self.mirrorlist is not None:
             r += ' --mirrorlist={0}'.format(self.mirrorlist)
