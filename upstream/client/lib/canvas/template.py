@@ -484,7 +484,7 @@ class Template(object):
 
         # process packages
         for p in self.packages:
-            if p.action == 1:
+            if p.included():
                 packages.packageList.append(p.name)
 
             else:
