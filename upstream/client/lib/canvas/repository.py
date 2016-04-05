@@ -40,7 +40,6 @@ class Repository(object):
         self.enabled    = kwargs.get('enabled', None)
         self.gpgcheck   = kwargs.get('gpgcheck', None)
         self.cost       = kwargs.get('cost', None)
-        self.exclude    = kwargs.get('exclude', None)
         self.install    = kwargs.get('install', None)
 
         self.exclude_packages = kwargs.get('exclude_packages', None)
@@ -117,8 +116,9 @@ class Repository(object):
             self.gpgcheck   = data.gpgcheck
             self.cost       = data.cost
             self.priority   = data.priority
-            self.exclude    = data.exclude
 
+            self.exclude_packages = data.exclude
+            self.include_packages = data.include
 #        self.meta_expired = data.meta_expired
 
             self.action     = self.ACTION_INCLUDE
@@ -136,7 +136,6 @@ class Repository(object):
             self.gpgcheck   = data.get('gc', self.gpgcheck)
             self.cost       = data.get('c', self.cost)
             self.priority   = data.get('p', self.priority)
-            self.exclude    = data.get('x', self.exclude)
             self.install    = data.get('i', self.install)
 
             self.exclude_packages = data.get('xp', self.exclude_packages)
@@ -191,7 +190,6 @@ class Repository(object):
             'me': self.meta_expired,
             'c':  self.cost,
             'p':  self.priority,
-            'x':  self.exclude,
             'i':  self.install,
             'xp': self.exclude_packages,
             'ip': self.include_packages,
@@ -230,8 +228,11 @@ class Repository(object):
         if self.cost is not None:
             r.cost = self.cost
 
-        if self.exclude is not None:
-            r.exclude = self.exclude
+        if self.exclude_packages is not None:
+            r.exclude = self.exclude_packages
+
+        if self.include_packages is not None:
+            r.include = self.include_packages
 
         if self.meta_expired is not None:
             r.meta_expired = self.meta_expired
