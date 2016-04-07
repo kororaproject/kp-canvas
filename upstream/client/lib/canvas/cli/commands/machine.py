@@ -26,7 +26,8 @@ from canvas.cli.commands import Command
 from canvas.package import Package
 from canvas.repository import Repository
 from canvas.service import Service, ServiceException
-from canvas.template import Machine, Template
+from canvas.template import Template
+from canvas.machine import Machine
 
 logger = logging.getLogger('canvas')
 

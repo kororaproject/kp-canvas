@@ -23,7 +23,8 @@ import json
 import logging
 import urllib.request, urllib.parse, urllib.error
 
-from canvas.template import Machine, Template
+from canvas.template import Template
+from canvas.machine import Machine
 
 logger = logging.getLogger('canvas')
 
