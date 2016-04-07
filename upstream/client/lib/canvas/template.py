@@ -32,6 +32,13 @@ from pykickstart.version import DEVEL, makeVersion
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
 #
+class ErrorInvalidTemplate(Exception):
+    def __init__(self, reason, code=0):
+        self.reason = reason.lower()
+        self.code = code
+
+    def __str__(self):
+        return 'error: {0}'.format(str(self.reason))
 
 
 class Template(object):
@@ -39,8 +46,8 @@ class Template(object):
         self._name = None
         self._user = user
         self._uuid = None
-        self._title = ''
-        self._description = ''
+        self._title = None
+        self._description = None
 
         self._includes = []           # includes in template
         self._includes_resolved = []  # data structs for all includes in template
@@ -212,11 +219,22 @@ class Template(object):
             parts = template.split(':')
 
             if len(parts) == 1:
-                self._name = parts[0]
+                self._name = parts[0].strip()
 
             elif len(parts) == 2:
-                self._user = parts[0]
-                self._name = parts[1]
+                self._user = parts[0].strip()
+                self._name = parts[1].strip()
+            else:
+                raise ErrorInvalidTemplate("template format invalid")
+
+            if not self._name:
+                raise ErrorInvalidTemplate("template format invalid")
+
+            if len(self._name) is 0:
+                raise ErrorInvalidTemplate("template format invalid")
+
+            if not self._user and (len(parts) == 2):
+                raise ErrorInvalidTemplate("template format invalid")
 
         # parse the dict form, the most common form and directly
         # relates to the json structures returned by canvas server
