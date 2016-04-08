@@ -37,6 +37,8 @@ sub add {
   $template->{meta}        //= {};
   $template->{packages}    //= {};
   $template->{repos}       //= {};
+  $template->{stores}      //= [];
+  $template->{objects}     //= [];
 
   if ($cb) {
     return Mojo::IOLoop->delay(
@@ -62,8 +64,8 @@ sub add {
         $self->pg->db->query('
           INSERT INTO templates
             (owner_id, uuid, name, stub, description,
-            includes, packages, repos, meta)
-          SELECT u.id, $1,$2,$3,$4,$5,$6,$7,$8
+            includes, packages, repos, stores, objects, meta)
+          SELECT u.id, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10
           FROM users u
           WHERE
             u.username=$9 AND
@@ -76,6 +78,8 @@ sub add {
             {json => $template->{includes}},
             {json => $template->{packages}},
             {json => $template->{repos}},
+            {json => $template->{stores}},
+            {json => $template->{objects}},
             {json => $template->{meta}},
             $template->{user},
             $args->{user_id}
@@ -173,6 +177,7 @@ sub get {
           SELECT
             t.uuid, t.name, t.description, t.stub, t.includes,
             t.repos, t.packages, t.meta, u.username,
+            t.stores, t.objects,
             EXTRACT(EPOCH FROM t.created) AS created,
             EXTRACT(EPOCH FROM t.updated) AS updated
           FROM templates t
@@ -286,6 +291,8 @@ sub update {
   $template->{meta}        //= {};
   $template->{packages}    //= {};
   $template->{repos}       //= {};
+  $template->{stores}      //= [];
+  $template->{objects}     //= [];
 
   if ($cb) {
     return Mojo::IOLoop->delay(
@@ -315,7 +322,8 @@ sub update {
           UPDATE templates
             SET
               name=$1, stub=$2, description=$3,
-              includes=$4, packages=$5, repos=$6, meta=$7
+              includes=$4, packages=$5, repos=$6,
+              stores=$7, $objects=$8, meta=$9
           WHERE
             uuid=$8' => (
             $template->{title},
@@ -323,6 +331,8 @@ sub update {
             {json => $template->{includes}},
             {json => $template->{packages}},
             {json => $template->{repos}},
+            {json => $template->{stores}},
+            {json => $template->{objects}},
             {json => $template->{meta}},
             $template->{uuid},
           ) => $d->begin);

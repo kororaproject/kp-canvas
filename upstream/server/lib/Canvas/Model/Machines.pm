@@ -46,7 +46,7 @@ sub add {
   # set default values
   $machine->{description} //= '';
   $machine->{stores}      //= [];
-  $machine->{archives}    //= [];
+  $machine->{objects}     //= [];
   $machine->{history}     //= [];
   $machine->{meta}        //= {};
 
@@ -98,7 +98,7 @@ sub add {
         $self->pg->db->query('
           INSERT INTO machines
             (owner_id, template_id, uuid, key, name, stub,
-            description, stores, archives, history, meta)
+            description, stores, objects, history, meta)
           SELECT u.id, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10
           FROM users u
           WHERE
@@ -112,7 +112,7 @@ sub add {
             $machine->{title},
             $machine->{stub}, $machine->{description},
             {json => $machine->{stores}},
-            {json => $machine->{archives}},
+            {json => $machine->{objects}},
             {json => $machine->{history}},
             {json => $machine->{meta}},
             $machine->{user},
@@ -228,7 +228,7 @@ sub get {
           SELECT
             m.uuid, m.name, m.description, m.stub,
             t.uuid AS template, m.meta, u.username,
-            m.stores, m.archives, m.history,
+            m.stores, m.objects, m.history,
             EXTRACT(EPOCH FROM m.created) AS created,
             EXTRACT(EPOCH FROM m.updated) AS updated
           FROM machines m
@@ -317,7 +317,7 @@ sub update {
   $machine->{title}       //= '';
   $machine->{description} //= '';
   $machine->{stores}      //= [];
-  $machine->{archives}    //= [];
+  $machine->{objects}     //= [];
   $machine->{hisotry}     //= [];
   $machine->{meta}        //= {};
 
@@ -373,14 +373,14 @@ sub update {
           UPDATE machines
             SET
               name=$1, stub=$2, description=$3,
-              stores=$4, archives=$5, history=$6, meta=$7,
+              stores=$4, objects=$5, history=$6, meta=$7,
               template_id=$8
           WHERE
             uuid=$9' => (
             $machine->{title},
             $machine->{stub}, $machine->{description},
             {json => $machine->{stores}},
-            {json => $machine->{archives}},
+            {json => $machine->{objects}},
             {json => $machine->{history}},
             {json => $machine->{meta}},
             $d->data('template'),

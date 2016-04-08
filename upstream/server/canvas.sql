@@ -155,7 +155,7 @@ CREATE TABLE templates (
   repos         JSONB         NOT NULL  DEFAULT '[]',
 
   stores        JSONB         NOT NULL  DEFAULT '[]',
-  archives      JSONB         NOT NULL  DEFAULT '[]',
+  objects       JSONB         NOT NULL  DEFAULT '[]',
 
   meta          JSONB         NOT NULL  DEFAULT '{}',
 
@@ -186,7 +186,7 @@ CREATE TABLE machines (
   description   TEXT,
 
   stores        JSONB         NOT NULL  DEFAULT '[]',
-  archives      JSONB         NOT NULL  DEFAULT '[]',
+  objects       JSONB         NOT NULL  DEFAULT '[]',
   history       JSONB         NOT NULL  DEFAULT '[]',
 
   meta          JSONB         NOT NULL  DEFAULT '{}',

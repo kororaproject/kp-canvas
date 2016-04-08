@@ -55,7 +55,7 @@ class Template(object):
         self._delta_packages = PackageSet()     # packages to add/remove in template
 
         self._stores   = []  # remote stores for machine
-        self._archives = []  # archive definitions in machine
+        self._objects  = []  # archive definitions in machine
 
         self._parse_template(template)
 
@@ -234,7 +234,7 @@ class Template(object):
             self._packages = PackageSet(Package(p) for p in template.get('packages', []))
 
             self._stores   = template.get('stores', [])
-            self._archives = template.get('archives', [])
+            self._objects  = template.get('objects', [])
 
             self._meta = template.get('meta', {})
 
@@ -521,7 +521,7 @@ class Template(object):
             'packages':    [p.to_object() for p in packages],
             'repos':       [r.to_object() for r in repos],
             'stores':      self._stores,
-            'archives':    self._archives,
+            'objects':     self._objects,
             'meta':        self._meta
         }
 
@@ -585,7 +585,7 @@ class Machine(object):
         self._key         = key
 
         self._stores   = []       # remote stores for machine
-        self._archives = []       # archive definitions in machine
+        self._objects  = []       # archive definitions in machine
         self._history  = []       # history of machine
         self._meta     = {}
 
@@ -596,7 +596,7 @@ class Machine(object):
             self._name,
             self._user,
             len(self._stores),
-            len(self._archives),
+            len(self._objects),
             len(self._history)
             )
 
@@ -623,15 +623,15 @@ class Machine(object):
             self._description = machine.get('description', None)
 
             self._stores   = machine.get('stores', [])
-            self._archives = machine.get('archives', [])
+            self._objects  = machine.get('objects', [])
             self._history  = machine.get('history', [])
             self._meta = machine.get('meta', {})
 
     #
     # PROPERTIES
     @property
-    def archives(self):
-        return self._archives
+    def objects(self):
+        return self._objects
 
     @property
     def description(self):
@@ -703,7 +703,7 @@ class Machine(object):
             'title':       self._title,
             'description': self._description,
             'stores':      self._stores,
-            'archives':    self._archives,
+            'objects':     self._objects,
             'history':     self._history,
             'meta':        self._meta,
         }
