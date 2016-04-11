@@ -15,8 +15,10 @@ Some fundamental goals of the Canvas project include:
 ## Component Overview
 The broad components understood to Canvas are:
 
- * Packages
- * Repos
+ * Packages,
+ * Repos,
+ * Stores,
+ * Objects,
  * Templates, and
  * Machines
 
@@ -443,6 +445,177 @@ canvas repo rm [user:]template repo_name
 ```
 canvas repo rm firnsy:htpc rpmfusion
 ```
+
+### Template Objects
+The following commands allow management of objects from specified Templates.
+
+#### Command Overview
+The following commands are available for the management of Canvas template objects:
+```
+canvas object add [user:]template store1:object_name1 store2:object_name2 ... storeN:object_nameN
+canvas object list [user:]template [--filter-store=...] [--filter-name=...]
+canvas object rm [user:]template store1:object_name1 store2:object_name2 ... storeN:object_nameN
+```
+
+#### Adding Objects
+The general usage for adding objects to templates is described as:
+```
+canvas object add [user:]template store1:object_name1 store2:object_name2 ... storeN:object_nameN
+```
+
+One or multiple objects can be listed, or one or more object file lists can be specified in place of or in addition to the objects. The file must contain a space- or newline-separated list of store:object references.
+```
+canvas object add firnsy:htpc services:couch-potato services:sickbeard
+canvas object add firnsy:htpc services:couch-potate ~/movie.objects
+```
+
+##### Included and Excluded Objects
+By default an object is assumed to be an `included` object for a template. That is it will be actioned (i.e. `included`) when synchronised to a system. You can specify that a object should be `excluded` (i.e. not acted upon) by prefixing the object definition with `~`. This will ensure that an object is not actioned (if included) in a parent template.
+
+For example:
+```
+canvas object add firnsy:htpc ~services:sabnzbd
+```
+
+#### Removing Objects
+The general usage for removing objects from templates is described as:
+```
+canvas object rm [user:]template store1:object_name1 store2:object_name2 ... storeN:object_nameN
+```
+
+```
+canvas object rm firnsy:htpc services:sickbeard
+```
+
+#### Listing Objects
+The general usage for listing objects in templates is described as:
+```
+canvas object list [user:]template [--filter-store=...] [--filter-name=...] [--filter-description=]
+```
+
+If no filters are provided, all objects belonging to the specified template will be listed.
+```
+canvas object list firnsy:htpc
+```
+
+If one or more filters are provided, only objects belonging to that template which match all of the specified filters will be listed.
+```
+canvas object list firnsy:htpc --filter-store=services
+```
+
+Multiple filters and multiple items per filter can be specified. Searching may take longer depending on the query provided.
+```
+canvas object list firnsy:htpc --filter-name=foo --filter-description=baz,buz
+```
+
+You can use the `--output` option to save the object list to a file in the specified path. If the file already exists, it will be replaced.
+```
+canvas objecte list firnsy:htpc --output=/home/firnsy/templates/boom
+```
+
+
+### Template Stores
+The following commands allow management of repos from specified Templates.
+
+#### Command Overview
+The following commands are available for the management of Canvas template repos:
+```
+canvas store add [user:]template store_name [--type] [--url] [--user] [--pass]
+canvas store update [user:]template store_name [--type] [--url] [--user] [--pass]
+canvas store list [user:]template
+canvas store rm [user:]template store_name
+
+canvas store get [user:]template/store name1 name2 ... nameN
+canvas store put [user:]template/store file1[:name1] file2[:name1] ... fileN[:nameN]
+```
+
+#### Stores Definitions
+The allowed characters of the `repo` ID string are restricted to the following character classes lower and upper case alphabetic letters, digits, `-`, and `_` .
+
+##### Store Options
+`type` (string)
+
+The type of service this store is attached to. Examples include: `google-drive`, `owncloud` and `ssh`.
+
+`url` (string)
+
+URL of the service this store is attached to. Required for `owncloud` and `ssh` stores only.
+
+`user` (string)
+
+Username to use when connecting to the attached service.
+
+`pass` (string)
+
+Password to use when connecting to the attached service.
+
+#### Adding Stores
+The general usage for adding repos from templates is described as:
+```
+canvas store add [user:]template store_name [--type] [--url] [--user] [--pass]
+```
+
+The following commands would add the `movies` store to the `htpc` template of user `firnsy`:
+```
+canvas store add firnsy:htpc movies --type=ssh --url=192.168.0.100 --user=admin --pass=supersecret
+```
+
+##### Included and Excluded Stores
+By default a store is assumed to be an `included` store for a template. That is it will be configured (i.e. `included`) when synchronising objects to a system. You can specify that a store should be `excluded` by prefixing the package definition with `~`. This will ensure that a store is not configured (if defined for inclusion in a parent template) on a system when synchronised with the template.
+
+For example:
+```
+canvas store add firnsy:htpc ~parent-store
+```
+
+#### Updating Stores
+The general usage for updating stores from templates is described as:
+```
+canvas store update [user:]template store_name [--type] [--url] [--user] [--pass]
+```
+
+```
+canvas store update firnsy:htpc movies --url=192.168.0.10
+```
+
+#### Listing Stores
+The general usage for listing stores in templates is described as:
+```
+canvas store list [user:]template
+```
+
+```
+canvas store list firnsy:htpc
+```
+
+#### Removing Stores
+The general usage for removing stores from templates is described as:
+```
+canvas store rm [user:]template store_name
+```
+
+```
+canvas store rm firnsy:htpc movies
+```
+
+#### Downloading Objects from Stores
+```
+canvas store get [user:]template/store name1 name2 ... nameN
+```
+
+```
+canvas store get firnsy:htpc/movies foo my-bar
+```
+
+#### Uploading Objects to Stores
+```
+canvas store put [user:]template/store file1[:name1] file2[:name1] ... fileN[:nameN]
+```
+
+```
+canvas store put firnsy:htpc/movies /path/to/foo /path/to/bar:my-bar
+```
+
 
 ### Machines
 The following commands allow adding, removing and updating Canvas machines that are assigned templates. Machines are your configured Canvas systems that can be managed and easily synchronised with your latest configurations.

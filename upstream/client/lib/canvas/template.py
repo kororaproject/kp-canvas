@@ -252,7 +252,7 @@ class Template(object):
             self._packages = PackageSet(Package(p) for p in template.get('packages', []))
 
             self._stores   = template.get('stores', [])
-            self._objects  = template.get('objects', [])
+            self._objects  = template.get('objects', template.get('archives', []))
 
             self._meta = template.get('meta', {})
 
@@ -591,4 +591,3 @@ class Template(object):
 
         self._repos.update(template.repos)
         self._packages.update(template.packages)
-
