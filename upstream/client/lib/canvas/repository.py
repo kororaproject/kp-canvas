@@ -40,7 +40,11 @@ class Repository(object):
         self.enabled    = kwargs.get('enabled', None)
         self.gpgcheck   = kwargs.get('gpgcheck', None)
         self.cost       = kwargs.get('cost', None)
-        self.install    = kwargs.get('install', None)
+        self.install    = kwargs.get('install', False)
+
+        self.ignoregroups = kwargs.get('ignoregroups', False)
+        self.proxy        = kwargs.get('proxy', None)
+        self.noverifyssl  = kwargs.get('noverifyssl', False)
 
         self.exclude_packages = kwargs.get('exclude_packages', None)
         self.include_packages = kwargs.get('include_packages', None)
@@ -73,26 +77,57 @@ class Repository(object):
     def __str__(self):
         return 'Repository: %s ' % (self.to_kickstart())
 
+    @staticmethod
+    def _parse_str_arg(data, name):
+        return data.replace(name, '').replace('"', '').replace("'", '').strip()
+
     def parse(self, data):
         if isinstance(data, str):
             # check are we a kickstart formatted repo
             data.strip()
 
             if data.startswith('repo '):
-                for a in data.split():
+                for a in data.split("--"):
                     if a == 'repo' or a == '':
                         continue
 
-                    elif a.startswith('--name='):
-                        self.stub = a[7:].strip('"')
+                    elif a.startswith('name='):
+                        name = self._parse_str_arg(a, 'name=')
 
-                    elif a.startswith('--baseurl='):
-                        self.baseurl = a[10:]
+                        self.name = name
+                        self.stub = name.replace(' ', '-').replace('---', '-')
 
-                    elif a.startswith('--mirrorlist='):
-                        self.mirrorlist = a[13:]
+                    elif a.startswith('baseurl='):
+                        self.baseurl = self._parse_str_arg(a, 'baseurl=')
 
+                    elif a.startswith('mirrorlist='):
+                        self.mirrorlist = self._parse_str_arg(a, 'mirrorlist=')
+
+                    elif a.startswith('cost='):
+                        self.cost = self._parse_str_arg(a, 'cost=')
+
+                    elif a.startswith('excludepkgs='):
+                        self.exclude_packages = self._parse_str_arg(a, 'excludepkgs=')
+
+                    elif a.startswith('includepkgs='):
+                        self.include_packages = self._parse_str_arg(a, 'includepkgs=')
+
+                    elif a.startswith('proxy='):
+                        self.proxy = self._parse_str_arg(a, 'proxy=')
+
+                    elif a.startswith('ignoregroups=true'):
+                        self.ignoregroups = True
+
+                    elif a.startswith('noverifyssl'):
+                        self.noverifyssl = True
+
+                    elif a.startswith('install'):
+                        self.install = True
+
+
+                # Repos added via kickstart are enabled by default
                 self.action = self.ACTION_INCLUDE
+                self.enabled = True
 
             else:
                 if data.startswith('~'):
@@ -169,7 +204,10 @@ class Repository(object):
         if self.include_packages is not None:
             r += ' --exclude_packages={0}'.format(self.include_packages.join(','))
 
-        if self.install is not None:
+        if self.noverifyssl:
+            r += ' --noverifyssl'
+
+        if self.install:
             r += ' --install'
 
         return r
@@ -216,8 +254,7 @@ class Repository(object):
             r.mirrorlist = self.mirrorlist
 
         if self.metalink is not None:
-            if len(self.metalink):
-                r.metalink = self.metalink[0]
+            r.metalink = self.metalink
 
         if self.gpgcheck is not None:
             r.gpgcheck = self.gpgcheck
