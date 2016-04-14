@@ -113,7 +113,7 @@ canvas template add firnsy:htpc --includes kororaproject:core
 
 When adding new templates they will be private by default. If you wish to make your templates available for others to see then set the `--public` flag to a value of `true` or `1`.
 
-Template names are restricted to the following character classes lower and upper case alphabetic letters, digits, `-`, and `_`.
+Template names are restricted to the following character classes: lower and upper case alphabetic letters, digits, `-`, and `_`.
 
 #### Updating Templates
 The general usage for updating an existing template of a Canvas user is described as:
@@ -357,7 +357,7 @@ canvas repo rm [user:]template repo_name
 ```
 
 #### Repos Definitions
-The allowed characters of the `repo` ID string are restricted to the following character classes lower and upper case alphabetic letters, digits, `-`, and `_` .
+The allowed characters of the `repo` ID string are restricted to the following character classes: lower and upper case alphabetic letters, digits, `-`, and `_` .
 
 ##### Repo Options
 `cost` (integer)
@@ -470,7 +470,7 @@ canvas object add firnsy:htpc services:couch-potate ~/movie.objects
 ```
 
 ##### Included and Excluded Objects
-By default an object is assumed to be an `included` object for a template. That is it will be actioned (i.e. `included`) when synchronised to a system. You can specify that a object should be `excluded` (i.e. not acted upon) by prefixing the object definition with `~`. This will ensure that an object is not actioned (if included) in a parent template.
+By default an object is assumed to be an `included` object for a template. That is it will be actioned (i.e. `included`) when synchronised to a system. You can specify that an object should be `excluded` (i.e. not acted upon) by prefixing the object definition with `~`. This will ensure that an object is not actioned (if included) in a parent template.
 
 For example:
 ```
@@ -530,7 +530,7 @@ canvas store put [user:]template/store file1[:name1] file2[:name1] ... fileN[:na
 ```
 
 #### Stores Definitions
-The allowed characters of the `repo` ID string are restricted to the following character classes lower and upper case alphabetic letters, digits, `-`, and `_` .
+The allowed characters of the `store_name` are restricted to the following character classes: lower and upper case alphabetic letters, digits, `-`, and `_` .
 
 ##### Store Options
 `type` (string)
@@ -539,7 +539,7 @@ The type of service this store is attached to. Examples include: `google-drive`,
 
 `url` (string)
 
-URL of the service this store is attached to. Required for `owncloud` and `ssh` stores only.
+URL (or IP) of the service this store is attached to. Not required for `google-drive` stores.
 
 `user` (string)
 
@@ -563,7 +563,7 @@ canvas store add firnsy:htpc movies --type=ssh --url=192.168.0.100 --user=admin 
 ##### Included and Excluded Stores
 By default a store is assumed to be an `included` store for a template. That is it will be configured (i.e. `included`) when synchronising objects to a system. You can specify that a store should be `excluded` by prefixing the package definition with `~`. This will ensure that a store is not configured (if defined for inclusion in a parent template) on a system when synchronised with the template.
 
-For example:
+For example the following command will ensure any stores in parent templates will not propogate to :
 ```
 canvas store add firnsy:htpc ~parent-store
 ```
@@ -594,26 +594,37 @@ The general usage for removing stores from templates is described as:
 canvas store rm [user:]template store_name
 ```
 
+The following example will remove the `movies` store from the template `htpc` owned by `firnsy`.
 ```
 canvas store rm firnsy:htpc movies
 ```
 
 #### Downloading Objects from Stores
+The general usage for downloading objects from stores is described as:
 ```
-canvas store get [user:]template/store name1 name2 ... nameN
+canvas store get [user:]template[/store_name] name1 name2 ... nameN
 ```
 
+The `store_name` is an optional argument, ommission indicates the object will be retrieved from the internal template store.
 ```
 canvas store get firnsy:htpc/movies foo my-bar
+canvas store get firnsy:htpc startup-script
 ```
 
 #### Uploading Objects to Stores
+The general usage for uploading objects to stores is described as:
 ```
-canvas store put [user:]template/store file1[:name1] file2[:name1] ... fileN[:nameN]
+canvas store put [user:]template[/store_name] file1[:name1] file2[:name1] ... fileN[:nameN]
 ```
 
+By default, the object name will have the same basename as the file uploaded. This can be overridden by appending an alternative `:name` after the path. For example the following command will upload to the `movies` store the local file at `/path/to/foo` with the name `foo` and a second local file at `/path/to/bar` with the name `my-bar`.
 ```
 canvas store put firnsy:htpc/movies /path/to/foo /path/to/bar:my-bar
+```
+
+The `store_name` is an optional argument, ommission indicates the object will be inserted from the internal template store. The internal store can store a total of 32 files each with a maximum size of 100kB each. Due to storage consraints, using the internal store is only recommended for small files (e.g. start/stop scripts and configuration files).
+```
+canvas store put firnsy:htpc /path/to/script:startup-script
 ```
 
 
