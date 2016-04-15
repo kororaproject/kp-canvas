@@ -84,21 +84,21 @@ The following commands allow adding, removing, modifying, querying, and synchron
 #### Command Overview
 The following commands are available for the management of Canvas templates:
 ```
-canvas template add [user:]template [--name] [--title] [--description] [--includes] [--public]
-canvas template update [user:]template [--name] [--title] [--description] [--includes] [--public]
-canvas template rm [user:]template
-canvas template push [user:]template [--all] [--kickstart]
-canvas template pull [user:]template [--clean]
-canvas template diff [user_from:][template_from|path_from] [[user_to:]template_to|path_to] [--output=path]
-canvas template copy [user_from:]template_from [[user_to:]template_to]
-canvas template list [user] [--filter-name] [--filter-description]
-canvas template dump [user:]template [--json|--yaml]
+canvas template add [user:]template[@version] [--name] [--title] [--description] [--includes] [--public]
+canvas template update [user:]template[@version] [--name] [--title] [--description] [--includes] [--public]
+canvas template rm [user:]template[@version]
+canvas template push [user:]template[@version] [--all] [--kickstart]
+canvas template pull [user:]template[@version] [--clean]
+canvas template diff [user_from:][template_from[@version]|path_from] [[user_to:]template_to[@version]|path_to] [--output=path]
+canvas template copy [user_from:]template_from[@version] [[user_to:]template_to[@version]]
+canvas template list [user] [--filter-name] [--filter-version] [--filter-description]
+canvas template dump [user:]template[@version] [--json|--yaml]
 ```
 
 #### Adding Templates
 The general usage for adding a new template to a Canvas user is described as:
 ```
-canvas template add [user:]template [--name] [--title] [--description] [--includes] [--public]
+canvas template add [user:]template[@version] [--name] [--title] [--description] [--includes] [--public]
 ```
 
 For example, adding a new blank template identifed as `htpc` to the Canvas user `firnsy`.
@@ -118,7 +118,7 @@ Template names are restricted to the following character classes: lower and uppe
 #### Updating Templates
 The general usage for updating an existing template of a Canvas user is described as:
 ```
-canvas template update [user:]template [--name] [--title] [--description] [--includes] [--public]
+canvas template update [user:]template[@version] [--name] [--version] [--title] [--description] [--includes] [--public]
 ```
 
 Updating the name and description of existing template `htpc` of Canvas user `firnsy`.
@@ -129,7 +129,7 @@ canvas template update firnsy:htpc --name="Firnsy's HTPC" --description="Ultimat
 #### Removing Templates
 The general usage for removing an existing template of a Canvas user is described as:
 ```
-canvas template rm [user:]template
+canvas template rm [user:]template[@version]
 ```
 
 Removing the existing template `htpc` from Canvas user `firnsy`.
@@ -140,8 +140,8 @@ canvas template rm firnsy:htpc
 #### Synchronising Templates
 The general usage for synchronising an existing template of a Canvas user is described as:
 ```
-canvas template push [user:]template [--all] [--kickstart]
-canvas template pull [user:]template [--clean]
+canvas template push [user:]template[@version] [--all] [--kickstart]
+canvas template pull [user:]template[@version] [--clean]
 ```
 
 For example the following command would install all packages and repos specified in the template `htpc` from the Canvas user `firnsy` to the current system. No packages would be removed from the current system.
@@ -172,7 +172,7 @@ canvas template push firnsy:htpc --kickstart ~/kickstarts/htpc.ks
 #### Diff Templates
 The general usage for viewing the differences between existing templates and/or the current system configuration is:
 ```
-canvas template diff [user_from:][template_from|path_from] [[user_to:]template_to|path_to] [--output=path]
+canvas template diff [user_from:][template_from[@version]|path_from] [[user_to:]template_to[@version]|path_to] [--output=path]
 ```
 
 Either an existing template or the path to a file on the current system can be specified as arguments. Specifying one argument will compare it to the current system configuration. For example, the following command would show the diff between the current system to the template `htpc` from Canvas user `firnsy`:
@@ -201,7 +201,7 @@ canvas template diff firnsy:htpc --output=~/templates/htpc.template
 #### Copying Templates
 The general usage for copying an existing template of a Canvas user to a new one is described as:
 ```
-canvas template copy [user_to:]template_from [[user_to:]template_to]
+canvas template copy [user_to:]template_from[@version] [[user_to:]template_to[@version]]
 ```
 
 For example the following command would copy the `htpc` template from `kororaproject` to the template `my-htpc` for the Canvas user `firnsy`.
@@ -217,7 +217,7 @@ canvas template copy kororaproject:htpc
 #### Listing Templates
 The general usage for listing templates that are currently accessible is described as:
 ```
-canvas template list [user] [--filter-name] [--filter-description]
+canvas template list [user] [--filter-name] [--filter-version] [--filter-description]
 ```
 
 If no filters are provided, all public templates and any that belong to you will be listed:
@@ -243,7 +243,7 @@ canvas template list kororaproject --filter-name=*workstation* --filter-descript
 #### Dumping Templates
 The general usage for dumping (or viewing) templates that are currently accessible is described as:
 ```
-canvas template dump [user:]template [--json|--yaml|--kickstart]
+canvas template dump [user:]template[@version] [--json|--yaml|--kickstart]
 ```
 
 By default the template will be dumped in a human readable format. You can dump to a machine readable `json` or `yaml` encoded format by adding the `--json` or `--yaml` options respectively. You can also dump a compliant kickstart file for automating ISO creation or anaconda installs via the `--kickstart` option.
@@ -254,9 +254,9 @@ The following commands allow management of packages from specified Templates.
 #### Command Overview
 The following commands are available for the management of Canvas template packages:
 ```
-canvas package add [user:]template [--nodeps] package1 packagelist1 package2 ... packageN
-canvas package list [user:]template [--filter-name] [--filter-summary] [--filter-description] [--filter-arch] [--filter-repo] [--output=path]
-canvas package rm [user:]template [--nodeps] package1 package2 ... packageN
+canvas package add [user:]template[@version] [--nodeps] package1 packagelist1 package2 ... packageN
+canvas package list [user:]template[@version] [--filter-name] [--filter-summary] [--filter-description] [--filter-arch] [--filter-repo] [--output=path]
+canvas package rm [user:]template[@version] [--nodeps] package1 package2 ... packageN
 ```
 
 #### Package Definition
@@ -282,7 +282,7 @@ foo#1@2.1-3:x86_64    # name, epoch, version, release and arch
 #### Adding Packages
 The general usage for adding packages from templates is described as:
 ```
-canvas package add [user:]template [--nodeps] package1 packagelist1 package2 ... packageN
+canvas package add [user:]template[@version] [--nodeps] package1 packagelist1 package2 ... packageN
 ```
 
 One or multiple packages can be listed, or one or more package file lists can be specified in place of or in addition to the packages. The file must contain a space- or newline-separated list of packages.
@@ -309,7 +309,7 @@ canvas package add firnsy:htpc --with-deps kodi    #kodi's dependencies will als
 #### Removing Packages
 The general usage for removing packages from templates is described as:
 ```
-canvas package rm [user:]template [--nodeps] package1 package2 ... packageN
+canvas package rm [user:]template[@version] [--nodeps] package1 package2 ... packageN
 ```
 
 If `--nodeps` is specified, the dependencies of any listed packages will not be automatically removed.
@@ -321,7 +321,7 @@ canvas package rm firnsy:htpc --nodeps foo baz
 #### Listing Packages
 The general usage for listing packages in templates is described as:
 ```
-canvas package list [user:]template [--filter-name] [--filter-summary] [--filter-description] [--filter-arch] [--filter-repo] [--output=path]
+canvas package list [user:]template[@version] [--filter-name] [--filter-summary] [--filter-description] [--filter-arch] [--filter-repo] [--output=path]
 ```
 
 If no filters are provided, all packages belonging to the specified template will be listed.
@@ -350,10 +350,10 @@ The following commands allow management of repos from specified Templates.
 #### Command Overview
 The following commands are available for the management of Canvas template repos:
 ```
-canvas repo add [user:]template repo_name [--filepath] [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]
-canvas repo update [user:]template repo_name [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]
-canvas repo list [user:] template
-canvas repo rm [user:]template repo_name
+canvas repo add [user:]template[@version] repo_name [--filepath] [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]
+canvas repo update [user:]template[@version] repo_name [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]
+canvas repo list [user:] template[@version]
+canvas repo rm [user:]template[@version] repo_name
 ```
 
 #### Repos Definitions
@@ -399,7 +399,7 @@ If enabled, DNF will continue running and disable the repository that couldn’t
 #### Adding Repos
 The general usage for adding repos from templates is described as:
 ```
-canvas repo add [user:]template repo_name --repofile [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]
+canvas repo add [user:]template[@version] repo_name --repofile [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]
 ```
 
 The following commands would add the `rpmfusion` repo to the `htpc` template of user `firnsy`:
@@ -419,7 +419,7 @@ canvas repo add firnsy:htpc ~fedora ~fedora-updates
 #### Updating Repos
 The general usage for updating repos from templates is described as:
 ```
-canvas repo update [user:]template repo_name [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]
+canvas repo update [user:]template[@version] repo_name [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]
 ```
 
 ```
@@ -429,7 +429,7 @@ canvas repo update firnsy:htpc rpmfusion --priority=50
 #### Listing Repos
 The general usage for listing repos in templates is described as:
 ```
-canvas repo list [user:]template
+canvas repo list [user:]template[@version]
 ```
 
 ```
@@ -452,15 +452,15 @@ The following commands allow management of objects from specified Templates.
 #### Command Overview
 The following commands are available for the management of Canvas template objects:
 ```
-canvas object add [user:]template store1:object_name1 store2:object_name2 ... storeN:object_nameN
-canvas object list [user:]template [--filter-store=...] [--filter-name=...]
-canvas object rm [user:]template store1:object_name1 store2:object_name2 ... storeN:object_nameN
+canvas object add [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN
+canvas object list [user:]template[@version] [--filter-store=...] [--filter-name=...]
+canvas object rm [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN
 ```
 
 #### Adding Objects
 The general usage for adding objects to templates is described as:
 ```
-canvas object add [user:]template store1:object_name1 store2:object_name2 ... storeN:object_nameN
+canvas object add [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN
 ```
 
 One or multiple objects can be listed, or one or more object file lists can be specified in place of or in addition to the objects. The file must contain a space- or newline-separated list of store:object references.
@@ -480,7 +480,7 @@ canvas object add firnsy:htpc ~services:sabnzbd
 #### Removing Objects
 The general usage for removing objects from templates is described as:
 ```
-canvas object rm [user:]template store1:object_name1 store2:object_name2 ... storeN:object_nameN
+canvas object rm [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN
 ```
 
 ```
@@ -490,7 +490,7 @@ canvas object rm firnsy:htpc services:sickbeard
 #### Listing Objects
 The general usage for listing objects in templates is described as:
 ```
-canvas object list [user:]template [--filter-store=...] [--filter-name=...] [--filter-description=]
+canvas object list [user:]template[@version] [--filter-store=...] [--filter-name=...] [--filter-description=]
 ```
 
 If no filters are provided, all objects belonging to the specified template will be listed.
@@ -520,13 +520,13 @@ The following commands allow management of repos from specified Templates.
 #### Command Overview
 The following commands are available for the management of Canvas template repos:
 ```
-canvas store add [user:]template store_name [--type] [--url] [--user] [--pass]
-canvas store update [user:]template store_name [--type] [--url] [--user] [--pass]
-canvas store list [user:]template
-canvas store rm [user:]template store_name
+canvas store add [user:]template[@version] store_name [--type] [--url] [--user] [--pass]
+canvas store update [user:]template[@version] store_name [--type] [--url] [--user] [--pass]
+canvas store list [user:]template[@version]
+canvas store rm [user:]template[@version] store_name
 
-canvas store get [user:]template/store name1 name2 ... nameN
-canvas store put [user:]template/store file1[:name1] file2[:name1] ... fileN[:nameN]
+canvas store get [user:]template[@version]/store name1 name2 ... nameN
+canvas store put [user:]template[@version]/store file1[:name1] file2[:name1] ... fileN[:nameN]
 ```
 
 #### Stores Definitions
@@ -571,7 +571,7 @@ canvas store add firnsy:htpc ~parent-store
 #### Updating Stores
 The general usage for updating stores from templates is described as:
 ```
-canvas store update [user:]template store_name [--type] [--url] [--user] [--pass]
+canvas store update [user:]template[@version] store_name [--type] [--url] [--user] [--pass]
 ```
 
 ```
@@ -581,7 +581,7 @@ canvas store update firnsy:htpc movies --url=192.168.0.10
 #### Listing Stores
 The general usage for listing stores in templates is described as:
 ```
-canvas store list [user:]template
+canvas store list [user:]template[@version]
 ```
 
 ```
@@ -591,7 +591,7 @@ canvas store list firnsy:htpc
 #### Removing Stores
 The general usage for removing stores from templates is described as:
 ```
-canvas store rm [user:]template store_name
+canvas store rm [user:]template[@version] store_name
 ```
 
 The following example will remove the `movies` store from the template `htpc` owned by `firnsy`.
@@ -602,7 +602,7 @@ canvas store rm firnsy:htpc movies
 #### Downloading Objects from Stores
 The general usage for downloading objects from stores is described as:
 ```
-canvas store get [user:]template[/store_name] name1 name2 ... nameN
+canvas store get [user:]template[@version][/store_name] name1 name2 ... nameN
 ```
 
 The `store_name` is an optional argument, ommission indicates the object will be retrieved from the internal template store.
@@ -614,7 +614,7 @@ canvas store get firnsy:htpc startup-script
 #### Uploading Objects to Stores
 The general usage for uploading objects to stores is described as:
 ```
-canvas store put [user:]template[/store_name] file1[:name1] file2[:name1] ... fileN[:nameN]
+canvas store put [user:]template[@version][/store_name] file1[:name1] file2[:name1] ... fileN[:nameN]
 ```
 
 By default, the object name will have the same basename as the file uploaded. This can be overridden by appending an alternative `:name` after the path. For example the following command will upload to the `movies` store the local file at `/path/to/foo` with the name `foo` and a second local file at `/path/to/bar` with the name `my-bar`.
@@ -636,17 +636,17 @@ Machines have a 1-to-1 link with a Canvas template. For example, you may assign 
 #### Command Overview
 The following commands are available for the management of Canvas machines:
 ```
-canvas machine add|update [user:]name [--description=] [--location=] [--name=] [--template=]
-canvas machine rm [user:]name
-canvas machine diff [user:]name [--output=path]
-canvas machine sync [user:]name [--pull [[user:]template]] | --push [user:]template]
-canvas machine cmd [user:]name command arg1 arg2 ... argN
+canvas machine add|update [user:]name[@version] [--description=] [--location=] [--name=] [--version] [--template=]
+canvas machine rm [user:]name[@version]
+canvas machine diff [user:]name[@version] [--output=path]
+canvas machine sync [user:]name[@version] [--pull [[user:]template[@version]]] | --push [user:]template[@version]]
+canvas machine cmd [user:]name[@version] command arg1 arg2 ... argN
 ```
 
 #### Adding Machines
 The general usage for adding a new managed machine to a Canvas user is described as:
 ```
-canvas machine add [user:]name [--description=] [--location=] [--name=] [--template=]
+canvas machine add [user:]name [--description=] [--location=] [--name=] [--version=] [--template=]
 ```
 
 To add the current system as a managed machine named `odin` to the Canvas user `firnsy` linked to the `htpc` template from the same Canvas user is as follows:
@@ -657,7 +657,7 @@ canvas machine add firnsy:odin --template firnsy:htpc
 #### Updating Machines
 The general usage for updating an existing managed machine of a Canvas user is described as:
 ```
-canvas machine add [user:]name [--description=] [--name=] [--template=]
+canvas machine update [user:]name [--description=] [--name=] [--version=] [--template=]
 ```
 
 For example to change the recently added machine from the `htpc` template to the `steam` template from Canvas user `firnsy` we can simply invoke:
@@ -668,7 +668,7 @@ canvas machine update firnsy:odin --template firnsy:steam
 #### Removing Machines
 The general usage for removing an existing managed machine to a Canvas user is described as:
 ```
-canvas machine rm [user:]name
+canvas machine rm [user:]name[@version]
 ```
 
 For example:
@@ -681,7 +681,7 @@ To determine the state of a machine with respect to it's assigned template. Can 
 
 The general usage for diff'ing an existing managed machine of a Canvas user is described as:
 ```
-canvas machine diff [user:]name [--output=path]
+canvas machine diff [user:]name[@version] [--output=path]
 ```
 
 For example to view the diff status of the machine `odin` of Canvas user `firnsy` relative to its assigned template can be done with the following command:
@@ -697,7 +697,7 @@ canvas machine diff firnsy:odin --output=/home/firnsy/templates/odin
 #### Synchronising Machines
 The general usage for synchronising an existing managed machine of a Canvas user is described as:
 ```
-canvas machine sync [user:]name [--pull [[user:]template]] | --push [user:]template]
+canvas machine sync [user:]name[@version] [--pull [[user:]template[@version]]] | --push [user:]template[@version]]
 ```
 
 For example synchronising machine `odin` of Canvas user `firnsy` is done with the following command:
@@ -723,7 +723,7 @@ canvas machine sync firnsy:odin --pull firnsy:htpc
 #### Commanding Machines
 The general usage for sending a command to an existing managed machine of a Canvas user is described as:
 ```
-canvas machine cmd [user:]name command arg1 arg2 ... argN
+canvas machine cmd [user:]name[@version] command arg1 arg2 ... argN
 ```
 
 Examples of running remote commands on the machine `odin` of Canvas user `firnsy` are shown below.
