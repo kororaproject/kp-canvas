@@ -37,7 +37,7 @@ class TemplateTestCase(TestCase):
         self.assertEqual(PackageSet(), templ1._delta_packages)
 
         self.assertEqual([], templ1._stores)
-        self.assertEqual([], templ1._archives)
+        self.assertEqual([], templ1._objects)
 
 
     def test_template_parse_str_valid(self):
