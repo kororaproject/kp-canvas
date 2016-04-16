@@ -30,6 +30,9 @@ import pykickstart.parser
 from pykickstart.i18n import _
 from pykickstart.version import DEVEL, makeVersion
 
+# [canvas://[user:]]name[@version]
+RE_TEMPLATE = re.compile("(?:canvas:\/\/)?(?:(?P<user>[\w\.\-]*):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
+
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
 #
@@ -40,8 +43,6 @@ class ErrorInvalidTemplate(Exception):
 
     def __str__(self):
         return 'error: {0}'.format(str(self.reason))
-
-RE_TEMPLATE = re.compile("(?:(?P<user>[\w\.\-]+):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
 
 class Template(object):
     def __init__(self, template=None, user=None):
@@ -219,25 +220,22 @@ class Template(object):
     def _parse_template(self, template):
         # parse the string short form
         if isinstance(template, str):
-            m = RE_TEMPLATE.match(template.strip())
+            (user, name, version) = self._parse_unv(template)
 
-            if m:
-                print(m.groups())
-                if m.group('user') is not None:
-                    self._user = m.group('user').strip()
+            if user:
+                self._user = user
 
-                if m.group('name') is not None:
-                    self._name = m.group('name').strip()
+            if name:
+                self._name = name
 
-                if m.group('version') is not None:
-                    self._version = m.group('version').strip()
+            if version:
+                self._version = version
 
-            else:
+            if not self._user or len(self._user) == 0:
                 raise ErrorInvalidTemplate("template format invalid")
 
             if not self._name or len(self._name) == 0:
                 raise ErrorInvalidTemplate("template format invalid")
-
 
         # parse the dict form, the most common form and directly
         # relates to the json structures returned by canvas server
@@ -263,6 +261,32 @@ class Template(object):
             # resolve includes
             self._flatten()
 
+    def _parse_unv(self, value):
+        if isinstance(value, str):
+            m = RE_TEMPLATE.match(value.strip())
+
+            if m:
+                return m.groups()
+
+        return (None, None, None)
+
+    def _unv_to_str(self, value):
+        if isinstance(value, str):
+            m = RE_TEMPLATE.match(value.strip())
+
+            if m:
+                (user, name, version) = m.groups()
+
+                if user is None:
+                    user = self._user
+
+                if user and name and version:
+                    return "canvas://{0}:{1}@{2}".format(user, name, version)
+                elif user and name:
+                    return "canvas://{0}:{1}".format(user, name)
+
+        return None
+
     #
     # PROPERTIES
     @property
@@ -282,10 +306,28 @@ class Template(object):
 
     @includes.setter
     def includes(self, value):
-        if ',' in value:
-            value = value.split(',')
+        if isinstance(value, str):
+            if ',' in value:
+                value = value.split(',')
+            else:
+                value = [value]
+        elif not isinstance(value, list):
+            return
 
-        self._includes = value
+        includes = []
+
+        for v in value:
+            sv = self._unv_to_str(v)
+            # attempt to sanitise the UNV string
+            if sv is not None:
+                includes.append(sv)
+
+            # otherwise check for a remote kickstart sring
+            elif v.startswith('ks+http'):
+                includes.append(v)
+
+        if len(includes):
+            self._includes = includes
 
     @property
     def name(self):

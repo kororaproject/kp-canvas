@@ -17,14 +17,9 @@ class MachineTestCase(TestCase):
 
     def test_machine_parse_str_valid(self):
         # valid
-        m1 = Machine("foo")
         m2 = Machine("foo:bar")
         m3 = Machine("foo:bar@baz")
         m4 = Machine("foo:bar@")
-
-        self.assertEqual(None, m1.user)
-        self.assertEqual("foo", m1.name)
-        self.assertEqual(None, m1.version)
 
         self.assertEqual("foo", m2.user)
         self.assertEqual("bar", m2.name)
@@ -40,23 +35,26 @@ class MachineTestCase(TestCase):
 
     def test_machine_parse_str_invalid(self):
 
-        # Whitespace name
-        with self.assertRaises(ErrorInvalidMachine):
-            Machine(" ")
-
-        # Empty name
-        with self.assertRaises(ErrorInvalidMachine):
-            Machine(":foo@bar")
-
-        # Empty name and version
-        with self.assertRaises(ErrorInvalidMachine):
-            Machine(":foo@")
-
-        # Empty string
+        # empty string
         with self.assertRaises(ErrorInvalidMachine):
             Machine("")
 
-        # Empty name
+        # pure whitespace
+        with self.assertRaises(ErrorInvalidMachine):
+            Machine(" ")
+
+        # no user
+        with self.assertRaises(ErrorInvalidMachine):
+            Machine("foo")
+
+        with self.assertRaises(ErrorInvalidMachine):
+            Machine(":foo@bar")
+
+        # no user or version
+        with self.assertRaises(ErrorInvalidMachine):
+            Machine(":foo@")
+
+        # no name
         with self.assertRaises(ErrorInvalidMachine):
             Machine("foo:")
 

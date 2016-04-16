@@ -20,7 +20,7 @@ import json
 import re
 import yaml
 
-RE_MACHINE = re.compile("(?:(?P<user>[\w\.\-]+):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
+RE_MACHINE = re.compile("(?:(?P<user>[\w\.\-]*):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
 
 class ErrorInvalidMachine(Exception):
     def __init__(self, reason, code=0):
@@ -63,7 +63,6 @@ class Machine(object):
             m = RE_MACHINE.match(machine)
 
             if m:
-                print(m.groups())
                 if m.group('user') is not None:
                     self._user = m.group('user').strip()
 
@@ -76,9 +75,11 @@ class Machine(object):
             else:
                 raise ErrorInvalidMachine("machine format invalid")
 
-            if not self._name or len(self._name) == 0:
+            if not self._user or len(self._user) == 0:
                 raise ErrorInvalidMachine("machine format invalid")
 
+            if not self._name or len(self._name) == 0:
+                raise ErrorInvalidMachine("machine format invalid")
 
         # parse the dict form, the most common form and directly
         # relates to the json structures returned by canvas server
