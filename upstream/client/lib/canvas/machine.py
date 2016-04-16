@@ -17,7 +17,18 @@
 #
 
 import json
+import re
 import yaml
+
+RE_MACHINE = re.compile("(?:(?P<user>[\w\.\-]+):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
+
+class ErrorInvalidMachine(Exception):
+    def __init__(self, reason, code=0):
+        self.reason = reason.lower()
+        self.code = code
+
+    def __str__(self):
+        return 'error: {0}'.format(str(self.reason))
 
 class Machine(object):
     def __init__(self, machine=None, user=None, key=None):
@@ -25,6 +36,7 @@ class Machine(object):
         self._user        = user
         self._template    = None
         self._uuid        = None
+        self._version     = None
         self._title       = ''
         self._description = ''
         self._key         = key
@@ -48,14 +60,25 @@ class Machine(object):
     def _parse_machine(self, machine):
         # parse the string short form
         if isinstance(machine, str):
-            parts = machine.split(':')
+            m = RE_MACHINE.match(machine)
 
-            if len(parts) == 1:
-                self._name = parts[0]
+            if m:
+                print(m.groups())
+                if m.group('user') is not None:
+                    self._user = m.group('user').strip()
 
-            elif len(parts) == 2:
-                self._user = parts[0]
-                self._name = parts[1]
+                if m.group('name') is not None:
+                    self._name = m.group('name').strip()
+
+                if m.group('version') is not None:
+                    self._version = m.group('version').strip()
+
+            else:
+                raise ErrorInvalidMachine("machine format invalid")
+
+            if not self._name or len(self._name) == 0:
+                raise ErrorInvalidMachine("machine format invalid")
+
 
         # parse the dict form, the most common form and directly
         # relates to the json structures returned by canvas server
@@ -64,6 +87,7 @@ class Machine(object):
             self._template = machine.get('template', self._template)
             self._user = machine.get('user', machine.get('username', None))
             self._name = machine.get('stub', self._name)
+            self._version = machine.get('version', None)
             self._title = machine.get('name', self._title)
             self._description = machine.get('description', None)
 
@@ -132,6 +156,17 @@ class Machine(object):
     @uuid.setter
     def uuid(self, value):
         self._uuid = value
+
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, value):
+        if value is None or len(str(value)) == 0:
+            return
+
+        self._version = str(value)
 
     #
     # PUBLIC METHODS

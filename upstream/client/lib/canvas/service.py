@@ -53,6 +53,64 @@ class Service(object):
 
         self._authenticated = False
 
+    def _template_data_get(self, template):
+        if not isinstance(template, Template):
+            TypeError('template is not of type Template')
+
+        query = {'user': template.user, 'name': template.name}
+
+        r = urllib.request.Request('%s/api/templates.json?%s' % (self._urlbase, urllib.parse.urlencode(query)))
+
+        try:
+            u = self._opener.open(r)
+            template_summary = json.loads(u.read().decode('utf-8'))
+
+            # nothing returned, so authenticate and retry
+            if len(template_summary) == 0 and not self._authenticated:
+                self.authenticate()
+
+                u = self._opener.open(r)
+                template_summary = json.loads(u.read().decode('utf-8'))
+
+            if len(template_summary):
+                # we only have one returned since template names are unique per account
+                r = urllib.request.Request('{0}/api/template/{1}.json'.format(self._urlbase,
+                        template_summary[0]['uuid']))
+                u = self._opener.open(r)
+                data = json.loads(u.read().decode('utf-8'))
+
+                return Template(template=data)
+
+            raise ServiceException('unable to get template')
+
+        except urllib.error.URLError as e:
+            res = json.loads(e.fp.read().decode('utf-8'))
+            raise ServiceException('{0}'.format(res.get('error', 'unknown')))
+
+        except urllib.error.HTTPError as e:
+            print(e)
+            raise ServiceException('unknown service response')
+
+    def _template_resolve_includes(self, template_src, template_dst=None):
+        # use the src temlate if if no dst template provided
+        if template_dst is None:
+            template_dst = template_src
+
+        for i in template_src.includes:
+
+            # TODO: check for canvas:// or URL or kickstart+https?://
+
+            t = Template(i)
+            data = self._template_data_get(t)
+
+            # push our resolved template to the dst
+            template_dst._includes_resolve.add(t)
+
+            # recurse down
+            self._template_resolve_includes(t, template_dst)
+
+        return template_dst
+
     def authenticate(self, username=None, password=None, prompt=None, force=False):
         # print('debug: authenticating to {0}'.format(self._urlbase))
 
@@ -373,7 +431,7 @@ class Service(object):
 
         raise ServiceException('unable to delete template.')
 
-    def template_get(self, template, auth=False):
+    def template_get(self, template, auth=False, resolve_includes=False):
         if not isinstance(template, Template):
             TypeError('template is not of type Template')
 
@@ -381,39 +439,13 @@ class Service(object):
         if auth:
             self.authenticate()
 
-        query = {'user': template.user, 'name': template.name}
+        template = self._template_data_get(template)
 
-        r = urllib.request.Request('%s/api/templates.json?%s' % (self._urlbase, urllib.parse.urlencode(query)))
+        if resolve_includes:
+            template = self._resolve_template_includes(template)
 
-        try:
-            u = self._opener.open(r)
-            template_summary = json.loads(u.read().decode('utf-8'))
+        return template
 
-            # nothing returned, so authenticate and retry
-            if len(template_summary) == 0 and not self._authenticated:
-                self.authenticate()
-
-                u = self._opener.open(r)
-                template_summary = json.loads(u.read().decode('utf-8'))
-
-            if len(template_summary):
-                # we only have one returned since template names are unique per account
-                r = urllib.request.Request('{0}/api/template/{1}.json'.format(self._urlbase,
-                        template_summary[0]['uuid']))
-                u = self._opener.open(r)
-                data = json.loads(u.read().decode('utf-8'))
-
-                return Template(template=data)
-
-            raise ServiceException('unable to get template')
-
-        except urllib.error.URLError as e:
-            res = json.loads(e.fp.read().decode('utf-8'))
-            raise ServiceException('{0}'.format(res.get('error', 'unknown')))
-
-        except urllib.error.HTTPError as e:
-            print(e)
-            raise ServiceException('unknown service response')
 
     def template_list(self, user=None, name=None, description=None, public=False):
         params = {

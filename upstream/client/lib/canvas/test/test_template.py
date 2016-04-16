@@ -41,14 +41,27 @@ class TemplateTestCase(TestCase):
 
 
     def test_template_parse_str_valid(self):
-        templ1 = Template("test1")
-        templ2 = Template("tst:test1")
+        # valid
+        templ1 = Template("foo")
+        templ2 = Template("foo:bar")
+        templ3 = Template("foo:bar@baz")
+        templ4 = Template("foo:bar@")
 
-        self.assertEqual("test1", templ1.name)
         self.assertEqual(None, templ1.user)
+        self.assertEqual("foo", templ1.name)
+        self.assertEqual(None, templ1.version)
 
-        self.assertEqual("test1", templ2.name)
-        self.assertEqual("tst", templ2.user)
+        self.assertEqual("foo", templ2.user)
+        self.assertEqual("bar", templ2.name)
+        self.assertEqual(None, templ2.version)
+
+        self.assertEqual("foo", templ3.user)
+        self.assertEqual("bar", templ3.name)
+        self.assertEqual("baz", templ3.version)
+
+        self.assertEqual("foo", templ4.user)
+        self.assertEqual("bar", templ4.name)
+        self.assertEqual(None, templ4.version)
 
     def test_template_parse_str_invalid(self):
 
@@ -56,25 +69,21 @@ class TemplateTestCase(TestCase):
         with self.assertRaises(ErrorInvalidTemplate):
             Template(" ")
 
+        # Empty name
+        with self.assertRaises(ErrorInvalidTemplate):
+            Template(":foo@bar")
+
+        # Empty name and version
+        with self.assertRaises(ErrorInvalidTemplate):
+            Template(":foo@")
+
         # Empty string
         with self.assertRaises(ErrorInvalidTemplate):
             Template("")
 
-        # Whitespace user
+        # Empty name
         with self.assertRaises(ErrorInvalidTemplate):
-            Template(" :test1")
-
-        # Missing user
-        with self.assertRaises(ErrorInvalidTemplate):
-            Template(":test1")
-
-        # Missing name
-        with self.assertRaises(ErrorInvalidTemplate):
-            Template("tst:")
-
-        # Trailing seperator
-        with self.assertRaises(ErrorInvalidTemplate):
-            Template("tst:test1:")
+            Template("foo:")
 
 #    def test_template_from_kickstart_invalid_path(self):
 #        templ1 = Template({})

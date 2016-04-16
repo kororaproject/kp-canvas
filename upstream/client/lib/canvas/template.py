@@ -18,6 +18,7 @@
 
 import dnf
 import json
+import re
 import sys
 import yaml
 
@@ -40,12 +41,14 @@ class ErrorInvalidTemplate(Exception):
     def __str__(self):
         return 'error: {0}'.format(str(self.reason))
 
+RE_TEMPLATE = re.compile("(?:(?P<user>[\w\.\-]+):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
 
 class Template(object):
     def __init__(self, template=None, user=None):
         self._name = None
         self._user = user
         self._uuid = None
+        self._version = None
         self._title = None
         self._description = None
 
@@ -216,25 +219,25 @@ class Template(object):
     def _parse_template(self, template):
         # parse the string short form
         if isinstance(template, str):
-            parts = template.split(':')
+            m = RE_TEMPLATE.match(template.strip())
 
-            if len(parts) == 1:
-                self._name = parts[0].strip()
+            if m:
+                print(m.groups())
+                if m.group('user') is not None:
+                    self._user = m.group('user').strip()
 
-            elif len(parts) == 2:
-                self._user = parts[0].strip()
-                self._name = parts[1].strip()
+                if m.group('name') is not None:
+                    self._name = m.group('name').strip()
+
+                if m.group('version') is not None:
+                    self._version = m.group('version').strip()
+
             else:
                 raise ErrorInvalidTemplate("template format invalid")
 
-            if not self._name:
+            if not self._name or len(self._name) == 0:
                 raise ErrorInvalidTemplate("template format invalid")
 
-            if len(self._name) is 0:
-                raise ErrorInvalidTemplate("template format invalid")
-
-            if not self._user and (len(parts) == 2):
-                raise ErrorInvalidTemplate("template format invalid")
 
         # parse the dict form, the most common form and directly
         # relates to the json structures returned by canvas server
@@ -242,6 +245,7 @@ class Template(object):
             self._uuid = template.get('uuid', None)
             self._user = template.get('user', template.get('username', None))
             self._name = template.get('stub', None)
+            self._version = template.get('version', None)
             self._title = template.get('name', self._name)
             self._description = template.get('description', None)
 
@@ -252,7 +256,7 @@ class Template(object):
             self._packages = PackageSet(Package(p) for p in template.get('packages', []))
 
             self._stores   = template.get('stores', [])
-            self._objects  = template.get('objects', template.get('archives', []))
+            self._objects  = template.get('objects', [])
 
             self._meta = template.get('meta', {})
 
@@ -271,10 +275,6 @@ class Template(object):
             return
 
         self._description = str(value)
-
-    @property
-    def uuid(self):
-        return self._uuid
 
     @property
     def includes(self):
@@ -338,6 +338,21 @@ class Template(object):
     @property
     def user(self):
         return self._user
+
+    @property
+    def uuid(self):
+        return self._uuid
+
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, value):
+        if value is None or len(str(value)) == 0:
+            return
+
+        self._version = str(value)
 
     #
     # PUBLIC METHODS
