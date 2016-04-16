@@ -89,22 +89,15 @@ class TemplateTestCase(TestCase):
 
     def test_template_add_includes(self):
         t1 = Template("foo:bar")
-        t2 = Template("foo:baz")
 
         t1.includes = 'foo'
-        self.assertEqual(["canvas://foo:foo"], t1.includes)
+        self.assertEqual(["foo:foo"], t1.includes)
 
-        t1.includes = ['foo','bar']
-        self.assertEqual(["canvas://foo:foo", "canvas://foo:bar"], t1.includes)
+        t1.includes = ['foo','bar@baz']
+        self.assertEqual(["foo:foo", "foo:bar@baz"], t1.includes)
 
-        t1.includes = 'foo,bar,baz'
-        self.assertEqual(["canvas://foo:foo", "canvas://foo:bar", "canvas://foo:baz"], t1.includes)
-
-        t1.includes = 'foo,canvas://bar:baz'
-        self.assertEqual(["canvas://foo:foo", "canvas://bar:baz"], t1.includes)
-
-        t1.includes = 'ks+http://foo.com/bar.ks,canvas://bar:baz'
-        self.assertEqual(["ks+http://foo.com/bar.ks", "canvas://bar:baz"], t1.includes)
+        t1.includes = 'foo,bar@baz,baz'
+        self.assertEqual(["foo:foo", "foo:bar@baz", "foo:baz"], t1.includes)
 
 if __name__ == "__main__":
     import unittest

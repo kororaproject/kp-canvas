@@ -30,8 +30,8 @@ import pykickstart.parser
 from pykickstart.i18n import _
 from pykickstart.version import DEVEL, makeVersion
 
-# [canvas://[user:]]name[@version]
-RE_TEMPLATE = re.compile("(?:canvas:\/\/)?(?:(?P<user>[\w\.\-]*):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
+# [user:]name[@version]
+RE_TEMPLATE = re.compile("(?:(?P<user>[\w\.\-]*):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
 
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
@@ -123,11 +123,11 @@ class Template(object):
             ksparser.readKickstart(path)
 
         except IOError as msg:
-            print("Failed to read kickstart file '%(filename)s' : %(error_msg)s" % {"filename": path, "error_msg": msg}, file=sys.stderr)
+            print("Failed to read kickstart file '{0}' : {1}".format(path, msg))
             return
 
         except pykickstart.errors.KickstartError as e:
-            print("Failed to parse kickstart file '%(filename)s' : %(error_msg)s" % {"filename": path, "error_msg": e}, file=sys.stderr)
+            print("Failed to parse kickstart file '{0}' : {1}".format(path, msg))
             return
 
         handler = ksparser.handler
@@ -281,9 +281,9 @@ class Template(object):
                     user = self._user
 
                 if user and name and version:
-                    return "canvas://{0}:{1}@{2}".format(user, name, version)
+                    return "{0}:{1}@{2}".format(user, name, version)
                 elif user and name:
-                    return "canvas://{0}:{1}".format(user, name)
+                    return "{0}:{1}".format(user, name)
 
         return None
 
@@ -321,10 +321,6 @@ class Template(object):
             # attempt to sanitise the UNV string
             if sv is not None:
                 includes.append(sv)
-
-            # otherwise check for a remote kickstart sring
-            elif v.startswith('ks+http'):
-                includes.append(v)
 
         if len(includes):
             self._includes = includes

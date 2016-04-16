@@ -57,7 +57,13 @@ class Service(object):
         if not isinstance(template, Template):
             TypeError('template is not of type Template')
 
-        query = {'user': template.user, 'name': template.name}
+        query = {
+            'user':    template.user,
+            'name':    template.name,
+            'version': template.version
+        }
+
+        query = {k: v for k, v in query.items() if v != None}
 
         r = urllib.request.Request('%s/api/templates.json?%s' % (self._urlbase, urllib.parse.urlencode(query)))
 
@@ -97,9 +103,6 @@ class Service(object):
             template_dst = template_src
 
         for i in template_src.includes:
-
-            # TODO: check for canvas:// or URL or kickstart+https?://
-
             t = Template(i)
             data = self._template_data_get(t)
 
@@ -249,7 +252,14 @@ class Service(object):
         if not isinstance(machine, Machine):
             TypeError('machine is not of type Machine')
 
-        query = {'user': machine.user, 'name': machine.name}
+        query = {
+            'user':    machine.user,
+            'name':    machine.name,
+            'version': machine.version
+        }
+
+        query = {k: v for k, v in query.items() if v != None}
+
         r = urllib.request.Request('{0}/api/machines.json?{1}'.format(self._urlbase, urllib.parse.urlencode(query)))
 
         try:
