@@ -44,6 +44,7 @@ sub add {
     $now->epoch;
 
   # set default values
+  $machine->{version}     //= '';
   $machine->{description} //= '';
   $machine->{stores}      //= [];
   $machine->{objects}     //= [];
@@ -98,8 +99,8 @@ sub add {
         $self->pg->db->query('
           INSERT INTO machines
             (owner_id, template_id, uuid, key, name, stub,
-            description, stores, objects, history, meta)
-          SELECT u.id, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10
+            version, description, stores, objects, history, meta)
+          SELECT u.id, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
           FROM users u
           WHERE
             u.username=$11 AND
@@ -110,7 +111,9 @@ sub add {
             $machine->{uuid},
             $machine->{key},
             $machine->{title},
-            $machine->{stub}, $machine->{description},
+            $machine->{stub},
+            $machine->{version},
+            $machine->{description},
             {json => $machine->{stores}},
             {json => $machine->{objects}},
             {json => $machine->{history}},
@@ -138,8 +141,8 @@ sub all {
 
   return $self->pg->db->query('
     SELECT
-      m.uuid, m.name, m.description, m.stub, m.includes,
-      m.repos, m.packages, m.meta, m.owner_id,
+      m.uuid, m.name, m.stub, m.version, m.description,
+      m.includes, m.repos, m.packages, m.meta, m.owner_id,
       u.username AS owner,
       EXTRACT(EPOCH FROM m.created) AS created,
       EXTRACT(EPOCH FROM m.updated) AS updated
@@ -165,7 +168,7 @@ sub find {
 
         $self->pg->db->query('
           SELECT
-            m.uuid, m.name, m.description, m.stub,
+            m.uuid, m.name, m.stub, m.version, m.description,
             t.uuid AS template, m.meta, u.username,
             EXTRACT(EPOCH FROM m.created) AS created,
             EXTRACT(EPOCH FROM m.updated) AS updated
@@ -177,11 +180,12 @@ sub find {
           WHERE
             (m.uuid=$1 or $1 IS NULL) AND
             (m.stub=$2 or $2 IS NULL) AND
-            (u.username=$3 or $3 IS NULL) AND
-            (m.owner_id=$4 OR
-              (u.meta->\'members\' @> CAST($4 AS text)::jsonb)
+            (m.version=$3 or $3 IS NULL) AND
+            (u.username=$4 or $4 IS NULL) AND
+            (m.owner_id=$5 OR
+              (u.meta->\'members\' @> CAST($5 AS text)::jsonb)
             )' => (
-              $args->{uuid}, $args->{name},
+              $args->{uuid}, $args->{name}, $args->{version},
               $args->{user_name}, $args->{user_id}) => $d->begin);
       },
       sub {
@@ -226,7 +230,7 @@ sub get {
 
         $self->pg->db->query('
           SELECT
-            m.uuid, m.name, m.description, m.stub,
+            m.uuid, m.name, m.stub, m.version, m.description,
             t.uuid AS template, m.meta, u.username,
             m.stores, m.objects, m.history,
             EXTRACT(EPOCH FROM m.created) AS created,
@@ -315,6 +319,7 @@ sub update {
   return $cb->('invalid name defined.', undef) unless length $machine->{stub};
 
   $machine->{title}       //= '';
+  $machine->{version}     //= '';
   $machine->{description} //= '';
   $machine->{stores}      //= [];
   $machine->{objects}     //= [];
@@ -372,13 +377,15 @@ sub update {
         $self->pg->db->query('
           UPDATE machines
             SET
-              name=$1, stub=$2, description=$3,
-              stores=$4, objects=$5, history=$6, meta=$7,
-              template_id=$8
+              name=$1, stub=$2, version=$3, description=$4,
+              stores=$5, objects=$6, history=$7, meta=$8,
+              template_id=$9
           WHERE
-            uuid=$9' => (
+            uuid=$10' => (
             $machine->{title},
-            $machine->{stub}, $machine->{description},
+            $machine->{stub},
+            $machine->{version},
+            $machine->{stub},
             {json => $machine->{stores}},
             {json => $machine->{objects}},
             {json => $machine->{history}},

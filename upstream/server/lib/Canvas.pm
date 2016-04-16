@@ -160,7 +160,6 @@ sub startup {
   $r_api->get('/template/:uuid')->to('api#template_get');
   $r_api->put('/template/:uuid')->to('api#template_update');
   $r_api->delete('/template/:uuid')->to('api#template_del');
-  $r_api->get('/template/:uuid/includes')->to('api#template_includes_get');
 
 
   $r_api->get('/machines')->to('api#machines_get');

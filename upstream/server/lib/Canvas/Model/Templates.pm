@@ -32,6 +32,7 @@ sub add {
     $now->epoch;
 
   # set default values
+  $template->{version}     //= '';
   $template->{description} //= '';
   $template->{includes}    //= [];
   $template->{meta}        //= {};
@@ -51,7 +52,7 @@ sub add {
           FROM templates t
           JOIN users u ON
             (u.id=t.owner_id)
-          WHERE t.stub=? AND u.username=?' => ($template->{stub}, $template->{user}) => $d->begin);
+          WHERE t.stub=? AND u.username=? AND t.version=?' => ($template->{stub}, $template->{user}, $template->{version}) => $d->begin);
       },
       sub {
         my ($d, $err, $res) = @_;
@@ -63,9 +64,9 @@ sub add {
         # insert if we're the owner or member of owner's group
         $self->pg->db->query('
           INSERT INTO templates
-            (owner_id, uuid, name, stub, description,
+            (owner_id, uuid, name, stub, version, description,
             includes, packages, repos, stores, objects, meta)
-          SELECT u.id, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10
+          SELECT u.id, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
           FROM users u
           WHERE
             u.username=$9 AND
@@ -74,7 +75,8 @@ sub add {
           LIMIT 1' => (
             $template->{uuid},
             $template->{title},
-            $template->{stub}, $template->{description},
+            $template->{stub}, $template->{version},
+            $template->{description},
             {json => $template->{includes}},
             {json => $template->{packages}},
             {json => $template->{repos}},
@@ -104,9 +106,8 @@ sub all {
 
   return $self->pg->db->query('
     SELECT
-      t.id, t.name, t.description, t.stub, t.includes,
-      t.repos, t.packages, t.meta, t.owner_id,
-      u.username AS owner,
+      t.id, t.name, t.description, t.stub, t.version, t.includes,
+      t.repos, t.packages, t.meta, t.owner_id, u.username AS owner,
       EXTRACT(EPOCH FROM t.created) AS created,
       EXTRACT(EPOCH FROM t.updated) AS updated
     FROM templates t
@@ -132,7 +133,7 @@ sub find {
 
         $self->pg->db->query('
           SELECT
-            t.uuid, t.name, t.description, t.stub, t.includes,
+            t.uuid, t.name, t.description, t.stub, t.version, t.includes,
             t.repos, t.packages, t.meta, u.username,
             EXTRACT(EPOCH FROM t.created) AS created,
             EXTRACT(EPOCH FROM t.updated) AS updated
@@ -142,12 +143,13 @@ sub find {
           WHERE
             (t.uuid=$1 or $1 IS NULL) AND
             (t.stub=$2 or $2 IS NULL) AND
-            (u.username=$3 or $3 IS NULL) AND
-            (t.owner_id=$4 OR
-              (u.meta->\'members\' @> CAST($4 AS text)::jsonb) OR
+            (t.version=$3 or $3 IS NULL) AND
+            (u.username=$4 or $4 IS NULL) AND
+            (t.owner_id=$5 OR
+              (u.meta->\'members\' @> CAST($5 AS text)::jsonb) OR
               (t.meta @> \'{"public": true}\'::jsonb)
             )' => (
-              $args->{uuid}, $args->{name},
+              $args->{uuid}, $args->{name}, $args->{version},
               $args->{user_name}, $args->{user_id}) => $d->begin);
       },
       sub {
@@ -175,7 +177,7 @@ sub get {
 
         $self->pg->db->query('
           SELECT
-            t.uuid, t.name, t.description, t.stub, t.includes,
+            t.uuid, t.name, t.description, t.stub, t.version, t.includes,
             t.repos, t.packages, t.meta, u.username,
             t.stores, t.objects,
             EXTRACT(EPOCH FROM t.created) AS created,
@@ -242,34 +244,6 @@ sub remove {
   }
 }
 
-sub resolve {
-  my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
-  my $self = shift;
-  my $args = @_%2 ? shift : {@_};
-
-  my $template = $args->{template};
-  my $includes = $template->{includes};
-
-  if (@{$includes}) {
-    $template->{includes} = [];
-
-    for my $template_name (@{$includes}) {
-      my ($user, $name) = split /:/, $template_name;
-
-      # TODO: ensure include is also "visible" to user
-      my $t = $self->pg->db->query('SELECT t.uuid, t.name, t.description, t.stub, t.includes, t.repos, t.packages, t.meta, u.username, EXTRACT(EPOCH FROM t.created) AS created, EXTRACT(EPOCH FROM t.updated) AS updated FROM templates t JOIN users u ON (u.id=t.owner_id) WHERE t.stub=? AND u.username=?', $name, $user)->expand->hash;
-
-      # recursively resolve
-      if ($t) {
-        $t = $self->resolve_includes(template => $t);
-        push @{$template->{includes_resolved}}, $t;
-      }
-    }
-  }
-
-  return $template;
-}
-
 sub update {
   my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
   my $self = shift;
@@ -286,6 +260,7 @@ sub update {
   return $cb->('invalid name defined.', undef) unless length $template->{stub};
 
   $template->{title}       //= '';
+  $template->{version}     //= '';
   $template->{description} //= '';
   $template->{includes}    //= [];
   $template->{meta}        //= {};
@@ -321,13 +296,14 @@ sub update {
         $self->pg->db->query('
           UPDATE templates
             SET
-              name=$1, stub=$2, description=$3,
-              includes=$4, packages=$5, repos=$6,
-              stores=$7, $objects=$8, meta=$9
+              name=$1, stub=$2, version=$3, description=$4,
+              includes=$5, packages=$6, repos=$7,
+              stores=$8, $objects=$9, meta=$10
           WHERE
-            uuid=$8' => (
+            uuid=$11' => (
             $template->{title},
-            $template->{stub}, $template->{description},
+            $template->{stub}, $template->{version},
+            $template->{description},
             {json => $template->{includes}},
             {json => $template->{packages}},
             {json => $template->{repos}},

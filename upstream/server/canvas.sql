@@ -148,6 +148,7 @@ CREATE TABLE templates (
 
   name          TEXT,
   stub          VARCHAR(128)  NOT NULL,
+  version       VARCHAR(16)   DEFAULT '',
   description   TEXT,
 
   includes      JSONB         NOT NULL  DEFAULT '[]',
@@ -163,6 +164,7 @@ CREATE TABLE templates (
   updated       TIMESTAMP     NOT NULL  DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'utc'),
 
   UNIQUE(owner_id, stub),
+  UNIQUE(owner_id, stub, version),
   UNIQUE(uuid)
 );
 
@@ -183,6 +185,7 @@ CREATE TABLE machines (
 
   name          TEXT,
   stub          VARCHAR(128)  NOT NULL,
+  version       VARCHAR(16)   DEFAULT '',
   description   TEXT,
 
   stores        JSONB         NOT NULL  DEFAULT '[]',
@@ -194,7 +197,7 @@ CREATE TABLE machines (
   created       TIMESTAMP     NOT NULL  DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'utc'),
   updated       TIMESTAMP     NOT NULL  DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'utc'),
 
-  UNIQUE(owner_id, name),
+  UNIQUE(owner_id, stub, version),
   UNIQUE(uuid)
 );
 
