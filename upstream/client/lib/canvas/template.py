@@ -74,9 +74,7 @@ class Template(object):
         return 'Template: %s (owner: %s) - R: %d, P: %d' % (self._name, self._user, len(self.repos_all), len(self.packages_all))
 
     def _flatten(self):
-        for tr in self._includes_resolved:
-            t = Template(tr)
-
+        for t in self._includes_resolved:
             self._includes_repos.update(t.repos_all)
             self._includes_packages.update(t.packages_all)
 
@@ -302,15 +300,16 @@ class Template(object):
 
     @includes.setter
     def includes(self, value):
+        # process string by splitting on `,`
         if isinstance(value, str):
-            if ',' in value:
-                value = value.split(',')
-            else:
-                value = [value]
-        elif not isinstance(value, list):
+            value = value.split(',')
+
+        # return early if not dealing with a list from here
+        if not isinstance(value, list):
             return
 
         includes = []
+        includes_resolved = []
 
         for v in value:
             if isinstance(v, str):
@@ -319,11 +318,20 @@ class Template(object):
                 if sv is not None:
                     includes.append(sv)
 
-            elif isinstance(t, Template):
-                pass
+            elif isinstance(v, Template):
+                if v.unv is not None:
+                    includes.append(v.unv)
+
+                includes_resolved.append(v)
 
         if len(includes):
             self._includes = includes
+
+        if len(includes_resolved):
+            self._includes_resolved = includes_resolved
+
+        # flatten template
+        self._flatten()
 
     @property
     def name(self):

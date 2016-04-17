@@ -107,7 +107,8 @@ class Service(object):
             data = self._template_data_get(t)
 
             # push our resolved template to the dst
-            template_dst._includes_resolve.add(t)
+            template_dst._includes.append(t.unv)
+            template_dst._includes_resolved.append(t)
 
             # recurse down
             self._template_resolve_includes(t, template_dst)

@@ -7,7 +7,7 @@ from unittest import TestCase
 
 from canvas.template import Template, ErrorInvalidTemplate
 from canvas.repository import RepoSet
-from canvas.package import PackageSet
+from canvas.package import Package, PackageSet
 
 
 class TemplateTestCase(TestCase):
@@ -90,7 +90,7 @@ class TemplateTestCase(TestCase):
 #        t1.from_kickstart('')
 
 
-    def test_template_add_includes(self):
+    def test_template_add_includes_str(self):
         t1 = Template("foo:bar")
 
         t1.includes = 'foo'
@@ -101,6 +101,45 @@ class TemplateTestCase(TestCase):
 
         t1.includes = 'foo,bar@baz,baz'
         self.assertEqual(["foo:foo", "foo:bar@baz", "foo:baz"], t1.includes)
+
+
+    def test_template_add_includes_obj(self):
+        t1 = Template("foo:bar")
+        t2 = Template("bar:baz")
+        t3 = Template("baz:daz")
+
+        p1 = Package("foo")
+        p2 = Package("bar")
+        p3 = Package("baz")
+        p4 = Package("~baz")
+
+        t1.add_package(p1)
+
+        t2.add_package(p2)
+        t2.add_package(p3)
+
+        t3.add_package(p4)
+
+        # check includes
+        t1.includes = [t2]
+        self.assertEqual(["bar:baz"], t1.includes)
+
+        # check includes (rebuild)
+        t1.includes = [t2, t3]
+        self.assertEqual(["bar:baz", "baz:daz"], t1.includes)
+
+        # check package resolution
+        t1.includes = [t2]
+        self.assertEqual(PackageSet([p1, p2, p3]), t1.packages_all)
+
+        # check package resolution (ordered)
+        t1.includes = [t2, t3]
+        self.assertEqual(PackageSet([p1, p2, p3]), t1.packages_all)
+
+        t1.includes = [t3, t2]
+        self.assertEqual(PackageSet([p1, p2, p4]), t1.packages_all)
+
+
 
 if __name__ == "__main__":
     import unittest
