@@ -243,7 +243,7 @@ class TemplateCommand(Command):
             return 0
 
         elif self.args.json:
-            print(json.dumps(t.to_object(), indent=4))
+            print(json.dumps(t.to_object(), indent=4, sort_keys=True))
             return 0
 
         # pretty general information
