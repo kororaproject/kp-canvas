@@ -248,7 +248,6 @@ class Template(object):
             self._description = template.get('description', None)
 
             self._includes = template.get('includes', [])
-            self._includes_resolved = template.get('includes_resolved', [])
 
             self._repos    = RepoSet(Repository(r) for r in template.get('repos', []))
             self._packages = PackageSet(Package(p) for p in template.get('packages', []))
@@ -257,9 +256,6 @@ class Template(object):
             self._objects  = template.get('objects', [])
 
             self._meta = template.get('meta', {})
-
-            # resolve includes
-            self._flatten()
 
     def _parse_unv(self, value):
         if isinstance(value, str):
@@ -317,10 +313,14 @@ class Template(object):
         includes = []
 
         for v in value:
-            sv = self._unv_to_str(v)
-            # attempt to sanitise the UNV string
-            if sv is not None:
-                includes.append(sv)
+            if isinstance(v, str):
+                sv = self._unv_to_str(v)
+                # attempt to sanitise the UNV string
+                if sv is not None:
+                    includes.append(sv)
+
+            elif isinstance(t, Template):
+                pass
 
         if len(includes):
             self._includes = includes
@@ -372,6 +372,15 @@ class Template(object):
     @title.setter
     def title(self, value):
         self._title = value
+
+    @property
+    def unv(self):
+        if self._user and self._name and self._version:
+            return "{0}:{1}@{2}".format(self._user, self._name, self._version)
+        elif self._user and self._name:
+            return "{0}:{1}".format(self._user, self._name)
+
+        return None
 
     @property
     def user(self):

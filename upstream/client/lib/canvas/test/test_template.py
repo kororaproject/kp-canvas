@@ -41,21 +41,24 @@ class TemplateTestCase(TestCase):
 
 
     def test_template_parse_str_valid(self):
-        t2 = Template("foo:bar")
-        t3 = Template("foo:bar@baz")
-        t4 = Template("foo:bar@")
+        t1 = Template("foo:bar")
+        t2 = Template("foo:bar@baz")
+        t3 = Template("foo:bar@")
+
+        self.assertEqual("foo", t1.user)
+        self.assertEqual("bar", t1.name)
+        self.assertEqual(None, t1.version)
+        self.assertEqual("foo:bar", t1.unv)
 
         self.assertEqual("foo", t2.user)
         self.assertEqual("bar", t2.name)
-        self.assertEqual(None, t2.version)
+        self.assertEqual("baz", t2.version)
+        self.assertEqual("foo:bar@baz", t2.unv)
 
         self.assertEqual("foo", t3.user)
         self.assertEqual("bar", t3.name)
-        self.assertEqual("baz", t3.version)
-
-        self.assertEqual("foo", t4.user)
-        self.assertEqual("bar", t4.name)
-        self.assertEqual(None, t4.version)
+        self.assertEqual(None, t3.version)
+        self.assertEqual("foo:bar", t3.unv)
 
     def test_template_parse_str_invalid(self):
 
