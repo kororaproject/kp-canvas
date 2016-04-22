@@ -90,10 +90,12 @@ class Service(object):
             raise ServiceException('unable to get template')
 
         except urllib.error.URLError as e:
-            res = json.loads(e.fp.read().decode('utf-8'))
-            raise ServiceException('{0}'.format(res.get('error', 'unknown')))
+            # TODO: clean up error message
+            print(e)
+            raise ServiceException('unknown service response')
 
         except urllib.error.HTTPError as e:
+            # TODO: clean up error message
             print(e)
             raise ServiceException('unknown service response')
 
