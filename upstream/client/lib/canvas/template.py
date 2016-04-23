@@ -93,14 +93,29 @@ class Template(object):
             self._includes_repos.update(t.repos_all)
             self._includes_packages.update(t.packages_all)
 
+    def _ks_command_to_object(self, command):
+        data = str(command)
+        xsum = hashlib.sha256(data.encode('utf-8')).hexdigest()
+        name = "ks-command-{0}".format(xsum[0:7])
+
+        return {
+            'name': name,
+            'data': data,
+            'action': [{
+                'type':     'ks-command',
+                'priority': command.writePriority,
+                'command':  command.currentCmd,
+            }]
+        }
+
     def _ks_script_to_object(self, script):
         xsum = hashlib.sha256(script.script.encode('utf-8')).hexdigest()
         name = "ks-script-{0}".format(xsum[0:7])
         type = MAP_SCRIPT_TYPE_TO_OBJ_STRING[script.type]
 
         return {
-            'name':          name,
-            'data':          script.script,
+            'name': name,
+            'data': script.script,
             'action': [{
                 'type':          type,
                 'interp':        script.interp,
@@ -170,28 +185,24 @@ class Template(object):
         lst = list(handler._writeOrder.keys())
         lst.sort()
 
-        if len(lst):
-            meta['commands'] = []
-            for prio in lst:
-                for c in handler._writeOrder[prio]:
-                    # we don't store null commands (why pykickstart? why?)
-                    if c.currentCmd == '':
-                        continue
+        for prio in lst:
+            for c in handler._writeOrder[prio]:
+                # we don't store null commands (why pykickstart? why?)
+                if c.currentCmd.strip() == '':
+                    continue
 
-                    elif c.currentCmd == 'repo':
-                        for r in c.__str__().split('\n'):
-                            # ignore blank lines
-                            if len(r.strip()) == 0:
-                                continue
+                # store repo commands as canvas templates
+                elif c.currentCmd == 'repo':
+                    for r in c.__str__().split('\n'):
+                        # ignore blank lines
+                        if len(r.strip()) == 0:
+                            continue
 
-                            self._repos.add(Repository(r))
+                        self._repos.add(Repository(r))
 
-                    else:
-                        meta['commands'].append({
-                            'command':  c.currentCmd,
-                            'priority': c.writePriority,
-                            'data':     c.__str__()
-                        })
+                # otherwise store commands as canvas objects
+                else:
+                    self._objects.append(self._ks_command_to_object(c))
 
         # convert scripts into canvas objects
         for s in handler.scripts:
@@ -566,19 +577,20 @@ class Template(object):
                 t = action.get('type', 'ignore')
 
                 # ignore non ks script objects
-                if t not in MAP_OBJ_STRING_TO_SCRIPT_TYPES.keys():
-                    continue
+                if t in MAP_OBJ_STRING_TO_SCRIPT_TYPES.keys():
+                    data = o.get('data', '')
 
-                data = o.get('data', '')
-
-                handler.scripts.append(
-                    pykickstart.parser.Script(data,
-                        errorOnFail = action.get('error_on_fail', None),
-                        interp      = action.get('interp', None),
-                        inChroot    = action.get('in_chroot', None),
-                        type        = MAP_OBJ_STRING_TO_SCRIPT_TYPES[t]
+                    handler.scripts.append(
+                        pykickstart.parser.Script(data,
+                            errorOnFail = action.get('error_on_fail', None),
+                            interp      = action.get('interp', None),
+                            inChroot    = action.get('in_chroot', None),
+                            type        = MAP_OBJ_STRING_TO_SCRIPT_TYPES[t]
+                        )
                     )
-                )
+
+                elif t == "ks-command":
+                    ksparser.readKickstartFromString(data, reset=False)
 
             # populate general package parameters
             if 'packages' in self._meta['kickstart']:
