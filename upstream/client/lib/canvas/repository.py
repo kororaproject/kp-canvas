@@ -98,7 +98,8 @@ class Repository(object):
                         self.stub = name.replace(' ', '-').replace('---', '-')
 
                     elif a.startswith('baseurl='):
-                        self.baseurl = self._parse_str_arg(a, 'baseurl=')
+                        baseurl = self._parse_str_arg(a, 'baseurl=')
+                        self.baseurl = baseurl.split(',')
 
                     elif a.startswith('mirrorlist='):
                         self.mirrorlist = self._parse_str_arg(a, 'mirrorlist=')

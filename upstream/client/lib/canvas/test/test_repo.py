@@ -63,12 +63,16 @@ class RepoTestCase(TestCase):
     def test_repo_parse_str_baseurl(self):
         r1 = Repository('repo --baseurl="https://fakeurl"')
         r2 = Repository('repo --name="Korora 23 - i386 - Updates"')
+        r3 = Repository('repo --baseurl="https://fakeurl,http://backupfakeurl"')
 
         # Set
-        self.assertEqual('https://fakeurl', r1.baseurl)
+        self.assertEqual(['https://fakeurl'], r1.baseurl)
 
         # Unset
         self.assertEqual(None, r2.baseurl)
+
+        # List
+        self.assertEqual(['https://fakeurl','http://backupfakeurl'], r3.baseurl)
 
     def test_repo_parse_str_mirrorlist(self):
         r1 = Repository('repo --mirrorlist="https://fakeurl"')
