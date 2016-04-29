@@ -56,6 +56,8 @@ class ErrorInvalidTemplate(Exception):
         self.reason = reason.lower()
         self.code = code
 
+        self._db = None
+
     def __str__(self):
         return 'error: {0}'.format(str(self.reason))
 
@@ -543,6 +545,119 @@ class Template(object):
             return True
 
         return False
+
+    def system_apply(self, clean=True):
+        """
+        Applies the transaction (configured by prepare) to the system.
+
+        Args:
+          db: dnf.Base object to use for preparation.
+          clean: specify wheter system packages not defined in the template are removed.
+
+        Returns:
+          Nothing.
+        """
+
+        if not isinstance(self._db, dnf.Base):
+            return
+
+        db = self._db
+
+        if len(db.transaction.install_set) or len(db.transaction.remove_set):
+            print('info: downloading ...')
+            db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
+
+            print('info: completing ...')
+            db.do_transaction()
+
+        print('info: syncing history ...')
+        for p in t.packages_all:
+            if p.included():
+                pkg = p.to_pkg();
+                if pkg is not None:
+                    db.yumdb.get_package(pkg).reason = 'user'
+
+        # check all objects
+
+
+    def system_prepare(self, clean=False, db=dnf.Base()):
+        """
+        Prepares the system for template application.
+
+        Args:
+          db: dnf.Base object to use for preparation.
+          clean: specify wheter system packages not defined in the template are removed.
+
+        Returns:
+          Nothing.
+        """
+
+        if not isinstance(self._db, dnf.Base):
+            self._db = db
+
+        else:
+            self._db.reset(goal=True, repos=True)
+
+        # prepare dnf
+        print('info: analysing system ...')
+
+        # install repos from template
+        if len(self.repos_all):
+            for r in self.repos_all:
+                dr = r.to_repo()
+                dr.set_progress_bar(dnf.cli.progress.MultiFileProgressMeter())
+                dr.load()
+                db.repos.add(dr)
+
+        else:
+            print('No template repos specified, using available system repos.')
+            db.read_all_repos()
+
+        db.read_comps()
+
+        try:
+            db.fill_sack()
+
+        except OSError as e:
+            pass
+
+        multilib_policy = db.conf.multilib_policy
+        clean_deps = db.conf.clean_requirements_on_remove
+
+        print('info: preparing transaction ...')
+        # process all packages in template
+        for p in self.packages_all:
+            if p.included():
+                try:
+                    db.install(p.to_pkg_spec())
+                except:
+                    print ("error: Package does not exist " + str(p))
+                    pass
+
+            else:
+                db.remove(p.to_pkg_spec())
+
+        print('info: resolving actions ...')
+        db.resolve(allow_erasing=True)
+
+    def system_transaction(self):
+        """
+        System transaction that specifies all package installations and removals.
+
+        Args:
+          None
+
+        Returns:
+          dnf.Transaction
+
+        Raises:
+          IOError: An error occurred accessing the kickstart file.
+        """
+
+        if isinstance(self._db, dnf.Base):
+            return self._db.transaction
+
+        return None
 
     def to_json(self):
         return json.dumps(self.to_object(), separators=(',', ':'))

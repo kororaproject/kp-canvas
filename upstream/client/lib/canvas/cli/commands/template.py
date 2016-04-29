@@ -376,59 +376,15 @@ class TemplateCommand(Command):
             print(e)
             return 1
 
-        # prepare dnf
-        print('info: analysing system ...')
-        db = dnf.Base()
-
-        # install repos from template
-        if len(t.repos_all):
-            for r in t.repos_all:
-                dr = r.to_repo()
-                dr.set_progress_bar(dnf.cli.progress.MultiFileProgressMeter())
-                dr.load()
-                db.repos.add(dr)
-
-        elif True:
-            print('No template repos specified, using available system repos.')
-            db.read_all_repos()
-
-        else:
-            print('No repos defined.')
-            return 0
-
-        db.read_comps()
-
-        try:
-            db.fill_sack()
-
-        except OSError as e:
-            pass
-
-        multilib_policy = db.conf.multilib_policy
-        clean_deps = db.conf.clean_requirements_on_remove
-
-        print('info: preparing transaction ...')
-        # process all packages in template
-        for p in t.packages_all:
-            if p.included():
-                try:
-                    db.install(p.to_pkg_spec())
-                except:
-                    print ("error: Package does not exist " + str(p))
-                    pass
-
-            else:
-                db.remove(p.to_pkg_spec())
-
-        print('info: resolving actions ...')
-        db.resolve(allow_erasing=True)
+        t.system_prepare(clean=self.args.clean)
 
         # describe process for dry runs
         if self.args.dry_run:
-            packages_install = list(db.transaction.install_set)
+            tx = t.system_transaction()
+            packages_install = list(tx.install_set)
             packages_install.sort(key=lambda x: x.name)
 
-            packages_remove = list(db.transaction.remove_set)
+            packages_remove = list(tx.remove_set)
             packages_remove.sort(key=lambda x: x.name)
 
             if len(packages_install) or len(packages_remove):
@@ -451,19 +407,7 @@ class TemplateCommand(Command):
             print('No action peformed during this dry-run.')
             return 0
 
-        if len(db.transaction.install_set) or len(db.transaction.remove_set):
-            print('info: downloading ...')
-            db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
-
-            print('info: completing ...')
-            db.do_transaction()
-
-        print('info: syncing history ...')
-        for p in t.packages_all:
-            if p.included():
-                pkg = p.to_pkg();
-                if pkg is not None:
-                    db.yumdb.get_package(pkg).reason = 'user'
+        t.to_system_apply()
 
     def run_push(self):
         t = Template(self.args.template, user=self.args.username)
@@ -479,6 +423,10 @@ class TemplateCommand(Command):
         if self.args.kickstart is not None:
             print('info: parsing kickstart ...')
             t.from_kickstart(self.args.kickstart)
+
+            print(json.dumps(t.to_object(), indent=4, sort_keys=True))
+
+            return 1
 
         else:
             # prepare dnf

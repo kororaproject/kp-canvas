@@ -227,79 +227,16 @@ class MachineCommand(Command):
         m = Machine(res['template'])
         t = Template(res['template'])
 
-        # prepare dnf
-        print('info: analysing system ...')
-        db = dnf.Base()
-
-        # install repos from template
-        for r in t.repos_all:
-            dr = r.to_repo()
-            try:
-                dr.load()
-                db.repos.add(dr)
-
-            except dnf.exceptions.RepoError as e:
-                print(e)
-                return 1
-
-        db.read_comps()
-
-        try:
-            db.fill_sack()
-
-        except OSError as e:
-            pass
-
-        multilib_policy = db.conf.multilib_policy
-        clean_deps = db.conf.clean_requirements_on_remove
-
-        # process all packages in template
-        for p in t.packages_all:
-            if p.included():
-                #
-                # stripped from dnf.base install() in full and optimesd
-                # for canvas usage
-
-                subj = dnf.subject.Subject(p.to_pkg_spec())
-                if multilib_policy == "all" or subj.is_arch_specified(db.sack):
-                    q = subj.get_best_query(db.sack)
-
-                    if not q:
-                        continue
-
-                    already_inst, available = db._query_matches_installed(q)
-
-                    for a in available:
-                        db._goal.install(a, optional=False)
-
-                elif multilib_policy == "best":
-                    sltrs = subj.get_best_selectors(db.sack)
-                    match = reduce(lambda x, y: y.matches() or x, sltrs, [])
-
-                    if match:
-                        for sltr in sltrs:
-                            if sltr.matches():
-                                db._goal.install(select=sltr, optional=False)
-
-            else:
-                #
-                # stripped from dnf.base remove() in full and optimesd
-                # for canvas usage
-                matches = dnf.subject.Subject(p.to_pkg_spec()).get_best_query(db.sack)
-
-                for pkg in matches.installed():
-                    db._goal.erase(pkg, clean_deps=clean_deps)
-
-        db.resolve()
+        t.system_prepare()
 
         # describe process for dry runs
         if self.args.dry_run:
-            packages_install = list(db.transaction.install_set)
+            tx = t.system_transaction()
+            packages_install = list(tx.install_set)
             packages_install.sort(key=lambda x: x.name)
 
-            packages_remove = list(db.transaction.remove_set)
+            packages_remove = list(tx.remove_set)
             packages_remove.sort(key=lambda x: x.name)
-
             if len(packages_install) or len(packages_remove):
                 print('The following would be installed to (+) and removed from (-) the system:')
 
@@ -321,8 +258,7 @@ class MachineCommand(Command):
             return 0
 
         # TODO: progress for download, install and removal
-        db.download_packages(list(db.transaction.install_set))
-        return db.do_transaction()
+        t.to_system_apply(clean=False)
 
         print('info: machine synced.')
 
