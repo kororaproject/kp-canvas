@@ -69,9 +69,9 @@ sub add {
           SELECT u.id, $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11
           FROM users u
           WHERE
-            u.username=$9 AND
-            (u.id=$10 OR
-              (u.meta->\'members\' @> CAST($10 AS text)::jsonb))
+            u.username=$12 AND
+            (u.id=$13 OR
+              (u.meta->\'members\' @> CAST($13 AS text)::jsonb))
           LIMIT 1' => (
             $template->{uuid},
             $template->{title},
@@ -298,7 +298,7 @@ sub update {
             SET
               name=$1, stub=$2, version=$3, description=$4,
               includes=$5, packages=$6, repos=$7,
-              stores=$8, $objects=$9, meta=$10
+              stores=$8, objects=$9, meta=$10
           WHERE
             uuid=$11' => (
             $template->{title},
