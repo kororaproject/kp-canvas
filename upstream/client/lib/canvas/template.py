@@ -23,6 +23,7 @@ import re
 import sys
 import yaml
 
+from canvas.object import Object, ObjectSet
 from canvas.package import Package, PackageSet
 from canvas.repository import Repository, RepoSet
 
@@ -34,19 +35,6 @@ from pykickstart.version import DEVEL, makeVersion
 
 # [user:]name[@version]
 RE_TEMPLATE = re.compile("(?:(?P<user>[\w\.\-]*):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
-MAP_OBJ_STRING_TO_SCRIPT_TYPE = {
-    'ks-post':          pykickstart.constants.KS_SCRIPT_POST,
-    'ks-pre':           pykickstart.constants.KS_SCRIPT_PRE,
-    'ks-pre-install':   pykickstart.constants.KS_SCRIPT_PREINSTALL,
-    'ks-traceback':     pykickstart.constants.KS_SCRIPT_TRACEBACK
-}
-
-MAP_SCRIPT_TYPE_TO_OBJ_STRING = {
-    pykickstart.constants.KS_SCRIPT_PRE:        'ks-pre',
-    pykickstart.constants.KS_SCRIPT_POST:       'ks-post',
-    pykickstart.constants.KS_SCRIPT_TRACEBACK:  'ks-traceback',
-    pykickstart.constants.KS_SCRIPT_PREINSTALL: 'ks-pre-install'
-}
 
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
@@ -94,38 +82,6 @@ class Template(object):
         for t in self._includes_resolved:
             self._includes_repos.update(t.repos_all)
             self._includes_packages.update(t.packages_all)
-
-    def _ks_command_to_object(self, command):
-        data = str(command)
-        xsum = hashlib.sha256(data.encode('utf-8')).hexdigest()
-        name = "ks-command-{0}".format(xsum[0:7])
-
-        return {
-            'name': name,
-            'data': data,
-            'action': [{
-                'type':     'ks-command',
-                'priority': command.writePriority,
-                'command':  command.currentCmd,
-            }]
-        }
-
-    def _ks_script_to_object(self, script):
-        xsum = hashlib.sha256(script.script.encode('utf-8')).hexdigest()
-        name = "ks-script-{0}".format(xsum[0:7])
-        type = MAP_SCRIPT_TYPE_TO_OBJ_STRING[script.type]
-
-        return {
-            'name': name,
-            'data': script.script,
-            'action': [{
-                'type':          type,
-                'interp':        script.interp,
-                'in_chroot':     script.inChroot,
-                'line_no':       script.lineno,
-                'error_on_fail': script.errorOnFail,
-            }]
-        }
 
     def _parse_kickstart(self, path):
         """
@@ -204,11 +160,11 @@ class Template(object):
 
                 # otherwise store commands as canvas objects
                 else:
-                    self._objects.append(self._ks_command_to_object(c))
+                    self._objects.add(Object(c))
 
         # convert scripts into canvas objects
         for s in handler.scripts:
-            self._objects.append(self._ks_script_to_object(s))
+            self._objects.add(Object(s))
 
         # parse pykickstart packages
         packages = handler.packages
@@ -285,7 +241,7 @@ class Template(object):
             self._packages = PackageSet(Package(p) for p in template.get('packages', []))
 
             self._stores   = template.get('stores', [])
-            self._objects  = template.get('objects', [])
+            self._objects  = ObjectSet(Object(o) for o in template.get('objects', []))
 
             self._meta = template.get('meta', {})
 
@@ -370,6 +326,10 @@ class Template(object):
     @property
     def name(self):
         return self._name
+
+    @property
+    def objects(self):
+        return self._objects
 
     @property
     def packages(self):
@@ -688,24 +648,12 @@ class Template(object):
 
             # populate scripts
             for o in self._objects:
-                action = o.get('action', {})
-                t = action.get('type', 'ignore')
+                if o.is_ks_script():
+                    script = o.to_script()
+                    handler.scripts.append(o.to_ks_script())
 
-                # ignore non ks script objects
-                if t in MAP_OBJ_STRING_TO_SCRIPT_TYPES.keys():
-                    data = o.get('data', '')
-
-                    handler.scripts.append(
-                        pykickstart.parser.Script(data,
-                            errorOnFail = action.get('error_on_fail', None),
-                            interp      = action.get('interp', None),
-                            inChroot    = action.get('in_chroot', None),
-                            type        = MAP_OBJ_STRING_TO_SCRIPT_TYPES[t]
-                        )
-                    )
-
-                elif t == "ks-command":
-                    ksparser.readKickstartFromString(data, reset=False)
+                elif o.is_ks_command():
+                    ksparser.readKickstartFromString(o.data, reset=False)
 
             # populate general package parameters
             if 'packages' in self._meta['kickstart']:
@@ -758,7 +706,10 @@ class Template(object):
         return template
 
     def to_object(self):
-        # sort packages and repos
+        # sort objects, packages and repos
+        objects = list(self.objects)
+        objects.sort(key=lambda x: x.name)
+
         packages = list(self.packages)
         packages.sort(key=lambda x: x.name)
 
@@ -775,7 +726,7 @@ class Template(object):
             'packages':    [p.to_object() for p in packages],
             'repos':       [r.to_object() for r in repos],
             'stores':      self._stores,
-            'objects':     self._objects,
+            'objects':     [o.to_object() for o in objects],
             'meta':        self._meta
         }
 

@@ -6,8 +6,9 @@
 from unittest import TestCase
 
 from canvas.template import Template, ErrorInvalidTemplate
-from canvas.repository import RepoSet
+from canvas.object import ObjectSet
 from canvas.package import Package, PackageSet
+from canvas.repository import RepoSet
 
 
 class TemplateTestCase(TestCase):
@@ -37,7 +38,7 @@ class TemplateTestCase(TestCase):
         self.assertEqual(PackageSet(), t1._delta_packages)
 
         self.assertEqual([], t1._stores)
-        self.assertEqual([], t1._objects)
+        self.assertEqual(ObjectSet(), t1._objects)
 
 
     def test_template_parse_str_valid(self):
