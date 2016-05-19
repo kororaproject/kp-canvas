@@ -130,6 +130,64 @@ def buildCommandLineParser(config):
     template_dump_parser.add_argument('--kickstart', action='store_true')
 
     #
+    # STORE COMMANDS
+    #
+
+    store_parser = subparsers.add_parser('store', add_help=False, parents=[general_parser])
+    subparsers_store = store_parser.add_subparsers(dest='action', title='store Commands')
+
+    store_parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run')
+
+    # store add arguments
+    store_add_parser = subparsers_store.add_parser('add', add_help=False, parents=[general_parser])
+    store_add_parser.add_argument('template', type=str)
+    store_add_parser.add_argument('store', type=str, nargs='+')
+    store_add_parser.add_argument('--with-deps', type=str)
+
+    store_update_parser = subparsers_store.add_parser('update', add_help=False, parents=[general_parser])
+    store_update_parser.add_argument('template', type=str)
+    store_update_parser.add_argument('store', type=str, nargs='+')
+
+    # store list arguments
+    store_list_parser = subparsers_store.add_parser('list', add_help=False, parents=[general_parser])
+    store_list_parser.add_argument('template', type=str)
+    store_list_parser.add_argument('--output', type=str)
+
+    # store remove arguments
+    store_remove_parser = subparsers_store.add_parser('rm', add_help=False, parents=[general_parser])
+    store_remove_parser.add_argument('template', type=str)
+    store_remove_parser.add_argument('store', type=str, nargs='+')
+
+    #
+    # OBJECT COMMANDS
+    #
+
+    object_parser = subparsers.add_parser('object', add_help=False, parents=[general_parser])
+    subparsers_object = object_parser.add_subparsers(dest='action', title='object Commands')
+
+    object_parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run')
+
+    # object add arguments
+    object_add_parser = subparsers_object.add_parser('add', add_help=False, parents=[general_parser])
+    object_add_parser.add_argument('template', type=str)
+    object_add_parser.add_argument('object', type=str, nargs='+')
+    object_add_parser.add_argument('--with-deps', type=str)
+
+    object_update_parser = subparsers_object.add_parser('update', add_help=False, parents=[general_parser])
+    object_update_parser.add_argument('template', type=str)
+    object_update_parser.add_argument('object', type=str, nargs='+')
+
+    # object list arguments
+    object_list_parser = subparsers_object.add_parser('list', add_help=False, parents=[general_parser])
+    object_list_parser.add_argument('template', type=str)
+    object_list_parser.add_argument('--output', type=str)
+
+    # object remove arguments
+    object_remove_parser = subparsers_object.add_parser('rm', add_help=False, parents=[general_parser])
+    object_remove_parser.add_argument('template', type=str)
+    object_remove_parser.add_argument('object', type=str, nargs='+')
+
+    #
     # PACKAGE COMMANDS
     #
 
@@ -298,6 +356,8 @@ def general_usage(prog_name='canvas'):
           "  template  List, create or delete templates\n"
           "  package   Find, add and remove packages in templates\n"
           "  repo      Find, add and remove repos in templates\n"
+          "  store     Find, add and remove stores in templates\n"
+          "  object    Find, add and remove objects in templates\n"
           "  machine   List, create or delete machines\n"
           "  config    Get and set configuration elements\n".format(prog_name))
 
