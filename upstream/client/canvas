@@ -32,6 +32,7 @@ import canvas.config
 import canvas.cli.commands
 import canvas.cli.commands.config
 import canvas.cli.commands.machine
+import canvas.cli.commands.object
 import canvas.cli.commands.package
 import canvas.cli.commands.repo
 import canvas.cli.commands.template
@@ -59,6 +60,9 @@ if __name__ == '__main__':
 
     elif args.command == 'template':
         cli = canvas.cli.commands.template.TemplateCommand()
+
+    elif args.command == 'object':
+        cli = canvas.cli.commands.object.ObjectCommand()
 
     elif args.command == 'package':
         cli = canvas.cli.commands.package.PackageCommand()

@@ -452,21 +452,21 @@ The following commands allow management of objects from specified Templates.
 #### Command Overview
 The following commands are available for the management of Canvas template objects:
 ```
-canvas object add [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN
-canvas object list [user:]template[@version] [--filter-store=...] [--filter-name=...]
-canvas object rm [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN
+canvas object add [user:]template[@version] object_name --source=... --action=... [--action=...]
+canvas object list [user:]template[@version] [--filter-source=...] [--filter-name=...]
+canvas object rm [user:]template[@version] object_name1 object_name2 ... object_nameN
 ```
 
 #### Adding Objects
 The general usage for adding objects to templates is described as:
 ```
-canvas object add [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN
+canvas object add [user:]template[@version] object_name --source=... --action=... [--action=...]
 ```
 
 One or multiple objects can be listed, or one or more object file lists can be specified in place of or in addition to the objects. The file must contain a space- or newline-separated list of store:object references.
 ```
-canvas object add firnsy:htpc services:couch-potato services:sickbeard
-canvas object add firnsy:htpc services:couch-potate ~/movie.objects
+canvas object add firnsy:htpc ~/movie.objects --action='copy:"/data"'
+canvas object add firnsy:htpc sickbeard --source https://firnsy.com/canvas/sickbeard.tar.gz --action='extract:"/srv/sickbeard"' --action='execute:"/srv/sickbeard/install"'
 ```
 
 ##### Included and Excluded Objects

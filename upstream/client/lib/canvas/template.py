@@ -71,7 +71,7 @@ class Template(object):
         self._delta_packages = PackageSet()     # packages to add/remove in template
 
         self._stores   = []  # remote stores for machine
-        self._objects  = []  # archive definitions in machine
+        self._objects  = ObjectSet  # archive definitions in machine
 
         self._parse_template(template)
 

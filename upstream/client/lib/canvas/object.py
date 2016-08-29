@@ -35,6 +35,7 @@ class ErrorInvalidObject(Exception):
     def __str__(self):
         return 'error: {0}'.format(str(self.reason))
 
+
 class Object(object):
     """ A Canvas object that represents a template Object. """
 
@@ -56,6 +57,7 @@ class Object(object):
     def __init__(self, name=None):
         self._name = None
         self._xsum = None
+        self._source = None
         self._data = None
         self._actions = []
 
@@ -119,18 +121,21 @@ class Object(object):
             self._name = data.get('name', None)
             self._xsum = data.get('checksum', {}).get('sha256', None)
             self._actions = data.get('actions', [])
+            self._source = data.get('source', None)
             self._data = data.get('data', None)
 
         # checksum is set confirm it equals the data
         if self._xsum is not None:
-            if (self._data is None):
+            if (self._data is None and self._source == 'raw'):
                 raise ErrorInvalidObject('checksum defined without data')
 
             _xsum = hashlib.sha256(self._data.encode('utf-8')).hexdigest()
 
             if self._xsum != _xsum:
-                raise ErrorInvalidObject("calculate checksum doesn't not match: {0} != {1}".format(_xsum, self._xsum))
+                raise ErrorInvalidObject("calculated checksum doesn't not match: {0} != {1}".format(_xsum, self._xsum))
 
+    #
+    # PROPERTIES
     @property
     def actions(self):
         return self._actions
@@ -142,6 +147,7 @@ class Object(object):
     @data.setter
     def data(self, data):
         self._data = data
+        self._source = 'raw'
         self._xsum = hashlib.sha256(self._data.encode('utf-8')).hexdigest()
 
     @property
@@ -149,13 +155,31 @@ class Object(object):
         return self._name
 
     @property
+    def source(self):
+        return self._data
+
+    @source.setter
+    def source(self, source):
+        self._source = source
+
+        if source != 'raw':
+            self._data = None
+
+    @property
     def xsum(self):
         return self._xsum
+
+    @xsum.setter
+    def xsum(self, xsum):
+        self._xsum = xsum
 
     #
     # PUBLIC METHODS
     def add_action(self, action):
         pass
+
+    def is_complete(self):
+        return self._xsum and ((self._source != 'raw') or (self._data is not None))
 
     def is_ks_command():
         if len(self._actions) != 1:
@@ -198,8 +222,9 @@ class Object(object):
 
 
     def to_object(self):
-        return {
+        _obj = {
             'name': self._name,
+            'source': self._source,
             'data': self._data,
             'checksum': {
                 'sha256': self._xsum
@@ -273,7 +298,7 @@ class ObjectSet(collections.MutableSet):
         if len(args) == 0:
             raise Exception('No ObjectSets defined for union.')
 
-        u = RepoSet(self._set)
+        u = ObjectSet(self._set)
 
         for o in args:
             if not isinstance(o, ObjectSet):

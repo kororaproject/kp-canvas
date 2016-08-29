@@ -170,9 +170,15 @@ def buildCommandLineParser(config):
     # object add arguments
     object_add_parser = subparsers_object.add_parser('add', add_help=False, parents=[general_parser])
     object_add_parser.add_argument('template', type=str)
-    object_add_parser.add_argument('object', type=str, nargs='+')
-    object_add_parser.add_argument('--with-deps', type=str)
+    object_add_parser.add_argument('object', type=str)
 
+    object_add_parser.add_argument('--source', type=str)
+    object_add_parser.add_argument('--data', type=str)
+    object_add_parser.add_argument('--data-file', type=str)
+
+    object_add_parser.add_argument('--action', dest='actions', type=str, nargs='+')
+
+    # object update arguments
     object_update_parser = subparsers_object.add_parser('update', add_help=False, parents=[general_parser])
     object_update_parser.add_argument('template', type=str)
     object_update_parser.add_argument('object', type=str, nargs='+')

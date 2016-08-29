@@ -59,14 +59,25 @@ class ObjectCommand(Command):
         print("General usage: {0} [--version] [--help] [--verbose] object [<args>]\n"
               "\n"
               "Specific usage:\n"
-              "{0} object add [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN\n"
+              "{0} object add [user:]template[@version] [store:]object_name [--action=...]\n"
               "{0} object list [user:]template[@version] [--filter-store=...] [--filter-name=...]"
               "{0} object rm [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN"
               "\n".format(self.prog_name))
 
     def help_add(self):
-        print("Usage: {0} object add [user:]template[@version]"
-              "           store1:object_name1 store2:object_name2 ... storeN:object_nameN\n"
+        print("Usage: {0} object add [user:]template[@version]\n"
+              "           [store:]object_name --data=|--data-file=|--source= --action= [--action= ...]\n"
+              "\n"
+              "Availablle actions are: \n"
+              "  copy\n"
+              "  copy-once\n"
+              "  extract\n"
+              "  extract-once\n"
+              "  execute\n"
+              "  execute-once\n"
+              "  ks-pre\n"
+              "  ks-pre-install\n"
+              "  ks-post\n"
               "\n".format(self.prog_name))
 
     def run(self):
@@ -88,6 +99,8 @@ class ObjectCommand(Command):
     def run_add(self):
         t = Template(self.args.template, user=self.args.username)
 
+        print(self.args)
+
         try:
             t = self.cs.template_get(t)
 
@@ -95,40 +108,22 @@ class ObjectCommand(Command):
             print(e)
             return 1
 
-        for o in self.args.objects:
-            try:
-                pkg = Object(o)
-            except ErrorInvalidObject as e:
-                print (e)
-                return 1
+        try:
+            obj = Object(data=self.args.data, data_file=self.args.data_file, source=self.args.source)
+        except ErrorInvalidObject as e:
+            print (e)
+            return 1
 
-            t.add_object(pkg)
-
-        objects = list(t.objects_delta)
-        objects.sort(key=lambda x: x.name)
+        t.add_object(obj)
 
         # describe process for dry runs
         if self.args.dry_run:
-            if len(objects):
-                print('The following would be added to the template: {0}'.format(t.name))
+            print('The following object would be added to the template: {0}'.format(t.name))
 
-                for o in objects:
-                    print('  - ' + str(o))
+            print('  - ' + str(obj))
+            print()
 
-                print()
-                print('Summary:')
-                print('  - Object(s): %d' % (len(objects)))
-                print()
-
-            else:
-                print('No template changes required.')
-
-            print('No action peformed during this dry-run.')
-            return 0
-
-        if not len(objects):
-            print('info: no changes detected, template up to date.')
-            return 0
+        return 0
 
         # push our updated template
         try:
@@ -137,6 +132,8 @@ class ObjectCommand(Command):
         except ServiceException as e:
             print(e)
             return 1
+
+        return 0
 
     def run_list(self):
         t = Template(self.args.template, user=self.args.username)
