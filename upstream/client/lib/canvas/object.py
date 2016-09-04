@@ -74,16 +74,18 @@ class Object(object):
             self._actions = kwargs.get('actions', self._actions)
 
             # check if we've got a data_file to read data from
-            data_file = kwargs.get('data_file', None)
-            if data_file is not None:
+            if kwargs.get('data_file', None) is not None:
                 try:
-                    with open(data_file, 'r') as f:
+                    with open(kwargs.get('data_file'), 'r') as f:
                         self._data = f.read()
 
                     self._source = 'raw'
 
                 except:
                     raise ErrorInvalidObject('unable to read data-file')
+
+            elif self._data is not None:
+                self._source = 'raw'
 
         elif args:
             if len(args) > 1:
@@ -104,12 +106,12 @@ class Object(object):
                 self._source  = args[0].get('source', self._source)
                 self._data    = args[0].get('data', self._data)
 
-        # checksum is set confirm it equals the data
-        if self._xsum is not None:
+        # calculate checksum if not defined
+        if self._xsum is None:
             if (self._data is None and self._source == 'raw'):
                 raise ErrorInvalidObject('checksum defined without data')
-
-            _xsum = hashlib.sha256(self._data.encode('utf-8')).hexdigest()
+            elif self._data:
+                self._xsum = hashlib.sha256(self._data.encode('utf-8')).hexdigest()
 
         # process actions
         actions = []
