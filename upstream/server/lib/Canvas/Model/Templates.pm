@@ -135,6 +135,7 @@ sub find {
           SELECT
             t.uuid, t.name, t.description, t.stub, t.version, t.includes,
             t.repos, t.packages, t.meta, u.username,
+            t.stores, t.objects,
             EXTRACT(EPOCH FROM t.created) AS created,
             EXTRACT(EPOCH FROM t.updated) AS updated
           FROM templates t
