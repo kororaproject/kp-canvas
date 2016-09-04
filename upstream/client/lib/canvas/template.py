@@ -71,7 +71,10 @@ class Template(object):
         self._delta_packages = PackageSet()     # packages to add/remove in template
 
         self._stores   = []           # remote stores for machine
-        self._objects  = ObjectSet()  # archive definitions in machine
+
+        self._objects  = ObjectSet()           # archive definitions in machine
+        self._includes_objects  = ObjectSet()  # archive definitions in machine
+        self._delta_objects  = ObjectSet()     # archive definitions in machine
 
         self._parse_template(template)
 
@@ -329,7 +332,15 @@ class Template(object):
 
     @property
     def objects(self):
-        return self._objects
+        return self._objects.union(self._delta_objects)
+
+    @property
+    def objects_all(self):
+        return self._objects.union(self._includes_objects, self._delta_objects)
+
+    @property
+    def objects_delta(self):
+        return self._delta_objects
 
     @property
     def packages(self):
@@ -405,11 +416,12 @@ class Template(object):
 
     #
     # PUBLIC METHODS
-    def add_object_from_str(self, store, data):
-        pass
+    def add_object(self, object):
+        if not isinstance(object, Object):
+            raise TypeError('Not an Object object')
 
-    def add_object_from_path(self, store, path):
-        pass
+        if object not in self.objects:
+            self._delta_objects.add(object)
 
     def add_package(self, package):
         if package not in self.packages:
@@ -477,6 +489,20 @@ class Template(object):
             rd.add(dr)
 
         return rd
+
+    def remove_object(self, object):
+        if not isinstance(object, Object):
+            raise TypeError('Not an Object object')
+
+        if object in self._delta_objects:
+            self._objects.discard(object)
+            return True
+
+        elif object in self._objects:
+            self._objects.discard(object)
+            return True
+
+        return False
 
     def remove_package(self, package):
         if not isinstance(package, Package):

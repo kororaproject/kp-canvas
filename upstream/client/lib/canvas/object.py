@@ -40,6 +40,11 @@ class Object(object):
     """ A Canvas object that represents a template Object. """
 
     # CONSTANTS
+    VALID_ACTIONS = ['copy', 'copy-once',
+                     'extract', 'extract-once',
+                     'execute', 'execute-once',
+                     'ks-post', 'ks-pre', 'ks-pre-install', 'ks-traceback']
+
     MAP_OBJ_STRING_TO_SCRIPT_TYPE = {
         'ks-post':          pykickstart.constants.KS_SCRIPT_POST,
         'ks-pre':           pykickstart.constants.KS_SCRIPT_PRE,
@@ -54,29 +59,90 @@ class Object(object):
         pykickstart.constants.KS_SCRIPT_PREINSTALL: 'ks-pre-install'
     }
 
-    def __init__(self, name=None):
+    def __init__(self, *args, **kwargs):
         self._name = None
         self._xsum = None
         self._source = None
         self._data = None
         self._actions = []
 
-        self._parse_object(name)
+        if kwargs:
+            self._name    = kwargs.get('name', self._name)
+            self._xsum    = kwargs.get('xsum', self._xsum)
+            self._source  = kwargs.get('source', self._source)
+            self._data    = kwargs.get('data', self._data)
+            self._actions = kwargs.get('actions', self._actions)
+
+            # check if we've got a data_file to read data from
+            data_file = kwargs.get('data_file', None)
+            if data_file is not None:
+                try:
+                    with open(data_file, 'r') as f:
+                        self._data = f.read()
+
+                    self._source = 'raw'
+
+                except:
+                    raise ErrorInvalidObject('unable to read data-file')
+
+        elif args:
+            if len(args) > 1:
+                raise ErrorInvalidObject('too many positional arguments')
+
+            elif (isinstance(args[0], Script)):
+                self._from_ks_script(args[0])
+
+            elif (isinstance(args[0], KickstartCommand)):
+                self._from_ks_command(args[0])
+
+            # parse the dict form, the most common form and directly
+            # relates to the json structures returned by canvas server
+            elif (isinstance(args[0], dict)):
+                self._name    = args[0].get('name', self._name)
+                self._xsum    = args[0].get('checksum', {}).get('sha256', None)
+                self._actions = args[0].get('actions', self._actions)
+                self._source  = args[0].get('source', self._source)
+                self._data    = args[0].get('data', self._data)
+
+        # checksum is set confirm it equals the data
+        if self._xsum is not None:
+            if (self._data is None and self._source == 'raw'):
+                raise ErrorInvalidObject('checksum defined without data')
+
+            _xsum = hashlib.sha256(self._data.encode('utf-8')).hexdigest()
+
+        # process actions
+        actions = []
+        for a in self._actions:
+            if isinstance(a, str):
+                t, p = a.split()
+                if t in Object.VALID_ACTIONS:
+                    actions.append({'type': t, 'path': p})
+
+            elif isinstance(a, dict):
+                if 'type' in a and a['type'] in Object.VALID_ACTIONS:
+                    actions.append(a)
+
+        self._actions = actions
+
 
     def __eq__(self, other):
         if isinstance(other, Object):
-            return (self._xsum == other._xsum)
+            if (self._xsum and other._xsum):
+                return (self._xsum == other._xsum)
+            else:
+                return (self._name == other._name)
         else:
             return False
 
     def __hash__(self):
-        return self._xsum
+        return self._name + self._xsum
 
     def __ne__(self, other):
         return (not self.__eq__(other))
 
     def __repr__(self):
-        return 'Object: {0} (xsum: {1}, actions: {2})'.format(self._name, self._xsum[0:7], len(self._actions))
+        return 'Object: {0} (xsum: {1}, actions: {2})'.format(self._name, self._xsum, len(self._actions))
 
     def _from_ks_command(self, command):
         self._data = str(command)
@@ -107,32 +173,6 @@ class Object(object):
         }
 
         self._actions = [action]
-
-    def _parse_object(self, data):
-        if (isinstance(data, Script)):
-            self._from_ks_script(data)
-
-        elif (isinstance(data, KickstartCommand)):
-            self._from_ks_command(data)
-
-        # parse the dict form, the most common form and directly
-        # relates to the json structures returned by canvas server
-        elif (isinstance(data, dict)):
-            self._name = data.get('name', None)
-            self._xsum = data.get('checksum', {}).get('sha256', None)
-            self._actions = data.get('actions', [])
-            self._source = data.get('source', None)
-            self._data = data.get('data', None)
-
-        # checksum is set confirm it equals the data
-        if self._xsum is not None:
-            if (self._data is None and self._source == 'raw'):
-                raise ErrorInvalidObject('checksum defined without data')
-
-            _xsum = hashlib.sha256(self._data.encode('utf-8')).hexdigest()
-
-            if self._xsum != _xsum:
-                raise ErrorInvalidObject("calculated checksum doesn't not match: {0} != {1}".format(_xsum, self._xsum))
 
     #
     # PROPERTIES
@@ -222,14 +262,14 @@ class Object(object):
 
 
     def to_object(self):
-        _obj = {
+        return {
             'name': self._name,
             'source': self._source,
             'data': self._data,
             'checksum': {
                 'sha256': self._xsum
             },
-            'action': self._actions
+            'actions': self._actions
         }
 
     def to_json(self):

@@ -176,7 +176,8 @@ def buildCommandLineParser(config):
     object_add_parser.add_argument('--data', type=str)
     object_add_parser.add_argument('--data-file', type=str)
 
-    object_add_parser.add_argument('--action', dest='actions', type=str, nargs='+')
+    object_add_parser.add_argument('--xsum', type=str)
+    object_add_parser.add_argument('--action', dest='actions', type=str, action='append')
 
     # object update arguments
     object_update_parser = subparsers_object.add_parser('update', add_help=False, parents=[general_parser])

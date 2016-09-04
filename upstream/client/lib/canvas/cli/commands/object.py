@@ -60,8 +60,8 @@ class ObjectCommand(Command):
               "\n"
               "Specific usage:\n"
               "{0} object add [user:]template[@version] [store:]object_name [--action=...]\n"
-              "{0} object list [user:]template[@version] [--filter-store=...] [--filter-name=...]"
-              "{0} object rm [user:]template[@version] store1:object_name1 store2:object_name2 ... storeN:object_nameN"
+              "{0} object list [user:]template[@version] [--filter-store=...] [--filter-name=...]\n"
+              "{0} object rm [user:]template[@version] [store1:]object_name1 [store2:]object_name2 ... [storeN:]object_nameN\n"
               "\n".format(self.prog_name))
 
     def help_add(self):
@@ -69,12 +69,12 @@ class ObjectCommand(Command):
               "           [store:]object_name --data=|--data-file=|--source= --action= [--action= ...]\n"
               "\n"
               "Availablle actions are: \n"
-              "  copy\n"
-              "  copy-once\n"
-              "  extract\n"
-              "  extract-once\n"
-              "  execute\n"
-              "  execute-once\n"
+              "  copy DST_PATH\n"
+              "  copy-once DST_PATH\n"
+              "  extract DST_PATH\n"
+              "  extract-once DST_PATH\n"
+              "  execute BIN_PATH\n"
+              "  execute-once BIN_PATH\n"
               "  ks-pre\n"
               "  ks-pre-install\n"
               "  ks-post\n"
@@ -99,8 +99,6 @@ class ObjectCommand(Command):
     def run_add(self):
         t = Template(self.args.template, user=self.args.username)
 
-        print(self.args)
-
         try:
             t = self.cs.template_get(t)
 
@@ -109,7 +107,7 @@ class ObjectCommand(Command):
             return 1
 
         try:
-            obj = Object(data=self.args.data, data_file=self.args.data_file, source=self.args.source)
+            obj = Object(name=self.args.object, data=self.args.data, data_file=self.args.data_file, source=self.args.source, xsum=self.args.xsum, actions=self.args.actions)
         except ErrorInvalidObject as e:
             print (e)
             return 1
@@ -122,8 +120,7 @@ class ObjectCommand(Command):
 
             print('  - ' + str(obj))
             print()
-
-        return 0
+            return 1
 
         # push our updated template
         try:
@@ -145,7 +142,6 @@ class ObjectCommand(Command):
             print(e)
             return 1
 
-
     def run_rm(self):
         t = Template(self.args.template, user=self.args.username)
 
@@ -155,3 +151,22 @@ class ObjectCommand(Command):
         except ServiceException as e:
             print(e)
             return 1
+
+        for o in self.args.object:
+            try:
+                obj = Object(name=o)
+            except ErrorInvalidObject as e:
+                print (e)
+                return 1
+
+            t.remove_object(obj)
+
+        # push our updated template
+        try:
+            res = self.cs.template_update(t)
+
+        except ServiceException as e:
+            print(e)
+            return 1
+
+        return 0
