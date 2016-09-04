@@ -59,7 +59,7 @@ class ObjectCommand(Command):
         print("General usage: {0} [--version] [--help] [--verbose] object [<args>]\n"
               "\n"
               "Specific usage:\n"
-              "{0} object add [user:]template[@version] [store:]object_name [--action=...]\n"
+              "{0} object add [user:]template[@version] [store:]object_name --data=|--data-file=|--source= --action= [--action= ...]\n"
               "{0} object list [user:]template[@version] [--filter-store=...] [--filter-name=...]\n"
               "{0} object rm [user:]template[@version] [store1:]object_name1 [store2:]object_name2 ... [storeN:]object_nameN\n"
               "\n".format(self.prog_name))
@@ -78,6 +78,14 @@ class ObjectCommand(Command):
               "  ks-pre\n"
               "  ks-pre-install\n"
               "  ks-post\n"
+              "\n".format(self.prog_name))
+
+    def help_list(self):
+        print("Usage: {0} object list [user:]template[@version] [--filter-store=...] [--filter-name=...]\n"
+              "\n".format(self.prog_name))
+
+    def help_rm(self):
+        print("Usage: {0} object rm [user:]template[@version] [store:]object_name [store2:]object_name2 ... [storeN:]object_nameN\n"
               "\n".format(self.prog_name))
 
     def run(self):
@@ -142,6 +150,15 @@ class ObjectCommand(Command):
             print(e)
             return 1
 
+        objects = t.objects
+        if objects:
+            print('Template {0} has the following objects:'.format(t.name))
+            for o in t.objects:
+                print('  - ' + str(o))
+
+        else:
+            print('Template {0} has no objects.')
+
     def run_rm(self):
         t = Template(self.args.template, user=self.args.username)
 
@@ -152,14 +169,19 @@ class ObjectCommand(Command):
             print(e)
             return 1
 
-        for o in self.args.object:
+        for o in self.args.objects:
             try:
                 obj = Object(name=o)
+
             except ErrorInvalidObject as e:
                 print (e)
                 return 1
 
             t.remove_object(obj)
+
+        if self.args.dry_run:
+            # TODO: print changes
+            return 1
 
         # push our updated template
         try:

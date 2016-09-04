@@ -144,7 +144,13 @@ class Object(object):
         return (not self.__eq__(other))
 
     def __repr__(self):
-        return 'Object: {0} (xsum: {1}, actions: {2})'.format(self._name, self._xsum, len(self._actions))
+        if self._xsum is None:
+            xsum = "unknown"
+
+        else:
+            xsum = self._xsum[0:7]
+
+        return 'Object: {0} (xsum: {1}, actions: {2})'.format(self._name, xsum, len(self._actions))
 
     def _from_ks_command(self, command):
         self._data = str(command)

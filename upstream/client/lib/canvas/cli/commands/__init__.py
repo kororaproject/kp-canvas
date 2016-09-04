@@ -192,7 +192,7 @@ def buildCommandLineParser(config):
     # object remove arguments
     object_remove_parser = subparsers_object.add_parser('rm', add_help=False, parents=[general_parser])
     object_remove_parser.add_argument('template', type=str)
-    object_remove_parser.add_argument('object', type=str, nargs='+')
+    object_remove_parser.add_argument('objects', type=str, nargs='+')
 
     #
     # PACKAGE COMMANDS
