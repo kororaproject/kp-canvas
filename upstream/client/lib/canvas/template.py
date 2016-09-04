@@ -70,8 +70,8 @@ class Template(object):
         self._includes_packages = PackageSet()  # packages from includes in template
         self._delta_packages = PackageSet()     # packages to add/remove in template
 
-        self._stores   = []  # remote stores for machine
-        self._objects  = ObjectSet  # archive definitions in machine
+        self._stores   = []           # remote stores for machine
+        self._objects  = ObjectSet()  # archive definitions in machine
 
         self._parse_template(template)
 
