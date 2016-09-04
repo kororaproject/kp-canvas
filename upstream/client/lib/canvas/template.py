@@ -159,15 +159,15 @@ class Template(object):
                         if len(r.strip()) == 0:
                             continue
 
-                        self._repos.add(Repository(r))
+                        self.add_repo(Repository(r))
 
                 # otherwise store commands as canvas objects
                 else:
-                    self._objects.add(Object(c))
+                    self.add_object(Object(c))
 
         # convert scripts into canvas objects
         for s in handler.scripts:
-            self._objects.add(Object(s))
+            self.add_object(Object(s))
 
         # parse pykickstart packages
         packages = handler.packages
@@ -189,22 +189,22 @@ class Template(object):
             grps = packages.groupList
             grps.sort()
             for g in grps:
-                self._packages.add(Package({'n': g.__str__(), 'z': 1}))
+                self.add_package(Package({'n': g.__str__(), 'z': 1}))
 
             pkgs = packages.packageList
             pkgs.sort()
             for p in pkgs:
-                self._packages.add(Package({'n': p.__str__(), 'z': 1}))
+                self.add_package(Package({'n': p.__str__(), 'z': 1}))
 
             grps = packages.excludedGroupList
             grps.sort()
             for g in grps:
-                self._packages.add(Package({'n': g.__str__(), 'z': 0}))
+                self.add_package(Package({'n': g.__str__(), 'z': 0}))
 
             pkgs = packages.excludedList
             pkgs.sort()
             for p in pkgs:
-                self._packages.add(Package({'n': p.__str__(), 'z': 0}))
+                self.add_package(Package({'n': p.__str__(), 'z': 0}))
 
         self._meta['kickstart'] = meta
 
