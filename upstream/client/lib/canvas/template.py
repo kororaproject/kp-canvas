@@ -44,8 +44,6 @@ class ErrorInvalidTemplate(Exception):
         self.reason = reason.lower()
         self.code = code
 
-        self._db = None
-
     def __str__(self):
         return 'error: {0}'.format(str(self.reason))
 
@@ -75,6 +73,8 @@ class Template(object):
         self._objects  = ObjectSet()           # archive definitions in machine
         self._includes_objects  = ObjectSet()  # archive definitions in machine
         self._delta_objects  = ObjectSet()     # archive definitions in machine
+
+        self._db = None
 
         self._parse_template(template)
 
@@ -549,22 +549,40 @@ class Template(object):
 
         db = self._db
 
-        if len(db.transaction.install_set) or len(db.transaction.remove_set):
-            print('info: downloading ...')
+        if db.transaction is not None and \
+            (len(db.transaction.install_set) or len(db.transaction.remove_set)):
+            print('info: downloading packages ...')
             db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
 
-            print('info: completing ...')
+            print('info: performing package transaction ...')
             db.do_transaction()
 
-        print('info: syncing history ...')
-        for p in t.packages_all:
-            if p.included():
-                pkg = p.to_pkg();
-                if pkg is not None:
-                    db.yumdb.get_package(pkg).reason = 'user'
+        if len(self.packages_all):
+            print('info: syncing history ...')
 
-        # check all objects
+            for p in self.packages_all:
+                if p.included():
+                    pkg = p.to_pkg();
+                    if pkg is not None:
+                        db.yumdb.get_package(pkg).reason = 'user'
 
+        # check all non-ks objects
+        if len(self.objects_all):
+            # find all non local object sources and fetch
+            external_sources = [o.source for o in self.objects_all if o.source != 'raw']
+
+            if len(external_sources):
+                print('info: downloading objects ...')
+
+                for s in external_sources:
+                    print('downloading: {0}'.format(s))
+
+            # apply non-ks actions only
+            for o in self.objects_all:
+                nonks_actions = [a for a in o.actions if a['type'] not in Object.ACTIONS_KS_ONLY]
+
+                for a in nonks_actions:
+                    print('applying {0} from {1}'.format(a, o))
 
     def system_prepare(self, clean=False, db=dnf.Base()):
         """
@@ -595,7 +613,8 @@ class Template(object):
                 dr.load()
                 db.repos.add(dr)
 
-        else:
+        # indicate we're using sytem repos if we're mangling packages
+        elif len(self.packages_all):
             print('No template repos specified, using available system repos.')
             db.read_all_repos()
 
@@ -607,24 +626,25 @@ class Template(object):
         except OSError as e:
             pass
 
-        multilib_policy = db.conf.multilib_policy
-        clean_deps = db.conf.clean_requirements_on_remove
+        if len(self.packages_all):
+            multilib_policy = db.conf.multilib_policy
+            clean_deps = db.conf.clean_requirements_on_remove
 
-        print('info: preparing transaction ...')
-        # process all packages in template
-        for p in self.packages_all:
-            if p.included():
-                try:
-                    db.install(p.to_pkg_spec())
-                except:
-                    print ("error: Package does not exist " + str(p))
-                    pass
+            print('info: preparing package transaction ...')
+            # process all packages in template
+            for p in self.packages_all:
+                if p.included():
+                    try:
+                        db.install(p.to_pkg_spec())
+                    except:
+                        print ("error: Package does not exist " + str(p))
+                        pass
 
-            else:
-                db.remove(p.to_pkg_spec())
+                else:
+                    db.remove(p.to_pkg_spec())
 
-        print('info: resolving actions ...')
-        db.resolve(allow_erasing=True)
+            print('info: resolving package actions ...')
+            db.resolve(allow_erasing=True)
 
     def system_transaction(self):
         """

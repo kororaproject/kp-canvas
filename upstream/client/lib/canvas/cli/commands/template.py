@@ -376,7 +376,7 @@ class TemplateCommand(Command):
             print(e)
             return 1
 
-        t.system_prepare(clean=self.args.clean)
+        t.system_prepare(clean=self.args.pull_clean)
 
         # describe process for dry runs
         if self.args.dry_run:
@@ -407,7 +407,7 @@ class TemplateCommand(Command):
             print('No action peformed during this dry-run.')
             return 0
 
-        t.to_system_apply()
+        t.system_apply()
 
     def run_push(self):
         t = Template(self.args.template, user=self.args.username)

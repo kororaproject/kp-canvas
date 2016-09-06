@@ -40,10 +40,12 @@ class Object(object):
     """ A Canvas object that represents a template Object. """
 
     # CONSTANTS
-    VALID_ACTIONS = ['copy', 'copy-once',
-                     'extract', 'extract-once',
-                     'execute', 'execute-once',
-                     'ks-post', 'ks-pre', 'ks-pre-install', 'ks-traceback']
+    ACTIONS_ALL = ['copy', 'copy-once',
+                   'extract', 'extract-once',
+                   'execute', 'execute-once',
+                   'ks-post', 'ks-pre', 'ks-pre-install', 'ks-traceback']
+
+    ACTIONS_KS_ONLY = ['ks-post', 'ks-pre', 'ks-pre-install', 'ks-traceback']
 
     MAP_OBJ_STRING_TO_SCRIPT_TYPE = {
         'ks-post':          pykickstart.constants.KS_SCRIPT_POST,
@@ -118,11 +120,11 @@ class Object(object):
         for a in self._actions:
             if isinstance(a, str):
                 t, p = a.split()
-                if t in Object.VALID_ACTIONS:
+                if t in Object.ACTIONS_ALL:
                     actions.append({'type': t, 'path': p})
 
             elif isinstance(a, dict):
-                if 'type' in a and a['type'] in Object.VALID_ACTIONS:
+                if 'type' in a and a['type'] in Object.ACTIONS_ALL:
                     actions.append(a)
 
         self._actions = actions
@@ -204,7 +206,7 @@ class Object(object):
 
     @property
     def source(self):
-        return self._data
+        return self._source
 
     @source.setter
     def source(self, source):
