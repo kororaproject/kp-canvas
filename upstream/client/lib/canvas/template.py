@@ -569,20 +569,20 @@ class Template(object):
         # check all non-ks objects
         if len(self.objects_all):
             # find all non local object sources and fetch
-            external_sources = [o.source for o in self.objects_all if o.source != 'raw']
+            external_sources = [o for o in self.objects_all if o.source != 'raw']
 
             if len(external_sources):
                 print('info: downloading objects ...')
 
-                for s in external_sources:
-                    print('downloading: {0}'.format(s))
+            for o in external_sources:
+                print('downloading: {0}'.format(o.source))
+                o.download()
+
 
             # apply non-ks actions only
             for o in self.objects_all:
-                nonks_actions = [a for a in o.actions if a['type'] not in Object.ACTIONS_KS_ONLY]
-
-                for a in nonks_actions:
-                    print('applying {0} from {1}'.format(a, o))
+                print('applying: {0}'.format(o.source))
+                o.apply_actions()
 
     def system_prepare(self, clean=False, db=dnf.Base()):
         """

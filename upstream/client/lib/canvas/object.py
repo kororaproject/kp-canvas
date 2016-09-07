@@ -19,11 +19,14 @@
 import collections
 import hashlib
 import json
+import os
+import urllib.request
 
 from pykickstart.base import KickstartCommand
 from pykickstart.parser import Script
 import pykickstart.constants
 
+import canvas.utilities
 
 class ErrorInvalidObject(Exception):
     def __init__(self, reason, code=0):
@@ -67,6 +70,8 @@ class Object(object):
         self._source = None
         self._data = None
         self._actions = []
+
+        self._cache_dir = os.getenv('CANVAS_CACHE_DIR', '/var/cache/canvas')
 
         if kwargs:
             self._name    = kwargs.get('name', self._name)
@@ -154,6 +159,10 @@ class Object(object):
 
         return 'Object: {0} (xsum: {1}, actions: {2})'.format(self._name, xsum, len(self._actions))
 
+    def _cached_object_path(self):
+        filename = '{0}-{1}'.format(self._name, os.path.basename(self._source))
+        return os.path.join(self._cache_dir, filename)
+
     def _from_ks_command(self, command):
         self._data = str(command)
         self._xsum = hashlib.sha256(self._data.encode('utf-8')).hexdigest()
@@ -227,6 +236,40 @@ class Object(object):
     # PUBLIC METHODS
     def add_action(self, action):
         pass
+
+    def apply_actions(self):
+        nonks_actions = [a for a in self.actions if a['type'] not in Object.ACTIONS_KS_ONLY]
+
+        for a in nonks_actions:
+            if a['type'].startswith('copy'):
+                canvas.utilities.copy_object_file(self._cached_object_path(), a['path'])
+
+            elif a['type'].startswith('execute'):
+                canvas.utilities.execute_object_file(self._cached_object_path())
+
+            elif a['type'].startswith('extract'):
+                canvas.utilities.extract_object_file(self._cached_object_path(), a['path'])
+
+    def download(self, force=False):
+        if self._source == 'raw':
+            return
+
+        cached_object_path = self._cached_object_path()
+
+        if os.path.exists(cached_object_path):
+            return
+
+        elif not os.path.exists(self._cache_dir):
+            os.mkdir(self._cache_dir)
+
+        urllib.request.urlretrieve(self._source, cached_object_path)
+
+    def is_downloaded(self):
+        if self._source != 'raw':
+            return os.path.exists(self._cached_object_path)
+
+        else:
+            return True
 
     def is_complete(self):
         return self._xsum and ((self._source != 'raw') or (self._data is not None))
