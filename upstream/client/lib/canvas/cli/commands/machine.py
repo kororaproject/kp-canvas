@@ -99,7 +99,7 @@ class MachineCommand(Command):
 
         # grab the template we're associating to the machine
         try:
-            t = self.cs.template_get(t, auth=True)
+            t = self.cs.template_get(t, auth=True, resolve_includes=False)
 
         except ServiceException as e:
             print(e)
@@ -279,7 +279,7 @@ class MachineCommand(Command):
             t = Template(self.args.template, user=self.args.username)
 
             try:
-                t = self.cs.template_get(t)
+                t = self.cs.template_get(t, resolve_includes=False)
 
             except ServiceException as e:
                 print(e)

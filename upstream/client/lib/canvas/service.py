@@ -99,23 +99,20 @@ class Service(object):
             print(e)
             raise ServiceException('unknown service response')
 
-    def _template_resolve_includes(self, template_src, template_dst=None):
-        # use the src temlate if if no dst template provided
-        if template_dst is None:
-            template_dst = template_src
+    def _template_resolve_includes(self, template_src):
+        if not template_src.includes:
+            return template_src
 
         for i in template_src.includes:
-            t = Template(i)
-            data = self._template_data_get(t)
+            data = self._template_data_get(Template(i))
+            data_resolv = self._template_resolve_includes(data)
 
-            # push our resolved template to the dst
-            template_dst._includes.append(t.unv)
-            template_dst._includes_resolved.append(t)
+            data_resolv._flatten()
 
-            # recurse down
-            self._template_resolve_includes(t, template_dst)
+            template_src._includes_resolved.append(data_resolv)
 
-        return template_dst
+        template_src._flatten()
+        return template_src
 
     def authenticate(self, username=None, password=None, prompt=None, force=False):
         # print('debug: authenticating to {0}'.format(self._urlbase))
@@ -444,7 +441,7 @@ class Service(object):
 
         raise ServiceException('unable to delete template.')
 
-    def template_get(self, template, auth=False, resolve_includes=False):
+    def template_get(self, template, auth=False, resolve_includes=True):
         if not isinstance(template, Template):
             TypeError('template is not of type Template')
 
@@ -455,7 +452,7 @@ class Service(object):
         template = self._template_data_get(template)
 
         if resolve_includes:
-            template = self._resolve_template_includes(template)
+            template = self._template_resolve_includes(template)
 
         return template
 
