@@ -443,7 +443,9 @@ class Template(object):
     def from_kickstart(self, path):
         self._parse_kickstart(path)
 
-    def from_system(self, all=False):
+    @classmethod
+    def from_system(cls, all=False):
+        system_template = cls('local:system')
         db = dnf.Base()
         try:
             db.fill_sack()
@@ -458,10 +460,11 @@ class Template(object):
             p_list = db.iter_userinstalled()
 
         for p in p_list:
-            self.add_package(Package(p, evr=False))
+            system_template.add_package(Package(p, evr=False))
 
         for r in db.repos.enabled():
-            self.add_repo(Repository(r))
+            system_template.add_repo(Repository(r))
+        return system_template
 
     def package_diff(self, packages):
         return self.packages_all.difference(packages)
