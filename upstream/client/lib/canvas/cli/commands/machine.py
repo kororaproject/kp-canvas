@@ -146,7 +146,7 @@ class MachineCommand(Command):
         m = Machine(res['template'])
         t = Template(res['template'])
 
-        ts = Template('system')
+        ts = Template('local:system')
         ts.from_system()
 
         (l_r, r_l) = t.package_diff(ts.packages_all)

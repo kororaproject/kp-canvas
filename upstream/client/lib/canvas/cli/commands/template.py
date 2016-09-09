@@ -203,7 +203,7 @@ class TemplateCommand(Command):
 
         # otherwise build from system
         else:
-            ts = Template('system')
+            ts = Template('local:system')
             ts.from_system()
 
         (l_r, r_l) = t.package_diff(ts.packages_all)
