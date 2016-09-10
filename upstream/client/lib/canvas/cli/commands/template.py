@@ -328,7 +328,7 @@ class TemplateCommand(Command):
                 if p.arch is None:
                     p.arch = '-'
 
-                if p.included():
+                if p.included:
                     p.action = '+'
 
                 else:

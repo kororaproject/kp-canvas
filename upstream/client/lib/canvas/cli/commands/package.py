@@ -21,7 +21,7 @@ import logging
 import prettytable
 
 from canvas.cli.commands import Command
-from canvas.package import Package, ErrorInvalidPackage
+from canvas.package import Package
 from canvas.service import Service, ServiceException
 from canvas.template import Template
 
@@ -111,7 +111,7 @@ class PackageCommand(Command):
         for p in self.args.package:
             try:
                 pkg = Package(p)
-            except ErrorInvalidPackage as e:
+            except TypeError as e:
                 print (e)
                 return 1
 
@@ -184,7 +184,7 @@ class PackageCommand(Command):
                 if p.arch is None:
                     p.arch = '-'
 
-                if p.included():
+                if p.included:
                     p.action = '+'
 
                 else:

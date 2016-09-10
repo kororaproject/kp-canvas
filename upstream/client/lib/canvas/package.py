@@ -17,55 +17,66 @@
 #
 
 import collections
-import dnf
 import hawkey
 import json
 import re
-
-
-# name[[#epoch]@version-release][:arch]
-RE_PACKAGE = re.compile("^([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))?(?::(\w+))?$")
-RE_GROUP = re.compile("^([+~])?(@[\w ]+)$")
-
-
-class ErrorInvalidPackage(Exception):
-    def __init__(self, reason, code=0):
-        self.reason = reason.lower()
-        self.code = code
-
-    def __str__(self):
-        return 'error: {0}'.format(str(self.reason))
+import dnf
 
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
 #
-
-
 class Package(object):
     """ A Canvas object that represents an installable Package. """
+
+    # name[[#epoch]@version-release][:arch]
+    RE_PACKAGE = re.compile(r"^([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))?(?::(\w+))?$")
+    RE_GROUP = re.compile(r"^([+~])?(@[\w ]+)$")
 
     # CONSTANTS
     ACTION_PIN              = 0x80
     ACTION_GROUP_OPTIONAL   = 0x40
     ACTION_GROUP_NODEFAULTS = 0x20
     ACTION_GROUP            = 0x10
-    ACTION_EXCLUDE          = 0x02
-    ACTION_INCLUDE          = 0x01
+    ACTION_EXCLUDE          = 0x02 # Should we remove a package if it is installed
+    ACTION_INCLUDE          = 0x01 # Should we install a package if it is missing
+    # NOTE: Valid combinations of EXCLUDE and INCLUDE are as follows
+    # INCLUDE | EXCLUDED
+    #    T    |    F
+    #    F    |    T
+    #    F    |    F
 
-    def __init__(self, *args, **kwargs):
-        self.name     = kwargs.get('name', None)
-        self.epoch    = kwargs.get('epoch', None)
-        self.version  = kwargs.get('version', None)
-        self.release  = kwargs.get('release', None)
-        self.arch     = kwargs.get('arch', None)
-        self.action   = kwargs.get('action', self.ACTION_INCLUDE)
 
-        # parse all args package defined objects
-        for arg in args:
-            self.parse(arg)
+    def __init__(self, package, evr=True):
+        if isinstance(package, dnf.package.Package) or \
+                isinstance(package, hawkey.Package):
+            package = Package.parse_dnf(package)
+        elif isinstance(package, str):
+            package = Package.parse_str(package)
+
+        if not isinstance(package, dict):
+            raise TypeError("Package must be a dict")
+
+        self.name    = package.get('n', None)
+        self.epoch   = package.get('e', None)
+        self.version = package.get('v', None)
+        self.release = package.get('r', None)
+        self.arch    = package.get('a', None)
+        self.action  = package.get('z', self.ACTION_INCLUDE)
+
+        if not self.name:
+            raise ValueError("Name cannot be None")
+
+        if (self.version and not self.release) or \
+            (not self.version and self.release):
+            raise ValueError("Both version and release must be specified")
+
+        # detect group packages
+        if self.name.startswith('@'):
+            self.action |= self.ACTION_GROUP
 
         # strip evr information as appropriate
-        if not kwargs.get('evr', True):
+        # NOTE: for things like pushing current state into a template
+        if not evr:
             self.epoch = None
             self.version = None
             self.release = None
@@ -90,7 +101,7 @@ class Package(object):
         return hash('{0}.{1}'.format(self.name, self.arch))
 
     def __ne__(self, other):
-        return (not self.__eq__(other))
+        return not self.__eq__(other)
 
     def __repr__(self):
         return 'Package: %s' % (self.to_json())
@@ -98,64 +109,111 @@ class Package(object):
     def __str__(self):
         return 'Package: %s' % (self.to_pkg_spec())
 
+    @property
     def excluded(self):
+        """ Is the package excluded from a template """
         return self.action & (self.ACTION_EXCLUDE) == self.ACTION_EXCLUDE
 
+    @property
     def included(self):
+        """ Is the package included in a template """
         return self.action & (self.ACTION_INCLUDE) == self.ACTION_INCLUDE
 
-    def parse(self, data):
-        if isinstance(data, dnf.package.Package) or \
-                isinstance(data, hawkey.Package):
-            self.name    = data.name
-            self.epoch   = data.epoch
-            self.version = data.version
-            self.release = data.release
-            self.arch    = data.arch
+    @classmethod
+    def parse_dnf(cls, pkg):
+        """ Generate a Package dictionary from a dnf package
 
-        elif isinstance(data, dict):
-            self.name    = data.get('n', self.name)
-            self.epoch   = data.get('e', self.epoch)
-            self.version = data.get('v', self.version)
-            self.release = data.get('r', self.release)
-            self.arch    = data.get('a', self.arch)
-            self.action  = data.get('z', self.ACTION_INCLUDE)
+        Note: String cannot support the pkg_spec format:
+            name-[epoc:]version
+            as revision must also be specified
 
-        elif isinstance(data, str):
-            m = RE_PACKAGE.match(data)
-            g = RE_GROUP.match(data)
+        Args:
+            cls: Holds the Package class
+            package: DNF or hawkey package
+        Returns:
+            The dictionary conversion of the dnf package
+        Raises:
+            TypeError: If package is not a dnf or hawkey package
 
-            if m is not None:
-                regex = m
-            elif g is not None:
-                regex = g
-            else:
-                raise ErrorInvalidPackage("package format invalid")
+        """
+        if not (isinstance(pkg, dnf.package.Package) or \
+                isinstance(pkg, hawkey.Package)):
+            raise TypeError("Pkg needs to be a DNF or hawkey package object")
 
-            if regex.group(1) == '~':
-                self.action = self.ACTION_EXCLUDE
-            else:
-                self.action = self.ACTION_INCLUDE
+        return {
+            'n' : pkg.name,
+            'e' : pkg.epoch,
+            'v' : pkg.version,
+            'r' : pkg.release,
+            'a' : pkg.arch
+        }
 
-            self.name    = regex.group(2)
-            if regex is m:
-                self.epoch   = regex.group(3)
-                self.version = regex.group(4)
-                self.release = regex.group(5)
-                self.arch    = regex.group(6)
+    @classmethod
+    def parse_str(cls, package):
+        """ Generate a Package dictionary from a Package string.
 
-        # detect group packages
-        if isinstance(self.name, str) and self.name.startswith('@'):
-            self.action |= self.ACTION_GROUP
+        Note: String cannot support the pkg_spec format:
+              name-[epoc:]version
+              as revision must also be specified
 
+        Args:
+            cls: Holds the Package class
+            package: String representation of a package
+        Returns:
+            The dictionary conversion of the package string
+        Raises:
+            TypeError: If package is not a string
+            ValueError: If string does not match either the Package or groups formats
+
+        """
+        if not isinstance(package, str):
+            raise TypeError("Package needs to be a string")
+
+        pkg_match = cls.RE_PACKAGE.match(package)
+        grp_match = cls.RE_GROUP.match(package)
+        action = cls.ACTION_INCLUDE
+
+        if pkg_match is not None:
+            regex = pkg_match
+        elif grp_match is not None:
+            regex = grp_match
+        else:
+            raise ValueError
+
+        if regex.group(1) == '~':
+            action = cls.ACTION_EXCLUDE
+
+        name = regex.group(2)
+
+        if regex is pkg_match:
+            epoch   = regex.group(3)
+            version = regex.group(4)
+            release = regex.group(5)
+            arch    = regex.group(6)
+
+            return {
+                'n' : name,
+                'e' : epoch,
+                'v' : version,
+                'r' : release,
+                'a' : arch,
+                'z' : action
+            }
+
+        return {'n': name, 'z': action}
+
+    @property
     def pinned(self):
+        """ Is the package pinned to its version """
         return self.action & (self.ACTION_PIN) == self.ACTION_PIN
 
     def to_json(self):
+        """ Return a json representation of the package object """
         return json.dumps(self.to_object(), separators=(',', ':'), sort_keys=True)
 
     def to_object(self):
-        o = {
+        """ Return a dictionary representation of the package object """
+        obj = {
             'n': self.name,
             'e': self.epoch,
             'v': self.version,
@@ -165,20 +223,17 @@ class Package(object):
         }
 
         # only build with non-None values
-        return {k: v for k, v in o.items() if v != None}
+        return {k: v for k, v in obj.items() if v != None}
 
     def to_pkg_spec(self):
-        # return empty string if no name (should never happen)
-        if self.name is None:
-            return ''
-
-        f = self.name
+        """ Return a dictionary representation of the package object """
+        pkg = self.name
 
         # calculate evr
         evr = ''
 
         if self.epoch is not None or self.version is not None:
-            f += '-'
+            pkg += '-'
 
         if self.epoch is not None:
             evr = self.epoch + ':'
@@ -187,20 +242,32 @@ class Package(object):
             db = dnf.Base()
             conf = db.conf.substitutions
             evr += '{0}-{1}.fc{2}'.format(self.version, self.release, conf['releasever'])
-        elif self.version is not None:
-            evr += self.version
+        # NOTE: This is valid according to DNF docs,
+        # however current str form makes this impossible
+        #elif self.version is not None:
+        #    evr += self.version
 
         # append evr if appropriate
         if evr:
-            f += evr
+            pkg += evr
 
         # append arch if appropriate
         if self.arch is not None:
-            f += '.' + self.arch
+            pkg += '.' + self.arch
 
-        return f
+        return pkg
 
     def to_pkg(self, db=None):
+        """ Convert this package into a DNF Package object.
+        Args:
+            db: A DNF Base object
+        Returns:
+            The DNF package object
+        Raises:
+            OSError: If errors are encountered in DNF
+
+        """
+
         if not isinstance(db, dnf.Base):
             db = dnf.Base()
             try:
