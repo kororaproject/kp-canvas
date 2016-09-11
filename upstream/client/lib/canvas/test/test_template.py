@@ -5,7 +5,7 @@
 
 from unittest import TestCase
 
-from canvas.template import Template, ErrorInvalidTemplate
+from canvas.template import Template
 from canvas.object import ObjectSet
 from canvas.package import Package, PackageSet
 from canvas.repository import RepoSet
@@ -64,26 +64,26 @@ class TemplateTestCase(TestCase):
     def test_template_parse_str_invalid(self):
 
         # empty string
-        with self.assertRaises(ErrorInvalidTemplate):
+        with self.assertRaises(ValueError):
             Template("")
 
         # pure whitespace
-        with self.assertRaises(ErrorInvalidTemplate):
+        with self.assertRaises(ValueError):
             Template(" ")
 
         # no user
-        with self.assertRaises(ErrorInvalidTemplate):
+        with self.assertRaises(ValueError):
             Template("foo")
 
-        with self.assertRaises(ErrorInvalidTemplate):
+        with self.assertRaises(ValueError):
             Template(":foo@bar")
 
         # no user or version
-        with self.assertRaises(ErrorInvalidTemplate):
+        with self.assertRaises(ValueError):
             Template(":foo@")
 
         # no name
-        with self.assertRaises(ErrorInvalidTemplate):
+        with self.assertRaises(ValueError):
             Template("foo:")
 
 #    def test_template_from_kickstart_invalid_path(self):

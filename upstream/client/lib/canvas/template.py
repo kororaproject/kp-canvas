@@ -39,13 +39,7 @@ RE_TEMPLATE = re.compile("(?:(?P<user>[\w\.\-]*):)?(?P<name>[\w\.\-]+)(?!.*:)(?:
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
 #
-class ErrorInvalidTemplate(Exception):
-    def __init__(self, reason, code=0):
-        self.reason = reason.lower()
-        self.code = code
 
-    def __str__(self):
-        return 'error: {0}'.format(str(self.reason))
 
 class Template(object):
     def __init__(self, template=None, user=None):
@@ -223,10 +217,10 @@ class Template(object):
                 self._version = version
 
             if not self._user or len(self._user) == 0:
-                raise ErrorInvalidTemplate("template format invalid")
+                raise ValueError("template format invalid")
 
             if not self._name or len(self._name) == 0:
-                raise ErrorInvalidTemplate("template format invalid")
+                raise ValueError("template format invalid")
 
         # parse the dict form, the most common form and directly
         # relates to the json structures returned by canvas server
