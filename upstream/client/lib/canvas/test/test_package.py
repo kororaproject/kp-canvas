@@ -51,6 +51,11 @@ class PackageTestCase(TestCase):
         self.assertEqual('x86_64', p1.arch)
         self.assertEqual(p1.action, Package.ACTION_EXCLUDE)
 
+
+    def test_package_parse_str_invalid(self):
+        with self.assertRaises(TypeError):
+            Package.parse_str(1)
+
     # https://fedoraproject.org/wiki/Packaging:NamingGuidelines
     # [a-zA-Z0-9-._+]
     def test_package_parse_str_valid_name(self):
