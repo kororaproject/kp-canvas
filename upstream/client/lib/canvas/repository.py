@@ -16,10 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import dnf
 import json
 
+from canvas.canvasset import CanvasSet
 
 class Repository(object):
     """ A Canvas object that represents a Repository of packages. """
@@ -281,85 +281,6 @@ class Repository(object):
         return r
 
 
-class RepoSet(collections.MutableSet):
+class RepoSet(CanvasSet):
     def __init__(self, initvalue=()):
-        self._set = []
-
-        for x in initvalue:
-            self.add(x)
-
-    def __contains__(self, item):
-        return item in self._set
-
-    def __getitem__(self, index):
-        return self._set[index]
-
-    def __iter__(self):
-        return iter(self._set)
-
-    def __len__(self):
-        return len(self._set)
-
-    def __repr__(self):
-        return "%s(%r)" % (type(self).__name__, self._set)
-
-    def add(self, item):
-        if not isinstance(item, Repository):
-            raise TypeError('Not a Repository.')
-
-        if item not in self._set:
-            self._set.append(item)
-
-    def discard(self, item):
-        if not isinstance(item, Repository):
-            raise TypeError('Not a Repository.')
-
-        try:
-            self._set.remove(item)
-
-        except:
-            pass
-
-    def difference(self, other):
-        if not isinstance(other, RepoSet):
-            raise TypeError('Not a RepoSet.')
-
-        uniq_self = RepoSet()
-        uniq_other = RepoSet()
-
-        # find unique items to self
-        for x in self._set:
-            if x not in other:
-                uniq_self.add(x)
-
-        # find unique items to other
-        for x in other:
-            if x not in self._set:
-                uniq_other.add(x)
-
-        return (uniq_self, uniq_other)
-
-    def union(self, *args):
-        if len(args) == 0:
-            raise Exception('No RepoSets defined for union.')
-
-        u = RepoSet(self._set)
-
-        for o in args:
-            if not isinstance(o, RepoSet):
-                raise TypeError('Not a RepoSet.')
-
-            # add takes care of uniqueness so let's use it
-            for x in o:
-                u.add(x)
-
-        return u
-
-    def update(self, *args):
-        for o in args:
-            if not isinstance(o, RepoSet):
-                raise TypeError('Not a RepoSet.')
-
-            # add takes care of uniqueness so let's use it
-            for x in o:
-                self.add(x)
+        CanvasSet.__init__(self, initvalue)

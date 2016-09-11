@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import hashlib
 import json
 import os
@@ -27,6 +26,8 @@ from pykickstart.parser import Script
 import pykickstart.constants
 
 import canvas.utilities
+
+from canvas.canvasset import CanvasSet
 
 class ErrorInvalidObject(Exception):
     def __init__(self, reason, code=0):
@@ -347,86 +348,6 @@ class Object(object):
     def to_json(self):
         return json.dumps(self.to_object(), separators=(',', ':'), sort_keys=True)
 
-
-class ObjectSet(collections.MutableSet):
+class ObjectSet(CanvasSet):
     def __init__(self, initvalue=()):
-        self._set = []
-
-        for x in initvalue:
-            self.add(x)
-
-    def __contains__(self, item):
-        return item in self._set
-
-    def __getitem__(self, index):
-        return self._set[index]
-
-    def __iter__(self):
-        return iter(self._set)
-
-    def __len__(self):
-        return len(self._set)
-
-    def __repr__(self):
-        return "%s(%r)" % (type(self).__name__, self._set)
-
-    def add(self, item):
-        if not isinstance(item, Object):
-            raise TypeError('Not an Object.')
-
-        if item not in self._set:
-            self._set.append(item)
-
-    def discard(self, item):
-        if not isinstance(item, Object):
-            raise TypeError('Not an Object.')
-
-        try:
-            self._set.remove(item)
-
-        except:
-            pass
-
-    def difference(self, other):
-        if not isinstance(other, ObjectSet):
-            raise TypeError('Not a ObjectSet.')
-
-        uniq_self = ObjectSet()
-        uniq_other = ObjectSet()
-
-        # find unique items to self
-        for x in self._set:
-            if x not in other:
-                uniq_self.add(x)
-
-        # find unique items to other
-        for x in other:
-            if x not in self._set:
-                uniq_other.add(x)
-
-        return (uniq_self, uniq_other)
-
-    def union(self, *args):
-        if len(args) == 0:
-            raise Exception('No ObjectSets defined for union.')
-
-        u = ObjectSet(self._set)
-
-        for o in args:
-            if not isinstance(o, ObjectSet):
-                raise TypeError('Not a ObjectSet.')
-
-            # add takes care of uniqueness so let's use it
-            for x in o:
-                u.add(x)
-
-        return u
-
-    def update(self, *args):
-        for o in args:
-            if not isinstance(o, ObjectSet):
-                raise TypeError('Not a ObjectSet.')
-
-            # add takes care of uniqueness so let's use it
-            for x in o:
-                self.add(x)
+        CanvasSet.__init__(self, initvalue)

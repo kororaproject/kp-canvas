@@ -16,12 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import dnf
 import hawkey
 import json
 import re
 
+from canvas.canvasset import CanvasSet
 
 # name[[#epoch]@version-release][:arch]
 RE_PACKAGE = re.compile("^([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))?(?::(\w+))?$")
@@ -215,92 +215,7 @@ class Store(object):
 
         return list(p_list)[0]
 
-
-class StoreSet(collections.MutableSet):
+class StoreSet(CanvasSet):
     def __init__(self, initvalue=()):
-        self._set = []
+        CanvasSet.__init__(self, initvalue)
 
-        for x in initvalue:
-            self.add(x)
-
-    def __contains__(self, item):
-        return item in self._set
-
-    def __getitem__(self, index):
-        return self._set[index]
-
-    def __iter__(self):
-        return iter(self._set)
-
-    def __len__(self):
-        return len(self._set)
-
-    def __repr__(self):
-        return "%s(%r)" % (type(self).__name__, self._set)
-
-    def add(self, item):
-        if not isinstance(item, Store):
-            raise TypeError('Not a Store.')
-
-        if item not in self._set:
-            self._set.append(item)
-
-        # add if new package has more explicit arch definition than existing
-        elif item.arch is not None:
-            for i, x in enumerate(self._set):
-                if x.name == item.name and x.arch is None:
-                    self._set[i] = item
-
-    def discard(self, item):
-        if not isinstance(item, Store):
-            raise TypeError('Not a Store.')
-
-        try:
-            self._set.remove(item)
-
-        except:
-            pass
-
-    def difference(self, other):
-        if not isinstance(other, StoreSet):
-            raise TypeError('Not a StoreSet.')
-
-        uniq_self = StoreSet()
-        uniq_other = StoreSet()
-
-        # find unique items to self
-        for x in self._set:
-            if x not in other:
-                uniq_self.add(x)
-
-        # find unique items to other
-        for x in other:
-            if x not in self._set:
-                uniq_other.add(x)
-
-        return (uniq_self, uniq_other)
-
-    def union(self, *args):
-        if len(args) == 0:
-            raise Exception('No StoreSets defined for union.')
-
-        u = StoreSet(self._set)
-
-        for o in args:
-            if not isinstance(o, StoreSet):
-                raise TypeError('Not a StoreSet.')
-
-            # add takes care of uniqueness so let's use it
-            for x in o:
-                u.add(x)
-
-        return u
-
-    def update(self, *args):
-        for o in args:
-            if not isinstance(o, StoreSet):
-                raise TypeError('Not a StoreSet.')
-
-            # add takes care of uniqueness so let's use it
-            for x in o:
-                self.add(x)

@@ -16,11 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import collections
 import hawkey
 import json
 import re
 import dnf
+
+from canvas.canvasset import CanvasSet
 
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS
@@ -284,32 +285,11 @@ class Package(object):
         return list(p_list)[0]
 
 
-class PackageSet(collections.MutableSet):
+class PackageSet(CanvasSet):
     def __init__(self, initvalue=()):
-        self._set = []
-
-        for x in initvalue:
-            self.add(x)
-
-    def __contains__(self, item):
-        return item in self._set
-
-    def __getitem__(self, index):
-        return self._set[index]
-
-    def __iter__(self):
-        return iter(self._set)
-
-    def __len__(self):
-        return len(self._set)
-
-    def __repr__(self):
-        return "%s(%r)" % (type(self).__name__, self._set)
+        CanvasSet.__init__(self, initvalue)
 
     def add(self, item):
-        if not isinstance(item, Package):
-            raise TypeError('Not a Package.')
-
         if item not in self._set:
             self._set.append(item)
 
@@ -319,56 +299,3 @@ class PackageSet(collections.MutableSet):
                 if x.name == item.name and x.arch is None:
                     self._set[i] = item
 
-    def discard(self, item):
-        if not isinstance(item, Package):
-            raise TypeError('Not a Package.')
-
-        try:
-            self._set.remove(item)
-
-        except:
-            pass
-
-    def difference(self, other):
-        if not isinstance(other, PackageSet):
-            raise TypeError('Not a PackageSet.')
-
-        uniq_self = PackageSet()
-        uniq_other = PackageSet()
-
-        # find unique items to self
-        for x in self._set:
-            if x not in other:
-                uniq_self.add(x)
-
-        # find unique items to other
-        for x in other:
-            if x not in self._set:
-                uniq_other.add(x)
-
-        return (uniq_self, uniq_other)
-
-    def union(self, *args):
-        if len(args) == 0:
-            raise Exception('No PackageSets defined for union.')
-
-        u = PackageSet(self._set)
-
-        for o in args:
-            if not isinstance(o, PackageSet):
-                raise TypeError('Not a PackageSet.')
-
-            # add takes care of uniqueness so let's use it
-            for x in o:
-                u.add(x)
-
-        return u
-
-    def update(self, *args):
-        for o in args:
-            if not isinstance(o, PackageSet):
-                raise TypeError('Not a PackageSet.')
-
-            # add takes care of uniqueness so let's use it
-            for x in o:
-                self.add(x)
