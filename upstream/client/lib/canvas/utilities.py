@@ -4,17 +4,17 @@ import subprocess
 import tarfile
 import zipfile
 
-def copy_object_file(path, to_directory='.'):
+def copy_file(path, to_directory='.'):
     dst_path = os.path.join(to_directory, os.path.basename(path))
 
     shutil.copyfile(path, dst_path)
 
-def execute_object_file(path):
-    ret = subprocess.run(path, shell=True)
+def execute_command(command):
+    ret = subprocess.run(command, shell=True)
 
     return ret
 
-def extract_object_file(path, to_directory='.'):
+def extract_file(path, to_directory='.'):
     if path.endswith('.zip'):
         opener, mode = zipfile.ZipFile, 'r'
     elif path.endswith('.tar.gz') or path.endswith('.tgz'):
