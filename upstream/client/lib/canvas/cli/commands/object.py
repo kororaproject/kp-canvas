@@ -155,7 +155,7 @@ class ObjectCommand(Command):
                 print('  - ' + str(o))
 
         else:
-            print('Template {0} has no objects.')
+            print('Template {0} has no objects.'.format(t.name))
 
     def run_rm(self):
         t = Template(self.args.template, user=self.args.username)
