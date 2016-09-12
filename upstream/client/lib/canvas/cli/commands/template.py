@@ -81,35 +81,50 @@ class TemplateCommand(Command):
         print("General usage: {0} [--version] [--help] [--verbose] template [<args>]\n"
               "\n"
               "Specific usage:\n"
-              "{0} template add [user:]template [--title] [--description] [--includes] [--public]\n"
-              "{0} template update [user:]template [--title] [--description] [--includes] [--public]\n"
-              "{0} template rm [user:]template\n"
-              "{0} template push [user:]template [--all]\n"
-              "{0} template pull [user:]template [--clean]\n"
-              "{0} template diff [user:]template\n"
-              "{0} template copy [user_from:]template_from [[user_to:]template_to]\n"
+              "{0} template add [user:]template[@version] [--title] [--description] [--includes] [--public]\n"
+              "{0} template update [user:]template[@version] [--title] [--description] [--includes] [--public]\n"
+              "{0} template rm [user:]template[@version]\n"
+              "{0} template push [user:]template[@version] [--all]\n"
+              "{0} template pull [user:]template[@version] [--clean]\n"
+              "{0} template diff [user:]template[@version]\n"
+              "{0} template copy [user_from:]template_from[@version] [[user_to:]template_to[@version]]\n"
               "{0} template list [--public]\n"
               "\n".format(self.prog_name))
 
     def help_add(self):
-        print("Usage: {0} template add [user:]template [--title] [--description]\n"
+        print("Usage: {0} template add [user:]template[@version] [--title] [--description]\n"
               "                           [--includes] [--public]\n"
               "\n"
               "Options:\n"
               "  --title        TITLE     Define the pretty TITLE of template\n"
               "  --description  TEXT      Define descriptive TEXT of the template\n"
-              "  --includes     TEMPLATE  Define descriptive TEXT of the template\n"
+              "  --includes     TEMPLATE  Comma separated list of TEMPLATEs to include\n"
               "\n"
               "\n".format(self.prog_name))
 
+    def help_copy(self):
+        pass
+
+    def help_diff(self):
+        pass
+
+    def help_list(self):
+        pass
+
+    def help_pull(self):
+        pass
+
+    def help_push(self):
+        pass
+
     def help_update(self):
-        print("Usage: {0} template update [user:]template [--title] [--description]\n"
+        print("Usage: {0} template update [user:]template[@version] [--title] [--description]\n"
               "                           [--includes] [--public]\n"
               "\n"
               "Options:\n"
               "  --title        TITLE     Define the pretty TITLE of template\n"
               "  --description  TEXT      Define descriptive TEXT of the template\n"
-              "  --includes     TEMPLATE  Define descriptive TEXT of the template\n"
+              "  --includes     TEMPLATE  Comma separated list of TEMPLATEs to include\n"
               "\n"
               "\n".format(self.prog_name))
 

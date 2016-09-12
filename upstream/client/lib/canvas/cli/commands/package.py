@@ -59,19 +59,28 @@ class PackageCommand(Command):
         print("General usage: {0} [--version] [--help] [--verbose] package [<args>]\n"
               "\n"
               "Specific usage:\n"
-              "{0} package add [user:]template [--nodeps] package1 packagelist1 package2 ... packageN\n"
-              "{0} package list [user:]template [--filter-name] [--filter-summary] [--filter-description] [--filter-arch] [--filter-repo] [--output=path]\n"
-              "{0} package rm [user:]template [--nodeps] package1 package2 ... packageN\n"
-              "{0} template list\n"
+              "{0} package add [user:]template[@version] [--nodeps] package1 packagelist1 package2 ... packageN\n"
+              "{0} package list [user:]template[@version] [--filter-name] [--filter-summary] [--filter-description] [--filter-arch] [--filter-repo] [--output=path]\n"
+              "{0} package rm [user:]template[@version] [--nodeps] package1 package2 ... packageN\n"
+              "{0} package update [user:]template[@version] [--nodeps] package1 packagelist1 package2 ... packageN\n"
               "\n".format(self.prog_name))
 
     def help_add(self):
-        print("Usage: {0} package add [user:]template [--nodeps]\n"
+        print("Usage: {0} package add [user:]template[@version] [--nodeps]\n"
               "           package1 packagelist1 package2 ... packageN\n"
               "\n"
               "Options:\n"
               "  --nodeps       Do not automatically remove dependencies\n"
               "\n".format(self.prog_name))
+
+    def help_list(self):
+        pass
+
+    def help_rm(self):
+        pass
+
+    def help_update(self):
+        pass
 
     def run(self):
         command = None

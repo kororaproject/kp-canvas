@@ -50,6 +50,41 @@ class RepoCommand(Command):
         # return false if any error, help, or usage needs to be shown
         return not args.help
 
+    def help(self):
+        # check for action specific help first
+        if self.args.action is not None:
+            try:
+                command = getattr(self, 'help_{0}'.format(self.args.action))
+
+                # show action specific if available
+                if command:
+                    return command()
+
+            except:
+                pass
+
+        # fall back to general usage
+        print("General usage: {0} [--version] [--help] [--verbose] repo [<args>]\n"
+              "\n"
+              "Specific usage:\n"
+              "{0} repo add [user:]template[@version] repo_name [--filepath] [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]\n"
+              "{0} repo update [user:]template[@version] repo_name [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]\n"
+              "{0} repo list [user:] template[@version]\n"
+              "{0} repo rm [user:]template[@version] repo_name\n"
+              "\n".format(self.prog_name))
+
+    def help_add(self):
+        pass
+
+    def help_list(self):
+        pass
+
+    def help_rm(self):
+        pass
+
+    def help_update(self):
+        pass
+
     def run(self):
         command = None
 

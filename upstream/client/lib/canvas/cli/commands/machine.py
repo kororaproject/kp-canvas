@@ -76,6 +76,30 @@ class MachineCommand(Command):
         print("Usage: {0} machine add [user:]machine [user:]template [--title] [--description]\n"
               "\n".format(self.prog_name))
 
+    def help_cmd(self):
+        pass
+
+    def help_connect(self):
+        pass
+
+    def help_disconnect(self):
+        pass
+
+    def help_diff(self):
+        pass
+
+    def help_list(self):
+        pass
+
+    def help_rm(self):
+        pass
+
+    def help_sync(self):
+        pass
+
+    def help_update(self):
+        pass
+
     def run(self):
         command = None
 
