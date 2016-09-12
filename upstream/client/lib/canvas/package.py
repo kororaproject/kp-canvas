@@ -21,7 +21,7 @@ import json
 import re
 import dnf
 
-from canvas.canvasset import CanvasSet
+from canvas.set import CanvasSet
 
 #
 # CLASS DEFINITIONS / IMPLEMENTATIONS

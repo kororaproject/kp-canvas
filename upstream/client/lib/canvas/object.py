@@ -27,7 +27,7 @@ import pykickstart.constants
 
 import canvas.utilities
 
-from canvas.canvasset import CanvasSet
+from canvas.set import CanvasSet
 
 class ErrorInvalidObject(Exception):
     def __init__(self, reason, code=0):

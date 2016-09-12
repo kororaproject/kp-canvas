@@ -19,7 +19,7 @@
 import dnf
 import json
 
-from canvas.canvasset import CanvasSet
+from canvas.set import CanvasSet
 
 class Repository(object):
     """ A Canvas object that represents a Repository of packages. """

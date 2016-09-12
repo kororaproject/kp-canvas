@@ -21,7 +21,7 @@ import hawkey
 import json
 import re
 
-from canvas.canvasset import CanvasSet
+from canvas.set import CanvasSet
 
 # name[[#epoch]@version-release][:arch]
 RE_PACKAGE = re.compile("^([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))?(?::(\w+))?$")
