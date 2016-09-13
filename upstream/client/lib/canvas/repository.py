@@ -28,36 +28,43 @@ class Repository(object):
     ACTION_EXCLUDE          = 0x02
     ACTION_INCLUDE          = 0x01
 
-    def __init__(self, *args, **kwargs):
-        self.name     = kwargs.get('name', None)
-        self.stub     = kwargs.get('stub', None)
+    def __init__(self, repository):
 
-        self.baseurl    = kwargs.get('baseurl', None)
-        self.mirrorlist = kwargs.get('mirrorlist', None)
-        self.metalink   = kwargs.get('metalink', None)
+        if isinstance(repository, str):
+            repository = Repository.parse_str(repository)
+        elif isinstance(repository, dnf.repo.Repo):
+            repository = Repository.parse_dnf(repository)
+        if not isinstance(repository, dict):
+            raise TypeError("Repository must be a dict")
 
-        self.gpgkey     = kwargs.get('gpgkey', None)
-        self.enabled    = kwargs.get('enabled', None)
-        self.gpgcheck   = kwargs.get('gpgcheck', None)
-        self.cost       = kwargs.get('cost', None)
-        self.install    = kwargs.get('install', False)
+        self.name     = repository.get('name', repository.get('n', None))
+        self.stub     = repository.get('stub', repository.get('s', None))
 
-        self.ignoregroups = kwargs.get('ignoregroups', False)
-        self.proxy        = kwargs.get('proxy', None)
-        self.noverifyssl  = kwargs.get('noverifyssl', False)
+        self.baseurl    = repository.get('baseurl', repository.get('bu', None))
+        self.mirrorlist = repository.get('mirrorlist', repository.get('ml', None))
+        self.metalink   = repository.get('metalink', repository.get('ma', None))
 
-        self.exclude_packages = kwargs.get('exclude_packages', None)
-        self.include_packages = kwargs.get('include_packages', None)
+        self.gpgkey     = repository.get('gpgkey', repository.get('gk', None))
+        self.enabled    = repository.get('enabled', repository.get('e', None))
+        self.gpgcheck   = repository.get('gpgcheck', repository.get('gc', None))
+        self.cost       = repository.get('cost', repository.get('c', None))
+        self.install    = repository.get('install', repository.get('i', False))
 
-        self.priority   = kwargs.get('priority', None)
+        self.ignoregroups = repository.get('ignoregroups', False)
+        self.proxy        = repository.get('proxy', None)
+        self.noverifyssl  = repository.get('noverifyssl', False)
 
-        self.meta_expired = kwargs.get('meta_expired', None)
+        self.exclude_packages = repository.get('exclude_packages', repository.get('xp', None))
+        self.include_packages = repository.get('include_packages', repository.get('ip', None))
 
-        self.action   = kwargs.get('action', self.ACTION_INCLUDE)
+        self.priority   = repository.get('priority', None)
 
-        # parse all args package defined objects
-        for arg in args:
-            self.parse(arg)
+        self.meta_expired = repository.get('meta_expired', repository.get('me', None))
+
+        self.action   = repository.get('action', repository.get('z', self.ACTION_INCLUDE))
+
+        if not self.name:
+            raise ValueError("Name cannot be None")
 
     def __eq__(self, other):
         if isinstance(other, Repository):
@@ -72,146 +79,186 @@ class Repository(object):
         return (not self.__eq__(other))
 
     def __repr__(self):
-        return 'Repository: %s ' % (self.to_json())
+        return 'Repository: %s' % (self.to_json())
 
     def __str__(self):
-        return 'Repository: %s ' % (self.to_kickstart())
+        return 'Repository: %s' % (self.to_kickstart())
+
 
     @staticmethod
     def _parse_str_arg(data, name):
         return data.replace(name, '').replace('"', '').replace("'", '').strip()
 
-    def parse(self, data):
-        if isinstance(data, str):
-            # check are we a kickstart formatted repo
-            data.strip()
+    @staticmethod
+    def _format_string(string):
+        """ Add double quotes to string if it contains at least one space """
+        if ' ' in string:
+            string = '"{}"'.format(string)
+        return string
+    #
+    @classmethod
+    def parse_str(cls, repository):
+        """ Generate a repo dictionary from a kickstart formated repository string.
 
-            if data.startswith('repo '):
-                for a in data.split("--"):
-                    if a == 'repo' or a == '':
-                        continue
+        Note: Kickstart documentation can be found here:
+            https://github.com/rhinstaller/pykickstart/blob/master/docs/kickstart-docs.rst#repo
 
-                    elif a.startswith('name='):
-                        name = self._parse_str_arg(a, 'name=')
+        Args:
+            cls: Holds the Repository class
+            repository: A string representation of a repository in kickstart format
+        Returns:
+            The dictionary conversion of the repository string
+        Raises:
+            TypeError: If repository is not a string
+            ValueError: If string does not match the kickstart format
 
-                        self.name = name
-                        self.stub = name.replace(' ', '-').replace('---', '-')
+        """
 
-                    elif a.startswith('baseurl='):
-                        baseurl = self._parse_str_arg(a, 'baseurl=')
-                        self.baseurl = baseurl.split(',')
+        if not isinstance(repository, str):
+            raise TypeError("Repository must be a string")
 
-                    elif a.startswith('mirrorlist='):
-                        self.mirrorlist = self._parse_str_arg(a, 'mirrorlist=')
+        repository.strip()
 
-                    elif a.startswith('cost='):
-                        self.cost = self._parse_str_arg(a, 'cost=')
+        repo = {
+            'enabled': True,
+            'action': cls.ACTION_INCLUDE
+        }
 
-                    elif a.startswith('excludepkgs='):
-                        self.exclude_packages = self._parse_str_arg(a, 'excludepkgs=')
+        # TODO: Do we need to support this here?
+        if repository.startswith('~repo '):
+            repository = repository[1:]
+            repo['action'] = cls.ACTION_EXCLUDE
 
-                    elif a.startswith('includepkgs='):
-                        self.include_packages = self._parse_str_arg(a, 'includepkgs=')
+        if not repository.startswith('repo '):
+            raise ValueError("Repository must start with '[~]repo '")
+            
+        for arg in repository.split("--"):
+            if arg == 'repo' or arg == '' or arg == 'repo ':
+                continue
 
-                    elif a.startswith('proxy='):
-                        self.proxy = self._parse_str_arg(a, 'proxy=')
+            elif arg.startswith('name='):
+                name = cls._parse_str_arg(arg, 'name=')
 
-                    elif a.startswith('ignoregroups=true'):
-                        self.ignoregroups = True
+                repo['name'] = name
+                repo['stub'] = name.replace(' ', '-').replace('---', '-')
 
-                    elif a.startswith('noverifyssl'):
-                        self.noverifyssl = True
+            elif arg.startswith('baseurl='):
+                baseurl = cls._parse_str_arg(arg, 'baseurl=')
+                repo['baseurl'] = list (filter(None, baseurl.split(',')))
 
-                    elif a.startswith('install'):
-                        self.install = True
+            elif arg.startswith('mirrorlist='):
 
+                # Not actually a comma-separated list just a url to a list
+                repo['mirrorlist'] = cls._parse_str_arg(arg, 'mirrorlist=')
 
-                # Repos added via kickstart are enabled by default
-                self.action = self.ACTION_INCLUDE
-                self.enabled = True
+            elif arg.startswith('cost='):
+                repo['cost'] = cls._parse_str_arg(arg, 'cost=')
+
+            elif arg.startswith('excludepkgs='):
+                exclude_packages = cls._parse_str_arg(arg, 'excludepkgs=').split(',')
+                repo['exclude_packages'] = list (filter(None, exclude_packages))
+
+            elif arg.startswith('includepkgs='):
+                include_packages = cls._parse_str_arg(arg, 'includepkgs=').split(',')
+                repo['include_packages'] = list (filter(None, include_packages))
+
+            elif arg.startswith('proxy='):
+                repo['proxy'] = cls._parse_str_arg(arg, 'proxy=')
+
+            elif arg.startswith('ignoregroups=true'):
+                repo['ignoregroups'] = True
+
+            elif arg.startswith('noverifyssl'):
+                repo['noverifyssl'] = True
+
+            elif arg.startswith('install'):
+                repo['install'] = True
 
             else:
-                if data.startswith('~'):
-                    self.stub = data[1:]
-                    self.action = self.ACTION_EXCLUDE
+                raise ValueError("Unsupported option '{}' in kickstart repo".format(arg))
 
-                else:
-                    self.stub = data
-                    self.action = self.ACTION_INCLUDE
+        if 'baseurl' in repo and 'mirrorlist' in repo:
+            raise ValueError("Kickstart format cannot have both baseurl and mirrorlist")
 
-        elif isinstance(data, dnf.repo.Repo):
-            self.name     = data.name
-            self.stub     = data.id
+        return repo
 
-            self.baseurl    = data.baseurl
-            self.mirrorlist = data.mirrorlist
-            self.metalink   = data.metalink
+    @classmethod
+    def parse_dnf(cls, repository):
 
-            self.gpgkey     = data.gpgkey
-            self.enabled    = data.enabled
-            self.gpgcheck   = data.gpgcheck
-            self.cost       = data.cost
-            self.priority   = data.priority
+        if not isinstance(repository, dnf.repo.Repo):
+            raise TypeError("Repository must be a dnf.repo.Repo")
 
-            self.exclude_packages = data.exclude
-            self.include_packages = data.include
-#        self.meta_expired = data.meta_expired
+        return {
+            'name': repository.name,
+            'stub': repository.id,
 
-            self.action     = self.ACTION_INCLUDE
+            'baseurl': repository.baseurl,
+            'mirrorlist': repository.mirrorlist,
+            'metalink': repository.metalink,
 
-        elif isinstance(data, dict):
-            self.name     = data.get('n', self.name)
-            self.stub     = data.get('s', self.stub)
+            'gpgkey': repository.gpgkey,
+            'enabled': repository.enabled,
+            'gpgcheck': repository.gpgcheck,
+            'cost': repository.cost,
+            'priority': repository.priority,
 
-            self.baseurl    = data.get('bu', self.baseurl)
-            self.mirrorlist = data.get('ml', self.mirrorlist)
-            self.metalink   = data.get('ma', self.metalink)
+            'exclude_packages': repository.exclude,
+            'include_packages': repository.include,
+            # 'meta_expired': repository.meta_expired,
 
-            self.gpgkey     = data.get('gk', self.gpgkey)
-            self.enabled    = data.get('e', self.enabled)
-            self.gpgcheck   = data.get('gc', self.gpgcheck)
-            self.cost       = data.get('c', self.cost)
-            self.priority   = data.get('p', self.priority)
-            self.install    = data.get('i', self.install)
-
-            self.exclude_packages = data.get('xp', self.exclude_packages)
-            self.include_packages = data.get('ip', self.include_packages)
-
-            self.meta_expired = data.get('me', self.meta_expired)
-
-            self.action  = data.get('z', self.ACTION_INCLUDE)
+            'action': cls.ACTION_INCLUDE,
+        }
 
     def to_kickstart(self):
-        r = 'repo'
+        """ Generate a repo dictionary from a kickstart formated repository string.
 
-        if self.name is not None:
-            r += ' --name="{0}"'.format(self.name)
+        Note: Kickstart documentation can be found here:
+            https://github.com/rhinstaller/pykickstart/blob/master/docs/kickstart-docs.rst#repo
 
-        if self.baseurl is not None and len(self.baseurl):
-            r += ' --baseurl={0}'.format(self.baseurl)
+        Args:
+            cls: Holds the Repository class
+            repository: A string representation of a repository in kickstart format
+        Returns:
+            The dictionary conversion of the repository string
+        Raises:
+            TypeError: If repository is not a string
+            ValueError: If string does not match the kickstart format
+
+        """
+
+        kickstart = 'repo --name={0}'.format(Repository._format_string(self.name))
+
+        if self.baseurl is not None:
+            kickstart += ' --baseurl={0}'.format(self.baseurl[0])
 
         elif self.mirrorlist is not None:
-            r += ' --mirrorlist={0}'.format(self.mirrorlist)
+            kickstart += ' --mirrorlist={0}'.format(self.mirrorlist)
 
         elif self.metalink is not None:
-            r += ' --mirrorlist={0}'.format(self.metalink)
+            kickstart += ' --mirrorlist={0}'.format(self.metalink)
 
         if self.cost is not None:
-            r += ' --cost={0}'.format(self.cost)
+            kickstart += ' --cost={0}'.format(self.cost)
 
         if self.exclude_packages is not None:
-            r += ' --exclude_packages={0}'.format(self.exclude_packages.join(','))
+            kickstart += ' --excludepkgs={0}'.format(','.join(self.exclude_packages))
 
         if self.include_packages is not None:
-            r += ' --exclude_packages={0}'.format(self.include_packages.join(','))
+            kickstart += ' --includepkgs={0}'.format(','.join(self.include_packages))
+
+        if self.proxy:
+            kickstart += ' --proxy={0}'.format(self.proxy)
+
+        if self.ignoregroups:
+            kickstart += ' --ignoregroups=true'
 
         if self.noverifyssl:
-            r += ' --noverifyssl'
+            kickstart += ' --noverifyssl'
 
         if self.install:
-            r += ' --install'
+            kickstart += ' --install'
 
-        return r
+        return kickstart
 
     def to_json(self):
         return json.dumps(self.to_object(), separators=(',', ':'), sort_keys=True)

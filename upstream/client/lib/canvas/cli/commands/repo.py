@@ -116,19 +116,19 @@ class RepoCommand(Command):
         if self.args.enabled is None:
             self.args.enabled = True
 
-        r = Repository(
-            stub        = self.args.repo,
-            name        = self.args.name,
-            baseurl     = self.args.baseurl,
-            mirrorlist  = self.args.mirrorlist,
-            metalink    = self.args.metalink,
-            enabled     = self.args.enabled,
-            cost        = self.args.cost,
-            priority    = self.args.priority,
-            gpgkey      = self.args.gpgkey,
-            gpgcheck    = self.args.gpgcheck,
-            exclude     = self.args.exclude
-        )
+        r = Repository({
+            'stub'       : self.args.repo,
+            'name'       : self.args.name,
+            'baseurl'    : self.args.baseurl,
+            'mirrorlist' : self.args.mirrorlist,
+            'metalink'   : self.args.metalink,
+            'enabled'    : self.args.enabled,
+            'cost'       : self.args.cost,
+            'priority'   : self.args.priority,
+            'gpgkey'     : self.args.gpgkey,
+            'gpgcheck'   : self.args.gpgcheck,
+            'exclude'    : self.args.exclude
+        })
 
         t.add_repo(r)
 
