@@ -294,7 +294,7 @@ class Object(object):
     def is_complete(self):
         return self._xsum and ((self._source != 'raw') or (self._data is not None))
 
-    def is_ks_command():
+    def is_ks_command(self):
         if len(self._actions) != 1:
             return None
 
@@ -304,7 +304,7 @@ class Object(object):
         # check we we're a ks-command
         return type == 'ks-command'
 
-    def is_ks_script():
+    def is_ks_script(self):
         if len(self._actions) != 1:
             return None
 
@@ -312,9 +312,9 @@ class Object(object):
         type = action.get('type', '')
 
         # check we we're a ks-script
-        return type in self.MAP_OBJ_STRING_TO_SCRIPT_TYPES.keys()
+        return type in self.MAP_OBJ_STRING_TO_SCRIPT_TYPE.keys()
 
-    def to_ks_script():
+    def to_ks_script(self):
         # kickstart scripts only have a single action
         if len(self._actions) != 1:
             return None
@@ -323,14 +323,14 @@ class Object(object):
         type = action.get('type', '')
 
         # check we contain ks-script
-        if type not in self.MAP_OBJ_STRING_TO_SCRIPT_TYPES.keys():
+        if type not in self.MAP_OBJ_STRING_TO_SCRIPT_TYPE.keys():
             return None
 
         return pykickstart.parser.Script(self._data,
             errorOnFail = action.get('error_on_fail', None),
             interp      = action.get('interp', None),
             inChroot    = action.get('in_chroot', None),
-            type        = self.MAP_OBJ_STRING_TO_SCRIPT_TYPES[type]
+            type        = self.MAP_OBJ_STRING_TO_SCRIPT_TYPE[type]
         )
 
 

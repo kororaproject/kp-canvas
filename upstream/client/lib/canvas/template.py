@@ -724,7 +724,7 @@ class Template(object):
             # populate scripts
             for o in self._objects:
                 if o.is_ks_script():
-                    script = o.to_script()
+                    script = o.to_ks_script()
                     handler.scripts.append(o.to_ks_script())
 
                 elif o.is_ks_command():
@@ -761,7 +761,7 @@ class Template(object):
 
         # process packages
         for p in self.packages:
-            if p.included():
+            if p.included:
                 packages.packageList.append(p.name)
 
             else:
