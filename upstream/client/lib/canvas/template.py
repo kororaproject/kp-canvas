@@ -428,6 +428,38 @@ class Template(object):
         if repo not in self.repos:
             self._delta_repos.add(repo)
 
+    def clear(self):
+        """
+        Clears all includes, objects, packages, repos and stores from the
+        template. Also removes all kickstart meta information.
+
+        Args:
+          None
+
+        Returns:
+          Nothing.
+        """
+
+        self._includes = []           # includes in template
+        self._includes_resolved = []  # data structs for all includes in template
+        self._repos = RepoSet()           # repos in template
+        self._includes_repos = RepoSet()  # repos from includes in template
+        self._delta_repos = RepoSet()     # repos to add/remove in template
+
+        self._packages = PackageSet()           # packages in template
+        self._includes_packages = PackageSet()  # packages from includes in template
+        self._delta_packages = PackageSet()     # packages to add/remove in template
+
+        self._stores   = []           # remote stores for machine
+
+        self._objects  = ObjectSet()           # archive definitions in machine
+        self._includes_objects  = ObjectSet()  # archive definitions in machine
+        self._delta_objects  = ObjectSet()     # archive definitions in machine
+
+        if 'kickstart' in self._meta:
+            del self._meta['kickstart']
+
+
     def find_package(self, name):
         return [p for p in self.packages if p.name == name]
 

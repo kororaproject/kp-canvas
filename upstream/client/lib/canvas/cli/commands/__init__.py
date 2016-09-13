@@ -109,6 +109,7 @@ def buildCommandLineParser(config):
     template_push_parser = subparsers_template.add_parser('push', add_help=False, parents=[general_parser])
     template_push_parser.add_argument('template', type=str)
     template_push_parser.add_argument('--all', action='store_true', dest='push_all')
+    template_push_parser.add_argument('--clean', action='store_true', dest='push_clean')
     template_push_parser.add_argument('--kickstart', type=str)
 
     # template diff arguments

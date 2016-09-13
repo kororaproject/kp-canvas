@@ -54,7 +54,7 @@ class TemplateCommand(Command):
         # eval public
         try:
             if args.public is not None:
-                args.public = (args.public.lower() in ['1', 'true'])
+                args.public = (args.public.lower() in ['1', 'true', 'yes', 'y'])
         except:
             pass
 
@@ -434,13 +434,12 @@ class TemplateCommand(Command):
             print(e)
             return 1
 
+        if self.args.push_clean:
+            t.clear()
+
         if self.args.kickstart is not None:
             print('info: parsing kickstart ...')
             t.from_kickstart(self.args.kickstart)
-
-            print(json.dumps(t.to_object(), indent=4, sort_keys=True))
-
-            return 1
 
         else:
             # prepare dnf
@@ -469,27 +468,34 @@ class TemplateCommand(Command):
             for r in db.repos.enabled():
                 t.add_repo(Repository(r))
 
-            packages = list(t.packages_delta)
-            packages.sort(key=lambda x: x.name)
+        objects = list(t.objects_delta)
+        objects.sort(key=lambda x: x.name)
 
-            repos = list(t.repos_delta)
-            repos.sort(key=lambda x: x.name)
+        packages = list(t.packages_delta)
+        packages.sort(key=lambda x: x.name)
+
+        repos = list(t.repos_delta)
+        repos.sort(key=lambda x: x.name)
 
         # describe process for dry runs
         if self.args.dry_run:
             if len(packages) or len(repos):
                 print('The following would be added to the template: {0}'.format(t.name))
 
-                for p in packages:
-                    print('  - ' + str(p))
-
                 for r in repos:
                     print('  - ' + str(r))
 
+                for p in packages:
+                    print('  - ' + str(p))
+
+                for o in objects:
+                    print('  - ' + str(o))
+
                 print()
                 print('Summary:')
-                print('  - Package(s): %d' % (len(packages)))
                 print('  - Repo(s): %d' % (len(repos)))
+                print('  - Package(s): %d' % (len(packages)))
+                print('  - Object(s): %d' % (len(objects)))
                 print()
 
             else:
