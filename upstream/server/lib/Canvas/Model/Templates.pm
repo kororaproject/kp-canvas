@@ -149,7 +149,8 @@ sub find {
             (t.owner_id=$5 OR
               (u.meta->\'members\' @> CAST($5 AS text)::jsonb) OR
               (t.meta @> \'{"public": true}\'::jsonb)
-            )' => (
+            )
+          ORDER BY u.username, t.stub' => (
               $args->{uuid}, $args->{name}, $args->{version},
               $args->{user_name}, $args->{user_id}) => $d->begin);
       },
@@ -168,8 +169,6 @@ sub get {
   my $cb = ref $_[-1] eq 'CODE' ? pop : undef;
   my $self = shift;
   my $uuid = shift;
-
-  # TODO: page
 
   if ($cb) {
     Mojo::IOLoop->delay(
