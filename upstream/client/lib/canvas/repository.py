@@ -94,8 +94,9 @@ class Repository(object):
         """ Add double quotes to string if it contains at least one space """
         if ' ' in string:
             string = '"{}"'.format(string)
+
         return string
-    #
+
     @classmethod
     def parse_str(cls, repository):
         """ Generate a repo dictionary from a kickstart formated repository string.
@@ -106,8 +107,10 @@ class Repository(object):
         Args:
             cls: Holds the Repository class
             repository: A string representation of a repository in kickstart format
+
         Returns:
             The dictionary conversion of the repository string
+
         Raises:
             TypeError: If repository is not a string
             ValueError: If string does not match the kickstart format
@@ -131,7 +134,7 @@ class Repository(object):
 
         if not repository.startswith('repo '):
             raise ValueError("Repository must start with '[~]repo '")
-            
+
         for arg in repository.split("--"):
             if arg == 'repo' or arg == '' or arg == 'repo ':
                 continue
@@ -140,7 +143,7 @@ class Repository(object):
                 name = cls._parse_str_arg(arg, 'name=')
 
                 repo['name'] = name
-                repo['stub'] = name.replace(' ', '-').replace('---', '-')
+                repo['stub'] = name.replace(' ', '-').replace('---', '-').lower()
 
             elif arg.startswith('baseurl='):
                 baseurl = cls._parse_str_arg(arg, 'baseurl=')

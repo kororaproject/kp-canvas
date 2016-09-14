@@ -111,7 +111,7 @@ class RepoTestCase(TestCase):
         # Set
         self.assertEqual(True, r1.ignoregroups)
 
-        # fedora documentation implies that it must be --ignoregroups=true 
+        # fedora documentation implies that it must be --ignoregroups=true
         with self.assertRaises(ValueError):
             Repository('repo --name="Korora 23 - i386 - Updates" --ignoregroups')
 
@@ -173,7 +173,7 @@ class RepoTestCase(TestCase):
         r1 = Repository('~repo --name="Korora 23 - i386 - Updates"')
 
         # Ensure that stub is parsed out of exclude format
-        self.assertEqual('Korora-23-i386-Updates', r1.stub)
+        self.assertEqual('korora-23-i386-updates', r1.stub)
 
         # Repo is Excluded
         self.assertEqual(r1.action, Repository.ACTION_EXCLUDE)
@@ -196,7 +196,7 @@ class RepoTestCase(TestCase):
     def test_repo___repr__(self):
         r1 = Repository('repo --name="Korora 23 - i386 - Updates" --ignoregroups=true')
         self.assertEqual(repr(r1),
-                         'Repository: {"e":true,"i":false,"n":"Korora 23 - i386 - Updates","s":"Korora-23-i386-Updates","z":1}')
+                         'Repository: {"e":true,"i":false,"n":"Korora 23 - i386 - Updates","s":"korora-23-i386-updates","z":1}')
 
 
     def test_repo_equality(self):
