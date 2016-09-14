@@ -129,6 +129,19 @@ def buildCommandLineParser(config):
     template_dump_parser.add_argument('--json', action='store_true')
     template_dump_parser.add_argument('--yaml', action='store_true')
     template_dump_parser.add_argument('--kickstart', action='store_true')
+    template_dump_parser.add_argument('--no-resolve-includes', action='store_true', dest='no_resolve_includes')
+
+    # template iso arguments
+    template_iso_parser = subparsers_template.add_parser('iso', add_help=False, parents=[general_parser])
+    template_iso_parser.add_argument('template', type=str)
+    template_iso_parser.add_argument('--project', type=str)
+    template_iso_parser.add_argument('--volid', type=str)
+    template_iso_parser.add_argument('--logfile', type=str)
+    template_iso_parser.add_argument('--iso-name', type=str, dest='iso_name')
+    template_iso_parser.add_argument('--releasever', type=str)
+    template_iso_parser.add_argument('--title', type=str)
+    template_iso_parser.add_argument('--resultdir', type=str)
+    template_iso_parser.add_argument('--livemedia-creator', action="store_true", dest='use_livemedia_creator')
 
     #
     # STORE COMMANDS

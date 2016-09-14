@@ -22,6 +22,7 @@ import json
 import logging
 import os
 import prettytable
+import subprocess
 import yaml
 
 from dnf.cli.progress import MultiFileProgressMeter
@@ -106,6 +107,9 @@ class TemplateCommand(Command):
         pass
 
     def help_diff(self):
+        pass
+
+    def help_iso(self):
         pass
 
     def help_list(self):
@@ -242,7 +246,7 @@ class TemplateCommand(Command):
         t = Template(self.args.template, user=self.args.username)
 
         try:
-            t = self.cs.template_get(t)
+            t = self.cs.template_get(t, resolve_includes=not self.args.no_resolve_includes)
 
         except ServiceException as e:
             print(e)
@@ -338,6 +342,108 @@ class TemplateCommand(Command):
 
             print(l)
             print()
+
+        return 0
+
+    def run_iso(self):
+        t = Template(self.args.template, user=self.args.username)
+
+        try:
+            t = self.cs.template_get(t)
+
+        except ServiceException as e:
+            print(e)
+            return 1
+
+        # calculate name and title for use if not specified
+        arch = os.uname()[4]
+
+        if arch in ['i386', 'i686']:
+            arch_pretty = '32 bit'
+            arch_pretty_long = '32 bit (%s)' % (arch)
+        elif arch in ['x86_64']:
+            arch_pretty = '64 bit'
+            arch_pretty_long = '64 bit (%s)' % (arch)
+
+        # we'll use version in our names
+        if self.args.releasever is None:
+            if t.version is None or t.version is '':
+                self.args.releasever = 'HEAD'
+            else:
+                self.args.releasever = t.version
+
+        name              = "{0}-{1}-{2}".format(t.name, self.args.releasever, arch)
+        name_pretty       = "{0}-{1}-{2}".format(t.name, self.args.releasever, arch_pretty)
+        title             = "{0} - {1} - {2}".format(t.title, self.args.releasever, arch_pretty)
+        title_pretty_long = "{0} - {1} - {2}".format(t.title, self.args.releasever, arch_pretty_long)
+
+        # build missing strings
+        if self.args.resultdir is None:
+            self.args.resultdir = "/var/tmp/canvas/isos/{0}".format(name.lower())
+
+        if self.args.iso_name is None:
+            self.args.iso_name = "{0}.iso".format(name.lower())
+
+        if self.args.project is None:
+            self.args.project = title
+
+        if self.args.volid is None:
+            self.args.volid = name.lower()
+
+        if self.args.title is None:
+            self.args.title = title_pretty_long
+
+        if self.args.logfile is None:
+            self.args.logfile = "/var/tmp/canvas/{0}.log".format(name.lower())
+
+        # build kickstart file
+        ks_file = "canvas-{0}.ks".format(t.uuid)
+        ks_path = os.path.join("/var/tmp/canvas/ks", ks_file)
+
+        # ensure our resultdir exists
+        if not os.path.exists(os.path.dirname(ks_path)):
+            os.makedirs(os.path.dirname(ks_path))
+
+        with open(ks_path, 'w') as f:
+            f.write(t.to_kickstart())
+
+        env = os.environ.copy()
+
+        # livemedia-creator
+        if self.args.use_livemedia_creator:
+            args = [
+                    'livemedia-creator',
+                    '--no-virt',
+                    '--make-iso',
+                    '--iso-only',
+                    '--macboot',
+                    '--ks',         ks_path,
+                    '--resultdir',  self.args.resultdir,
+                    '--project',    self.args.project,
+                    '--volid',      self.args.volid,
+                    '--iso-name',   self.args.iso_name,
+                    '--releasever', self.args.releasever,
+                    '--title',      self.args.title,
+                    '--logfile',    self.args.logfile
+                ]
+
+        # livecd-creator
+        else:
+            args = [
+                    'livecd-creator',
+                    '--verbose',
+                    '--config',     ks_path,
+                    '--fslabel',    self.args.iso_name,
+                    '--title',      self.args.title,
+                    '--releasever', self.args.releasever,
+                    '--product',    self.args.project,
+                    '--cache',      self.args.resultdir,
+                    '--logfile',    self.args.logfile
+                ]
+
+            env["setarch"] = arch
+
+        subprocess.run(args, env=env)
 
         return 0
 
@@ -536,7 +642,7 @@ class TemplateCommand(Command):
         t = Template(self.args.template, user=self.args.username)
 
         try:
-            t = self.cs.template_get(t)
+            t = self.cs.template_get(t, resolve_includes=False)
 
         except ServiceException as e:
             print(e)
