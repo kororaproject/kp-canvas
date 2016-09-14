@@ -76,9 +76,16 @@ class Template(object):
         return 'Template: %s (owner: %s) - R: %d, P: %d' % (self._name, self._user, len(self.repos_all), len(self.packages_all))
 
     def _flatten(self):
-        for t in self._includes_resolved:
+        # iterate the includes in reverse order for packages and repos due to
+        # higher level templates prioritising lower levels
+        for t in reversed(self._includes_resolved):
+            self._includes_objects.update(t.objects_all)
             self._includes_repos.update(t.repos_all)
             self._includes_packages.update(t.packages_all)
+
+        # iterate the includes in normal order for objects
+        for t in self._includes_resolved:
+            self._includes_objects.update(t.objects_all)
 
     def _parse_kickstart(self, path):
         """
@@ -330,7 +337,7 @@ class Template(object):
 
     @property
     def objects_all(self):
-        return self._objects.union(self._includes_objects, self._delta_objects)
+        return self._objects.union(self._delta_objects, self._includes_objects)
 
     @property
     def objects_delta(self):
@@ -342,7 +349,7 @@ class Template(object):
 
     @property
     def packages_all(self):
-        return self._packages.union(self._includes_packages, self._delta_packages)
+        return self._packages.union(self._delta_packages, self._includes_packages)
 
     @property
     def packages_delta(self):
@@ -366,7 +373,7 @@ class Template(object):
 
     @property
     def repos_all(self):
-        return self._repos.union(self._includes_repos).union(self._delta_repos)
+        return self._repos.union(self._delta_repos, self._includes_repos)
 
     @property
     def repos_delta(self):
@@ -722,7 +729,7 @@ class Template(object):
                     ksparser.readKickstartFromString(c['data'], reset=False)
 
             # populate scripts
-            for o in self._objects:
+            for o in self.objects_all:
                 if o.is_ks_script():
                     script = o.to_ks_script()
                     handler.scripts.append(o.to_ks_script())
@@ -756,11 +763,11 @@ class Template(object):
                     packages.multiLib = mp['multi_lib']
 
         # populate repos (technically commands)
-        for r in self.repos:
+        for r in self.repos_all:
             ksparser.readKickstartFromString(r.to_kickstart(), reset=False)
 
         # process packages
-        for p in self.packages:
+        for p in self.packages_all:
             if p.included:
                 packages.packageList.append(p.name)
 
