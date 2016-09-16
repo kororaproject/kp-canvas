@@ -33,6 +33,8 @@ import pykickstart.parser
 from pykickstart.i18n import _
 from pykickstart.version import DEVEL, makeVersion
 
+from dnf.cli.progress import MultiFileProgressMeter
+
 # [user:]name[@version]
 RE_TEMPLATE = re.compile("(?:(?P<user>[\w\.\-]*):)?(?P<name>[\w\.\-]+)(?!.*:)(?:@(?P<version>[\w\.\-]+))?")
 
@@ -597,7 +599,7 @@ class Template(object):
             print('info: syncing history ...')
 
             for p in self.packages_all:
-                if p.included():
+                if p.included:
                     pkg = p.to_pkg();
                     if pkg is not None:
                         db.yumdb.get_package(pkg).reason = 'user'
@@ -669,7 +671,7 @@ class Template(object):
             print('info: preparing package transaction ...')
             # process all packages in template
             for p in self.packages_all:
-                if p.included():
+                if p.included:
                     try:
                         db.install(p.to_pkg_spec())
                     except:

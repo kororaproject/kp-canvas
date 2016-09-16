@@ -25,7 +25,6 @@ import prettytable
 import subprocess
 import yaml
 
-from dnf.cli.progress import MultiFileProgressMeter
 from functools import reduce
 
 from canvas.cli.commands import Command
