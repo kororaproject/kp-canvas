@@ -124,7 +124,7 @@ class Object(object):
         actions = []
         for a in self._actions:
             if isinstance(a, str):
-                t, p = a.split(" ", 1)
+                t, p = a.split(":", 1)
 
                 if t not in Object.ACTIONS_ALL:
                     continue
