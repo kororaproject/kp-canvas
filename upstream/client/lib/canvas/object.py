@@ -45,10 +45,10 @@ class Object(object):
 
     # CONSTANTS
     ACTIONS_ALL = ['copy', 'extract',
-                   'execute', 'execute-command',
+                   'execute', 'execute-command', 'ks-command',
                    'ks-post', 'ks-pre', 'ks-pre-install', 'ks-traceback']
 
-    ACTIONS_KS_ONLY = ['ks-post', 'ks-pre', 'ks-pre-install', 'ks-traceback']
+    ACTIONS_KS_ONLY = ['ks-command', 'ks-post', 'ks-pre', 'ks-pre-install', 'ks-traceback']
 
     MAP_OBJ_STRING_TO_SCRIPT_TYPE = {
         'ks-post':          pykickstart.constants.KS_SCRIPT_POST,
@@ -144,6 +144,9 @@ class Object(object):
             elif isinstance(a, dict):
                 if 'type' in a and a['type'] in Object.ACTIONS_ALL:
                     actions.append(a)
+
+                else:
+                    print('STRIPPING', a)
 
         self._actions = actions
 
@@ -284,6 +287,20 @@ class Object(object):
 
         urllib.request.urlretrieve(self._source, cached_object_path)
 
+    def get_ks_command(self):
+        if len(self._actions) != 1:
+            return None
+
+        action = self._actions[0]
+        return action.get('command', None)
+
+    def get_ks_command_priority(self):
+        if len(self._actions) != 1:
+            return 0
+
+        action = self._actions[0]
+        return action.get('priority', None)
+
     def is_downloaded(self):
         if self._source != 'raw':
             return os.path.exists(self._cached_object_path)
@@ -313,6 +330,51 @@ class Object(object):
 
         # check we we're a ks-script
         return type in self.MAP_OBJ_STRING_TO_SCRIPT_TYPE.keys()
+
+    def to_kickstart(self):
+        if len(self._actions) != 1:
+            return ''
+
+        action = self._actions[0]
+        type = action.get('type', '')
+
+        if type == 'ks-command':
+            return self.data
+
+        elif type in self.MAP_OBJ_STRING_TO_SCRIPT_TYPE.keys():
+            header = ''
+            footer = "%end\n"
+
+            if type == 'ks-post':
+                header = '%post'
+
+                if not action.get('in_chroot', True):
+                    header += ' --nochroot'
+
+                if action.get('interp', '/bin/sh') != '/bin/sh':
+                    header += ' --interpreter={0}'.format(action.get('interp'))
+
+            elif type == 'ks-pre':
+                header = '%pre'
+
+                if action.get('interp', '/bin/sh') != '/bin/sh':
+                    header += ' --interpreter={0}'.format(action.get('interp'))
+
+            elif type == 'ks-pre-install':
+                header = '%preinstall'
+
+                if action.get('interp', '/bin/sh') != '/bin/sh':
+                    header += ' --interpreter={0}'.format(action.get('interp'))
+
+            elif type == 'ks-traceback':
+                header = '%traceback'
+
+                if action.get('interp', '/bin/sh') != '/bin/sh':
+                    header += ' --interpreter={0}'.format(action.get('interp'))
+
+            return header + "\n" + self.data + footer
+
+        return ''
 
     def to_ks_script(self):
         # kickstart scripts only have a single action
