@@ -404,7 +404,7 @@ class TemplateCommand(Command):
             os.makedirs(os.path.dirname(ks_path))
 
         with open(ks_path, 'w') as f:
-            f.write(t.to_kickstart())
+            f.write(t.to_kickstart(resolved=True))
 
         env = os.environ.copy()
 
@@ -432,7 +432,7 @@ class TemplateCommand(Command):
                     'livecd-creator',
                     '--verbose',
                     '--config',     ks_path,
-                    '--fslabel',    self.args.iso_name,
+                    '--fslabel',    name.lower(),
                     '--title',      self.args.title,
                     '--releasever', self.args.releasever,
                     '--product',    self.args.project,
