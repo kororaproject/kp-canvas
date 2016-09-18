@@ -120,6 +120,9 @@ class Package(object):
         """ Is the package included in a template """
         return self.action & (self.ACTION_INCLUDE) == self.ACTION_INCLUDE
 
+    def is_group(self):
+        return self.name[0] == '@'
+
     @classmethod
     def parse_dnf(cls, pkg):
         """ Generate a Package dictionary from a dnf package
@@ -207,6 +210,14 @@ class Package(object):
     def pinned(self):
         """ Is the package pinned to its version """
         return self.action & (self.ACTION_PIN) == self.ACTION_PIN
+
+    def to_kickstart(self):
+        """ Return a kickstart compatible string representation """
+        if self.included:
+            return self.name
+
+        else:
+            return "-" + self.name
 
     def to_json(self):
         """ Return a json representation of the package object """
