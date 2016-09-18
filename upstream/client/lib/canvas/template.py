@@ -81,7 +81,6 @@ class Template(object):
         # iterate the includes in reverse order for packages and repos due to
         # higher level templates prioritising lower levels
         for t in reversed(self._includes_resolved):
-            self._includes_objects.update(t.objects_all)
             self._includes_repos.update(t.repos_all)
             self._includes_packages.update(t.packages_all)
 
@@ -169,7 +168,8 @@ class Template(object):
                     self.add_object(Object(c))
 
         # convert scripts into canvas objects
-        for s in handler.scripts:
+        # sort on line number seen
+        for s in sorted(handler.scripts, key=lambda x:x.lineno):
             self.add_object(Object(s))
 
         # parse pykickstart packages
@@ -339,7 +339,8 @@ class Template(object):
 
     @property
     def objects_all(self):
-        return self._objects.union(self._delta_objects, self._includes_objects)
+        # order is important
+        return self._includes_objects.union(self._objects, self._delta_objects)
 
     @property
     def objects_delta(self):
@@ -703,10 +704,10 @@ class Template(object):
 
         return None
 
-    def to_json(self):
-        return json.dumps(self.to_object(), separators=(',', ':'))
+    def to_json(self, resolved=False):
+        return json.dumps(self.to_object(resolved=resolved), separators=(',', ':'))
 
-    def to_kickstart(self):
+    def to_kickstart(self, resolved=False):
         """
         Represent the template as a kickstart file.
 
@@ -716,65 +717,16 @@ class Template(object):
         Returns:
           Kickstart formatted file.
         """
-        ksversion = makeVersion(DEVEL)
-        ksparser = pykickstart.parser.KickstartParser(ksversion)
 
-        handler = ksparser.handler
-        packages = handler.packages
+        if resolved:
+            _packages = self.packages_all
+            _repos    = self.repos_all
+            _objects  = self.objects_all
 
-        if 'kickstart' in self._meta:
-            # populate general
-
-            # populate commands
-            if 'commands' in self._meta['kickstart']:
-                for c in self._meta['kickstart']['commands']:
-                    ksparser.readKickstartFromString(c['data'], reset=False)
-
-            # populate scripts
-            for o in self.objects_all:
-                if o.is_ks_script():
-                    script = o.to_ks_script()
-                    handler.scripts.append(o.to_ks_script())
-
-                elif o.is_ks_command():
-                    ksparser.readKickstartFromString(o.data, reset=False)
-
-            # populate general package parameters
-            if 'packages' in self._meta['kickstart']:
-                mp = self._meta['kickstart']['packages']
-
-                if 'default' in mp:
-                    packages.default = mp['default']
-
-                if 'exclude_docs' in mp:
-                    packages.excludeDocs = mp['exclude_docs']
-
-                if 'no_base' in mp:
-                    packages.addBase = not mp['no_base']
-
-                if 'no_core' in mp:
-                    packages.nocore = mp['no_core']
-
-        #       if 'handle_missing' in mp:
-        #           packages.handleMissing = pykickstart.constants.KS_MISSING_IGNORE
-
-                if 'install_langs' in mp:
-                    packages.instLangs = mp['install_langs']
-
-                if 'multi_lib' in mp:
-                    packages.multiLib = mp['multi_lib']
-
-        # populate repos (technically commands)
-        for r in self.repos_all:
-            ksparser.readKickstartFromString(r.to_kickstart(), reset=False)
-
-        # process packages
-        for p in self.packages_all:
-            if p.included:
-                packages.packageList.append(p.name)
-
-            else:
-                packages.excludedList.append(p.name)
+        else:
+            _packages = self.packages
+            _repos    = self.repos
+            _objects  = self.objects
 
         template = ('# Canvas generated template - {1}\n'
                     '# UUID: {0}\n'
@@ -785,20 +737,98 @@ class Template(object):
                         self._uuid, self._name, self._user, self._title, self._description
                     )
 
-        template += ksparser.handler.__str__()
+
+        # populate repos (technically commands)
+        # since repos commands have writePriority 0 we'll put them up top
+        if len(_repos):
+            for r in _repos:
+                template += r.to_kickstart() + "\n"
+
+            template += "\n"
+
+
+
+        # first kickstart command seen has highest priority
+        ks_commands = {}
+        ks_commands_append = ['part', 'partition']
+
+        # populate objects (ie ks specific commands)
+        # first build a map of commands considering those that can be defined
+        # multiple times
+        for o in _objects:
+            if o.is_ks_command():
+                cmd = o.get_ks_command()
+                if cmd in ks_commands_append:
+                    ks_commands.setdefault(cmd, []).append(o)
+
+                else:
+                    ks_commands[cmd] = [o]
+
+        # sort on priority order then add to template
+        for oo in sorted(ks_commands.values(), key=lambda x: x[0].get_ks_command_priority()):
+            for o in oo:
+                template += o.to_kickstart() + "\n"
+
+
+        # populate objects (ie ks specific scripts)
+        for o in _objects:
+            if o.is_ks_script():
+                template += o.to_kickstart() + "\n"
+
+        # process packages
+        if len(self._packages):
+            package_header = "%packages"
+
+            mp = self._meta.get('kickstart', {}).get('packages', None)
+
+            if mp is not None:
+                if mp.get('exclude_docs', False):
+                    package_header += ' --excludedocs'
+
+                if mp.get('no_base', False):
+                    package_header += ' --nobase'
+
+                if mp.get('no_core', False):
+                    package_header += ' --nocore'
+
+                if mp.get('install_langs', False):
+                    package_header += ' --installlangs'
+
+                if mp.get('multi_lib', False):
+                    package_header += ' --multilib'
+
+                #if 'handle_missing' in mp:
+                #    package_header += ' --handlemissing'
+
+            template += package_header + "\n\n"
+
+            packages_included = sorted([p.to_kickstart() for p in _packages if p.included])
+            packages_excluded = sorted([p.to_kickstart() for p in _packages if not p.included])
+
+            template += "\n".join(packages_included)
+            template += "\n"
+            template += "\n".join(packages_excluded)
+
+            template += "\n%end\n"
 
         return template
 
-    def to_object(self):
-        # sort objects, packages and repos
-        objects = list(self.objects)
-        objects.sort(key=lambda x: x.name)
+    def to_object(self, resolved=False):
+        if resolved:
+            _packages = list(self.packages_all)
+            _repos    = list(self.repos_all)
+            _objects  = self.objects_all
 
-        packages = list(self.packages)
-        packages.sort(key=lambda x: x.name)
+        else:
+            _packages = list(self.packages)
+            _repos    = list(self.repos)
+            _objects  = self.objects
 
-        repos = list(self.repos)
-        repos.sort(key=lambda x: x.stub)
+        # sort packages and repos
+        _packages.sort(key=lambda x: x.name)
+        _repos.sort(key=lambda x: x.stub)
+
+        # we don't sort objects as insertion order is important
 
         return {
             'uuid':        self._uuid,
@@ -807,15 +837,15 @@ class Template(object):
             'title':       self._title,
             'description': self._description,
             'includes':    self._includes,
-            'packages':    [p.to_object() for p in packages],
-            'repos':       [r.to_object() for r in repos],
+            'packages':    [p.to_object() for p in _packages],
+            'repos':       [r.to_object() for r in _repos],
             'stores':      self._stores,
-            'objects':     [o.to_object() for o in objects],
+            'objects':     [o.to_object() for o in _objects],
             'meta':        self._meta
         }
 
-    def to_yaml(self):
-        return yaml.dump(self.to_object())
+    def to_yaml(self, resolved=False):
+        return yaml.dump(self.to_object(resolved=resolved))
 
     def update_package(self, package):
         if not isinstance(package, Package):

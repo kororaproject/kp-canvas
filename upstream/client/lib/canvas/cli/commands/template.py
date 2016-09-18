@@ -252,15 +252,15 @@ class TemplateCommand(Command):
             return 1
 
         if self.args.kickstart:
-            print(t.to_kickstart())
+            print(t.to_kickstart(resolved=not self.args.no_resolve_includes))
             return 0
 
         elif self.args.yaml:
-            print(yaml.dump(t.to_object(), indent=4))
+            print(yaml.dump(t.to_object(resolved=not self.args.no_resolve_includes), indent=4))
             return 0
 
         elif self.args.json:
-            print(json.dumps(t.to_object(), indent=4, sort_keys=True))
+            print(json.dumps(t.to_object(resolved=not self.args.no_resolve_includes), indent=4, sort_keys=True))
             return 0
 
         # pretty general information
