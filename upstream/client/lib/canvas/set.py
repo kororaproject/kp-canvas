@@ -44,15 +44,18 @@ class CanvasSet(collections.MutableSet):
         if item not in self._set:
             self._set.append(item)
 
+    def as_list(self):
+        return list(self._set)
+
     def discard(self, item):
         if item not in self._set:
             raise ValueError("item not in set")
+
         self._set.remove(item)
 
     def difference(self, other):
         if not isinstance(other, CanvasSet):
             raise NotImplementedError
-
 
         uniq_self = self.__class__()
         uniq_other = self.__class__()
@@ -71,7 +74,7 @@ class CanvasSet(collections.MutableSet):
 
     def union(self, *args):
         if len(args) == 0:
-            raise Exception('No PackageSets defined for union.')
+            raise Exception('No CanvasSets defined for union.')
 
         u = self.__class__(self._set)
 
@@ -88,7 +91,7 @@ class CanvasSet(collections.MutableSet):
     def update(self, *args):
         for o in args:
             if not isinstance(o, CanvasSet):
-                raise TypeError('Not a PackageSet %s %s.' % (type(o).__name__, type(self).__name__))
+                raise TypeError('Not a CanvasSet %s %s.' % (type(o).__name__, type(self).__name__))
 
             # add takes care of uniqueness so let's use it
             for x in o:
