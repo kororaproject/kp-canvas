@@ -360,6 +360,7 @@ class TemplateCommand(Command):
         if arch in ['i386', 'i686']:
             arch_pretty = '32 bit'
             arch_pretty_long = '32 bit (%s)' % (arch)
+
         elif arch in ['x86_64']:
             arch_pretty = '64 bit'
             arch_pretty_long = '64 bit (%s)' % (arch)
@@ -408,8 +409,24 @@ class TemplateCommand(Command):
 
         env = os.environ.copy()
 
+        # livecd-creator
+        if self.args.use_livecd_creator:
+            args = [
+                    'livecd-creator',
+                    '--verbose',
+                    '--config',     ks_path,
+                    '--fslabel',    name.lower(),
+                    '--title',      self.args.title,
+                    '--releasever', self.args.releasever,
+                    '--product',    self.args.project,
+                    '--cache',      self.args.resultdir,
+                    '--logfile',    self.args.logfile
+                ]
+
+            env["setarch"] = arch
+
         # livemedia-creator
-        if self.args.use_livemedia_creator:
+        else:
             args = [
                     'livemedia-creator',
                     '--no-virt',
@@ -425,22 +442,6 @@ class TemplateCommand(Command):
                     '--title',      self.args.title,
                     '--logfile',    self.args.logfile
                 ]
-
-        # livecd-creator
-        else:
-            args = [
-                    'livecd-creator',
-                    '--verbose',
-                    '--config',     ks_path,
-                    '--fslabel',    name.lower(),
-                    '--title',      self.args.title,
-                    '--releasever', self.args.releasever,
-                    '--product',    self.args.project,
-                    '--cache',      self.args.resultdir,
-                    '--logfile',    self.args.logfile
-                ]
-
-            env["setarch"] = arch
 
         subprocess.run(args, env=env)
 

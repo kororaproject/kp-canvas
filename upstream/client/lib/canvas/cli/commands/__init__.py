@@ -141,7 +141,7 @@ def buildCommandLineParser(config):
     template_iso_parser.add_argument('--releasever', type=str)
     template_iso_parser.add_argument('--title', type=str)
     template_iso_parser.add_argument('--resultdir', type=str)
-    template_iso_parser.add_argument('--livemedia-creator', action="store_true", dest='use_livemedia_creator')
+    template_iso_parser.add_argument('--livecd-creator', action="store_true", dest='use_livecd_creator')
 
     #
     # STORE COMMANDS

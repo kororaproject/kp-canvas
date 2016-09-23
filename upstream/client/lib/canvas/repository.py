@@ -229,39 +229,44 @@ class Repository(object):
 
         """
 
-        kickstart = 'repo --name={0}'.format(Repository._format_string(self.name))
+        repo = 'repo --name={0}'.format(Repository._format_string(self.name))
+        url  = 'url '
 
         if self.baseurl is not None:
-            kickstart += ' --baseurl={0}'.format(self.baseurl[0])
+            repo += ' --baseurl={0}'.format(self.baseurl[0])
+            url  += ' --url="{0}"'.format(self.baseurl[0])
 
         elif self.mirrorlist is not None:
-            kickstart += ' --mirrorlist={0}'.format(self.mirrorlist)
+            repo += ' --mirrorlist={0}'.format(self.mirrorlist)
+            url  += ' --mirrorlist="{0}"'.format(self.mirrorlist)
 
         elif self.metalink is not None:
-            kickstart += ' --mirrorlist={0}'.format(self.metalink)
+            repo += ' --mirrorlist={0}'.format(self.metalink)
 
         if self.cost is not None:
-            kickstart += ' --cost={0}'.format(self.cost)
+            repo += ' --cost={0}'.format(self.cost)
 
         if self.exclude_packages is not None:
-            kickstart += ' --excludepkgs={0}'.format(','.join(self.exclude_packages))
+            repo += ' --excludepkgs={0}'.format(','.join(self.exclude_packages))
 
         if self.include_packages is not None:
-            kickstart += ' --includepkgs={0}'.format(','.join(self.include_packages))
+            repo += ' --includepkgs={0}'.format(','.join(self.include_packages))
 
         if self.proxy:
-            kickstart += ' --proxy={0}'.format(self.proxy)
+            repo += ' --proxy={0}'.format(self.proxy)
+            url  += ' --proxy={0}'.format(self.proxy)
 
         if self.ignoregroups:
-            kickstart += ' --ignoregroups=true'
+            repo += ' --ignoregroups=true'
 
         if self.noverifyssl:
-            kickstart += ' --noverifyssl'
+            repo += ' --noverifyssl'
+            url  += ' --noverifyssl'
 
         if self.install:
-            kickstart += ' --install'
+            repo += ' --install'
 
-        return kickstart
+        return repo # + "\n" + url
 
     def to_json(self):
         return json.dumps(self.to_object(), separators=(',', ':'), sort_keys=True)
