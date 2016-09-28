@@ -88,7 +88,8 @@ class TemplateCommand(Command):
               "{0} template pull [user:]template[@version] [--clean]\n"
               "{0} template diff [user:]template[@version]\n"
               "{0} template copy [user_from:]template_from[@version] [[user_to:]template_to[@version]]\n"
-              "{0} template list [--public]\n"
+              "{0} template list [--public-only]\n"
+              "{0} template iso [user:]template[@version] [--releasever] [--livecd-creator]\n"
               "\n".format(self.prog_name))
 
     def help_add(self):
@@ -103,22 +104,34 @@ class TemplateCommand(Command):
               "\n".format(self.prog_name))
 
     def help_copy(self):
-        pass
+        print("Usage: {0} template copy [user_from:]template_from[@version] [user_to:]template_to[@version]\n"
+              "\n"
+              "\n".format(self.prog_name))
 
     def help_diff(self):
-        pass
+        print("Usage: {0} template diff [user:]template[@version]\n"
+              "\n"
+              "\n".format(self.prog_name))
 
     def help_iso(self):
-        pass
+        print("Usage: {0} template iso [user:]template[@version] [--releasever] [--livecd-creator]\n"
+              "\n"
+              "\n".format(self.prog_name))
 
     def help_list(self):
-        pass
+        print("Usage: {0} template list [--public-only]\n"
+              "\n"
+              "\n".format(self.prog_name))
 
     def help_pull(self):
-        pass
+        print("Usage: {0} template pull [user:]template[@version] [--clean]\n"
+              "\n"
+              "\n".format(self.prog_name))
 
     def help_push(self):
-        pass
+        print("Usage: {0} template push [user:]template[@version] [--all]\n"
+              "\n"
+              "\n".format(self.prog_name))
 
     def help_update(self):
         print("Usage: {0} template update [user:]template[@version] [--title] [--description]\n"
