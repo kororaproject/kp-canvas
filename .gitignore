@@ -2,3 +2,5 @@ canvas.conf
 
 *.pyc
 build/sources
+
+client_secret.json
