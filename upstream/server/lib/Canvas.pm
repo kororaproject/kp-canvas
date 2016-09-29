@@ -183,19 +183,21 @@ sub startup {
   $r->any('/authorised')->to('api#authorised_any');
 
   #
-  if (0) {
-    $r->get('/')->to('api#index');
-    $r->get('/templates')->to('template#index_get');
+  $r->get('/')->to('api#alpha');
 
-    $r->get('/:user/template')->to('template#summary_get');
-    $r->get('/:user/template/:name')->to('template#detail_get');
-  }
-  else {
-    $r->get('/')->to('api#alpha');
-    $r->any('/*trap' => {trap => ''} => sub { shift->redirect_to('/'); });
-  }
+  $r->get('/main')->to('api#index');
 
+  $r->get('/templates')->to('template#index_get');
 
+  $r->get('/:user/templates')->to('template#user_get');
+  $r->get('/:user/template')->to('template#summary_get');
+  $r->get('/:user/template/:name')->to('template#detail_get');
+
+#  $r->get('/:user/machines')->to('machine#user_get');
+#  $r->get('/:user/machine')->to('machine#summary_get');
+#  $r->get('/:user/machine/:name')->to('machine#detail_get');
+
+  $r->any('/*trap' => {trap => ''} => sub { shift->redirect_to('/'); });
 }
 
 1;

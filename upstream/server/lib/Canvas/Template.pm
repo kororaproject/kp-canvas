@@ -87,4 +87,32 @@ sub detail_get {
   });
 }
 
+sub summary_get {
+}
+
+sub user_get {
+  my $c = shift;
+
+  my $user = $c->param('user');
+
+  # get auth'd user
+  my $cu = $c->auth_user // { id => -1 };
+
+  $c->render_later;
+
+  $c->canvas->templates->find(
+    user_name => $user,
+    user_id   => $cu->{id},
+    sub {
+      my ($err, $templates) = @_;
+
+      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+
+      $c->stash(templates => $templates->to_array);
+
+      $c->render(status  => 200, json => $templates->to_array);
+    }
+  );
+}
+
 1;
