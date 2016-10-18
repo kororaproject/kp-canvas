@@ -44,16 +44,18 @@ class ErrorRaisingArgumentParser(argparse.ArgumentParser):
 
 
 def buildCommandLineParser(config):
-    parser = ErrorRaisingArgumentParser(prog='cnvs', add_help=False)
+    parser = ErrorRaisingArgumentParser(prog='canvas', add_help=False)
     subparsers = parser.add_subparsers(dest='command')
+
+    # root anchored
+    parser.add_argument('-U', '--user', type=str, dest='username', default=config.get('user', 'name', CANVAS_USER))
+    parser.add_argument('-H', '--host', type=str, dest='host', default=config.get('core', 'host', CANVAS_HOST))
+    parser.add_argument('-V', '--version', action='version', version='{0} - {1}'.format(PROG_NAME, PROG_VERSION))
 
     # general arguments
     general_parser = argparse.ArgumentParser(add_help=False)
     general_parser.add_argument('-h', '--help', '-?', action='store_true', dest='help')
-    general_parser.add_argument('-U', '--user', type=str, dest='username', default=config.get('user', 'name', CANVAS_USER))
-    general_parser.add_argument('-H', '--host', type=str, dest='host', default=config.get('core', 'host', CANVAS_HOST))
     general_parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
-    general_parser.add_argument('-V', '--version', action='version', version='{0} - {1}'.format(PROG_NAME, PROG_VERSION))
 
     #
     # CONFIG COMMANDS
