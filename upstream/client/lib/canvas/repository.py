@@ -32,48 +32,50 @@ class Repository(object):
 
         if isinstance(repository, str):
             repository = Repository.parse_str(repository)
+
         elif isinstance(repository, dnf.repo.Repo):
             repository = Repository.parse_dnf(repository)
+
         if not isinstance(repository, dict):
             raise TypeError("Repository must be a dict")
 
-        self.name     = repository.get('name', repository.get('n', None))
-        self.stub     = repository.get('stub', repository.get('s', None))
+        self._name     = repository.get('name', repository.get('n', None))
+        self._stub     = repository.get('stub', repository.get('s', None))
 
-        self.baseurl    = repository.get('baseurl', repository.get('bu', None))
-        self.mirrorlist = repository.get('mirrorlist', repository.get('ml', None))
-        self.metalink   = repository.get('metalink', repository.get('ma', None))
+        self._baseurl    = repository.get('baseurl', repository.get('bu', None))
+        self._mirrorlist = repository.get('mirrorlist', repository.get('ml', None))
+        self._metalink   = repository.get('metalink', repository.get('ma', None))
 
-        self.gpgkey     = repository.get('gpgkey', repository.get('gk', None))
-        self.enabled    = repository.get('enabled', repository.get('e', None))
-        self.gpgcheck   = repository.get('gpgcheck', repository.get('gc', None))
-        self.cost       = repository.get('cost', repository.get('c', None))
-        self.install    = repository.get('install', repository.get('i', False))
+        self._gpgkey     = repository.get('gpgkey', repository.get('gk', None))
+        self._enabled    = repository.get('enabled', repository.get('e', None))
+        self._gpgcheck   = repository.get('gpgcheck', repository.get('gc', None))
+        self._cost       = repository.get('cost', repository.get('c', None))
+        self._install    = repository.get('install', repository.get('i', False))
 
-        self.ignoregroups = repository.get('ignoregroups', False)
-        self.proxy        = repository.get('proxy', None)
-        self.noverifyssl  = repository.get('noverifyssl', False)
+        self._ignoregroups = repository.get('ignoregroups', False)
+        self._proxy        = repository.get('proxy', None)
+        self._noverifyssl  = repository.get('noverifyssl', False)
 
-        self.exclude_packages = repository.get('exclude_packages', repository.get('xp', None))
-        self.include_packages = repository.get('include_packages', repository.get('ip', None))
+        self._exclude_packages = repository.get('exclude_packages', repository.get('xp', None))
+        self._include_packages = repository.get('include_packages', repository.get('ip', None))
 
-        self.priority   = repository.get('priority', None)
+        self._priority   = repository.get('priority', None)
 
-        self.meta_expired = repository.get('meta_expired', repository.get('me', None))
+        self._meta_expired = repository.get('meta_expired', repository.get('me', None))
 
-        self.action   = repository.get('action', repository.get('z', self.ACTION_INCLUDE))
+        self._action   = repository.get('action', repository.get('z', self.ACTION_INCLUDE))
 
-        if not self.name:
+        if not self._name:
             raise ValueError("Name cannot be None")
 
     def __eq__(self, other):
         if isinstance(other, Repository):
-            return (self.stub == other.stub)
+            return (self._stub == other.stub)
         else:
             return False
 
     def __hash__(self):
-        return hash(self.stub)
+        return hash(self._stub)
 
     def __ne__(self, other):
         return (not self.__eq__(other))
@@ -214,6 +216,102 @@ class Repository(object):
             'action': cls.ACTION_INCLUDE,
         }
 
+    #
+    # PROPERTIES
+    @property
+    def action(self):
+        return self._action
+
+    @property
+    def baseurl(self):
+        return self._baseurl
+
+    @baseurl.setter
+    def baseurl(self, value):
+        self._baseurl = value
+
+    @property
+    def cost(self):
+        return self._cost
+
+    @cost.setter
+    def cost(self, value):
+        self._cost= value
+
+    @property
+    def enabled(self):
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value):
+        self._enabled = bool(value)
+
+    @property
+    def exclude_packages(self):
+        return self._exclude_packages
+
+    @property
+    def gpgcheck(self):
+        return self._gpgcheck
+
+    @property
+    def gpgkey(self):
+        return self._gpgkey
+
+    @property
+    def ignoregroups(self):
+        return self._ignoregroups
+
+    @property
+    def include_packages(self):
+        return self._include_packages
+
+    @property
+    def install(self):
+        return self._install
+
+    @property
+    def metalink(self):
+        return self._metalink
+
+    @metalink.setter
+    def metalink(self, value):
+        self._metalink = value
+
+    @property
+    def meta_expired(self):
+        return self._meta_expired
+
+    @property
+    def mirrorlist(self):
+        return self._mirrorlist
+
+    @mirrorlist.setter
+    def mirrorlist(self, value):
+        self._mirrorlist = value
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def noverifyssl(self):
+        return self._noverifyssl
+
+    @property
+    def proxy(self):
+        return self._proxy
+
+    @property
+    def priority(self):
+        return self._priority
+
+    @property
+    def stub(self):
+        return self._stub
+
+    #
+    # PUBLIC METHODS
     def to_kickstart(self):
         """ Generate a repo dictionary from a kickstart formated repository string.
 
@@ -231,41 +329,41 @@ class Repository(object):
 
         """
 
-        repo = 'repo --name={0}'.format(Repository._format_string(self.name))
+        repo = 'repo --name={0}'.format(Repository._format_string(self._name))
         url  = 'url '
 
-        if self.baseurl is not None:
-            repo += ' --baseurl={0}'.format(self.baseurl[0])
-            url  += ' --url="{0}"'.format(self.baseurl[0])
+        if self._baseurl is not None:
+            repo += ' --baseurl={0}'.format(self._baseurl[0])
+            url  += ' --url="{0}"'.format(self._baseurl[0])
 
-        elif self.mirrorlist is not None:
-            repo += ' --mirrorlist={0}'.format(self.mirrorlist)
-            url  += ' --mirrorlist="{0}"'.format(self.mirrorlist)
+        elif self._mirrorlist is not None:
+            repo += ' --mirrorlist={0}'.format(self._mirrorlist)
+            url  += ' --mirrorlist="{0}"'.format(self._mirrorlist)
 
-        elif self.metalink is not None:
-            repo += ' --mirrorlist={0}'.format(self.metalink)
+        elif self._metalink is not None:
+            repo += ' --mirrorlist={0}'.format(self._metalink)
 
-        if self.cost is not None:
-            repo += ' --cost={0}'.format(self.cost)
+        if self._cost is not None:
+            repo += ' --cost={0}'.format(self._cost)
 
-        if self.exclude_packages is not None:
-            repo += ' --excludepkgs={0}'.format(','.join(self.exclude_packages))
+        if self._exclude_packages is not None:
+            repo += ' --excludepkgs={0}'.format(','.join(self._exclude_packages))
 
-        if self.include_packages is not None:
-            repo += ' --includepkgs={0}'.format(','.join(self.include_packages))
+        if self._include_packages is not None:
+            repo += ' --includepkgs={0}'.format(','.join(self._include_packages))
 
-        if self.proxy:
-            repo += ' --proxy={0}'.format(self.proxy)
-            url  += ' --proxy={0}'.format(self.proxy)
+        if self._proxy:
+            repo += ' --proxy={0}'.format(self._proxy)
+            url  += ' --proxy={0}'.format(self._proxy)
 
-        if self.ignoregroups:
+        if self._ignoregroups:
             repo += ' --ignoregroups=true'
 
-        if self.noverifyssl:
+        if self._noverifyssl:
             repo += ' --noverifyssl'
             url  += ' --noverifyssl'
 
-        if self.install:
+        if self._install:
             repo += ' --install'
 
         return repo # + "\n" + url
@@ -275,21 +373,21 @@ class Repository(object):
 
     def to_object(self):
         o = {
-            's':  self.stub,
-            'n':  self.name,
-            'bu': self.baseurl,
-            'ml': self.mirrorlist,
-            'ma': self.metalink,
-            'e':  self.enabled,
-            'gc': self.gpgcheck,
-            'gk': self.gpgkey,
-            'me': self.meta_expired,
-            'c':  self.cost,
-            'p':  self.priority,
-            'i':  self.install,
-            'xp': self.exclude_packages,
-            'ip': self.include_packages,
-            'z':  self.action,
+            's':  self._stub,
+            'n':  self._name,
+            'bu': self._baseurl,
+            'ml': self._mirrorlist,
+            'ma': self._metalink,
+            'e':  self._enabled,
+            'gc': self._gpgcheck,
+            'gk': self._gpgkey,
+            'me': self._meta_expired,
+            'c':  self._cost,
+            'p':  self._priority,
+            'i':  self._install,
+            'xp': self._exclude_packages,
+            'ip': self._include_packages,
+            'z':  self._action,
         }
 
         # only build with non-None values
@@ -300,39 +398,39 @@ class Repository(object):
             cli_cache = dnf.conf.CliCache('/var/tmp')
             cache_dir = cli_cache.cachedir
 
-        r = dnf.repo.Repo('canvas_{0}'.format(self.stub), cache_dir)
+        r = dnf.repo.Repo('canvas_{0}'.format(self._stub), cache_dir)
 
-        if self.name is not None:
-            r.name = self.name
+        if self._name is not None:
+            r.name = self._name
 
-        if self.baseurl is not None:
-            r.baseurl = self.baseurl
+        if self._baseurl is not None:
+            r.baseurl = self._baseurl
 
-        if self.mirrorlist is not None:
-            r.mirrorlist = self.mirrorlist
+        if self._mirrorlist is not None:
+            r.mirrorlist = self._mirrorlist
 
-        if self.metalink is not None:
-            r.metalink = self.metalink
+        if self._metalink is not None:
+            r.metalink = self._metalink
 
-        if self.gpgcheck is not None:
-            r.gpgcheck = self.gpgcheck
+        if self._gpgcheck is not None:
+            r.gpgcheck = self._gpgcheck
 
-        if self.gpgkey is not None:
-            r.gpgkey = self.gpgkey
+        if self._gpgkey is not None:
+            r.gpgkey = self._gpgkey
 
-        if self.cost is not None:
-            r.cost = self.cost
+        if self._cost is not None:
+            r.cost = self._cost
 
-        if self.exclude_packages is not None:
-            r.exclude = self.exclude_packages
+        if self._exclude_packages is not None:
+            r.exclude = self._exclude_packages
 
-        if self.include_packages is not None:
-            r.include = self.include_packages
+        if self._include_packages is not None:
+            r.include = self._include_packages
 
-        if self.meta_expired is not None:
-            r.meta_expired = self.meta_expired
+        if self._meta_expired is not None:
+            r.meta_expired = self._meta_expired
 
-        if self.enabled is not None and not self.enabled:
+        if self._enabled is not None and not self._enabled:
             r.disable()
 
         return r

@@ -160,26 +160,42 @@ class RepoCommand(Command):
             return 1
 
         r = r[0]
-        o = {
-            'n':  self.args.name,
-            'bu': self.args.baseurl,
-            'ml': self.args.mirrorlist,
-            'ma': self.args.metalink,
-            'e':  self.args.enabled,
-            'c':  self.args.cost,
-            'p':  self.args.priority,
-            'gc': self.args.gpgcheck,
-            'gk': self.args.gpgkey,
-            'sk': self.args.skip,
-            'x':  self.args.exclude
-        }
 
-        o = {k: v for k, v in o.items() if v != None}
+        # reset baseurl, metalink and mirrorlist when any are specified
+        if self.args.baseurl is not None or self.args.metalink is not None or self.args.mirrorlist is not None:
+            r.baseurl = None
+            r.mirrorlist = None
+            r.metalink = None
 
-        r.parse(o)
+        if self.args.baseurl is not None:
+            r.baseurl = self.args.baseurl
+
+        if self.args.cost is not None:
+            r.cost = self.args.cost
+
+        if self.args.enabled is not None:
+            r.enabled = self.args.enabled
+
+        if self.args.gpgcheck is not None:
+            r.gpgcheck = self.args.gpgcheck
+
+        if self.args.gpgkey is not None:
+            r.gpgkey = self.args.gpgkey
+
+        if self.args.metalink is not None:
+            r.metalink = self.args.metalink
+
+        if self.args.mirrorlist is not None:
+            r.mirrorlist = self.args.mirrorlist
+
+        if self.args.name is not None:
+            r.name = self.args.name
+
+        if self.args.priority is not None:
+            r.priority= self.args.priority
 
         if not t.update_repo(r):
-            print('error: no changes detected.')
+            print('info: no changes detected.')
             return 0
 
         # push our updated template
