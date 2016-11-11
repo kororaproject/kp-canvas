@@ -49,12 +49,16 @@ class RepoTestCase(TestCase):
         with self.assertRaises(TypeError):
             Repository.parse_str(1)
 
-        with self.assertRaises(ValueError):
-            Repository.parse_str('notvalid')
 
         with self.assertRaises(ValueError):
             Repository.parse_str('repo --mirrorlist=http://fakeurl --baseurl=http://alsofake')
 
+
+
+    def test_package_parse_str_from_name(self):
+        d1 = Repository.parse_str('validreponame')
+        # Name set
+        self.assertEqual('validreponame', d1['name'])
 
     def test_repo__parse_str_arg(self):
         # Double Quotes

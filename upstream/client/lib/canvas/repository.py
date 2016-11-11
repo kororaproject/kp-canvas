@@ -133,7 +133,9 @@ class Repository(object):
             repo['action'] = cls.ACTION_EXCLUDE
 
         if not repository.startswith('repo '):
-            raise ValueError("Repository must start with '[~]repo '")
+            repo['name'] = repository
+            repo['stub'] = repository.replace(' ', '-').replace('---', '-').lower()
+            return repo
 
         for arg in repository.split("--"):
             if arg == 'repo' or arg == '' or arg == 'repo ':
