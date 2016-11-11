@@ -89,6 +89,7 @@ class TemplateCommand(Command):
               "{0} template diff [user:]template[@version]\n"
               "{0} template copy [user_from:]template_from[@version] [[user_to:]template_to[@version]]\n"
               "{0} template list [--public-only]\n"
+              "{0} template dump [user:]template[@version] [--json|--kickstart|--yaml] [--no-resolve-includes]\n"
               "{0} template iso [user:]template[@version] [--releasever] [--livecd-creator]\n"
               "\n".format(self.prog_name))
 
@@ -111,6 +112,16 @@ class TemplateCommand(Command):
     def help_diff(self):
         print("Usage: {0} template diff [user:]template[@version]\n"
               "\n"
+              "\n".format(self.prog_name))
+
+    def help_dump(self):
+        print("Usage: {0} template dump [user:]template[@version] [--json|--kickstart|--yaml] [--no-resolve-includes]\n"
+              "\n"
+              "Options:\n"
+              "  --json                   Output the template in JSON format\n"
+              "  --kickstart              Output the template in kickstart format\n"
+              "  --yaml                   Output the template in YAML format\n"
+              "  --no-resolve-includes    Do not resolve any template includes\n"
               "\n".format(self.prog_name))
 
     def help_iso(self):
