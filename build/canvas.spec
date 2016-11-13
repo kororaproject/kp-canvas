@@ -9,8 +9,11 @@ URL:            https://github.com/kororaproject/kp-canvas
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  python3-devel gzip
-Requires:       python3 python3-argcomplete python3-prettytable python3-PyYAML
-
+Requires:       python3 
+Requires:       python3-argcomplete
+Requires:       python3-prettytable
+Requires:       python3-PyYAML
+Requires:       python3-kickstart
 
 %description
 %{summary}.
