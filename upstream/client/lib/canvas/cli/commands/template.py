@@ -22,6 +22,8 @@ import json
 import logging
 import os
 import prettytable
+import random
+import string
 import subprocess
 import yaml
 
@@ -335,7 +337,7 @@ class TemplateCommand(Command):
         packages.sort(key=lambda x: x.name)
 
         if len(packages):
-            l = prettytable.PrettyTable(['package', 'epoch', 'version', 'release', 'arch', 'action'])
+            l = prettytable.PrettyTable(['package', 'action'])
             l.min_table_width = 120
             l.hrules = prettytable.HEADER
             l.vrules = prettytable.NONE
@@ -343,25 +345,13 @@ class TemplateCommand(Command):
             l.padding_witdth = 1
 
             for p in packages:
-                if p.epoch is None:
-                    p.epoch = '-'
-
-                if p.version is None:
-                    p.version = '-'
-
-                if p.release is None:
-                    p.release = '-'
-
-                if p.arch is None:
-                    p.arch = '-'
-
                 if p.included:
                     p.action = '+'
 
                 else:
                     p.action = '-'
 
-                l.add_row([p.name, p.epoch, p.version, p.release, p.arch, p.action])
+                l.add_row([p.name, p.action])
 
             print(l)
             print()
@@ -369,6 +359,7 @@ class TemplateCommand(Command):
         return 0
 
     def run_iso(self):
+
         t = Template(self.args.template, user=self.args.username)
 
         try:
@@ -389,47 +380,56 @@ class TemplateCommand(Command):
             arch_pretty = '64 bit'
             arch_pretty_long = '64 bit (%s)' % (arch)
 
-        # we'll use version in our names
+        # we'll use the release version in our names
         if self.args.releasever is None:
             if t.version is None or t.version is '':
-                self.args.releasever = 'HEAD'
+                # default to release ver of installed system at /
+                self.args.releasever = dnf.rpm.detect_releasever('/')
+
             else:
                 self.args.releasever = t.version
 
-        name              = "{0}-{1}-{2}".format(t.name, self.args.releasever, arch)
+        name              = "{0}".format(t.name)
+        name_long         = "{0}-{1}-{2}".format(t.name, self.args.releasever, arch)
         name_pretty       = "{0}-{1}-{2}".format(t.name, self.args.releasever, arch_pretty)
         title             = "{0} - {1} - {2}".format(t.title, self.args.releasever, arch_pretty)
         title_pretty_long = "{0} - {1} - {2}".format(t.title, self.args.releasever, arch_pretty_long)
 
         # build missing strings
         if self.args.resultdir is None:
-            self.args.resultdir = "/var/tmp/canvas/isos/{0}".format(name.lower())
+            self.args.resultdir = "/var/tmp/canvas/isos/{0}-{1}".format(name_long.lower(), ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8)))
 
         if self.args.iso_name is None:
-            self.args.iso_name = "{0}.iso".format(name.lower())
+            self.args.iso_name = "{0}.iso".format(name_long.lower())
 
         if self.args.project is None:
-            self.args.project = title
+            self.args.project = name
 
         if self.args.volid is None:
-            self.args.volid = name.lower()
+            self.args.volid = name_long.lower()
 
         if self.args.title is None:
             self.args.title = title_pretty_long
 
         if self.args.logfile is None:
-            self.args.logfile = "/var/tmp/canvas/{0}.log".format(name.lower())
+            self.args.logfile = "/var/tmp/canvas/{0}.log".format(name_long.lower())
 
         # build kickstart file
         ks_file = "canvas-{0}.ks".format(t.uuid)
         ks_path = os.path.join("/var/tmp/canvas/ks", ks_file)
 
-        # ensure our resultdir exists
-        if not os.path.exists(os.path.dirname(ks_path)):
-            os.makedirs(os.path.dirname(ks_path))
+        try:
 
-        with open(ks_path, 'w') as f:
-            f.write(t.to_kickstart(resolved=True))
+            # ensure our resultdir exists
+            if not os.path.exists(os.path.dirname(ks_path)):
+                os.makedirs(os.path.dirname(ks_path))
+
+            with open(ks_path, 'w') as f:
+                f.write(t.to_kickstart(resolved=True))
+
+        except IOError as e:
+            print('need root privileges to build iso at this location.')
+            return 1
 
         env = os.environ.copy()
 
@@ -439,7 +439,7 @@ class TemplateCommand(Command):
                     'livecd-creator',
                     '--verbose',
                     '--config',     ks_path,
-                    '--fslabel',    name.lower(),
+                    '--fslabel',    name_long.lower(),
                     '--title',      self.args.title,
                     '--releasever', self.args.releasever,
                     '--product',    self.args.project,
