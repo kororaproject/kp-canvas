@@ -392,7 +392,8 @@ class TemplateCommand(Command):
         name              = "{0}".format(t.name)
         name_long         = "{0}-{1}-{2}".format(t.name, self.args.releasever, arch)
         name_pretty       = "{0}-{1}-{2}".format(t.name, self.args.releasever, arch_pretty)
-        title             = "{0} - {1} - {2}".format(t.title, self.args.releasever, arch_pretty)
+        title             = "{0}".format(t.title)
+        title_long        = "{0} - {1} - {2}".format(t.title, self.args.releasever, arch_pretty)
         title_pretty_long = "{0} - {1} - {2}".format(t.title, self.args.releasever, arch_pretty_long)
 
         # build missing strings
@@ -403,7 +404,7 @@ class TemplateCommand(Command):
             self.args.iso_name = "{0}.iso".format(name_long.lower())
 
         if self.args.project is None:
-            self.args.project = name
+            self.args.project = title
 
         if self.args.volid is None:
             self.args.volid = name_long.lower()
@@ -440,7 +441,7 @@ class TemplateCommand(Command):
                     '--verbose',
                     '--config',     ks_path,
                     '--fslabel',    name_long.lower(),
-                    '--title',      self.args.title,
+                    '--title',      self.args.title_long,
                     '--releasever', self.args.releasever,
                     '--product',    self.args.project,
                     '--cache',      self.args.resultdir,
@@ -463,7 +464,7 @@ class TemplateCommand(Command):
                     '--volid',      self.args.volid,
                     '--iso-name',   self.args.iso_name,
                     '--releasever', self.args.releasever,
-                    '--title',      self.args.title,
+                    '--title',      self.args.title_long,
                     '--logfile',    self.args.logfile
                 ]
 
