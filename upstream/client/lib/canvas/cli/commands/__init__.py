@@ -40,6 +40,7 @@ class ArgumentParserError(Exception):
 
 class ErrorRaisingArgumentParser(argparse.ArgumentParser):
     def error(self, message):
+        print(message)
         raise ArgumentParserError(message)
 
 

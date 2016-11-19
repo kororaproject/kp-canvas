@@ -83,7 +83,8 @@ class RepoCommand(Command):
         pass
 
     def help_update(self):
-        pass
+        print("Usage: {0} repo update [user:]template[@version] repo_name [--baseurl] [--metalink] [--mirrorlist] [--cost] [--enabled] [--gpgkey] [--name] [--priority]\n"
+              "\n".format(self.prog_name))
 
     def run(self):
         command = None
@@ -230,19 +231,19 @@ class RepoCommand(Command):
             l.padding_witdth = 1
 
             for r in repos:
-                if r.cost is None:
-                    r.cost = '-'
+                cost = r.cost
+                if cost is None:
+                    cost = '-'
 
-                if r.priority is None:
-                    r.priority = '-'
+                priority = '-'
+                if priority is None:
+                    priority = '-'
 
-                if r.enabled:
-                    r.enabled = 'Y'
+                enabled = r.enabled
+                if enabled:
+                    enabled = 'Y'
 
-                else:
-                    r.enabled = 'N'
-
-                l.add_row([r.stub, r.name, r.priority, r.cost, r.enabled])
+                l.add_row([r.stub, r.name, priority, cost, enabled])
 
             print(l)
             print()
