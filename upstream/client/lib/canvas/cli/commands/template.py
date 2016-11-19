@@ -441,7 +441,7 @@ class TemplateCommand(Command):
                     '--verbose',
                     '--config',     ks_path,
                     '--fslabel',    name_long.lower(),
-                    '--title',      self.args.title_long,
+                    '--title',      self.args.title,
                     '--releasever', self.args.releasever,
                     '--product',    self.args.project,
                     '--cache',      self.args.resultdir,
@@ -464,7 +464,7 @@ class TemplateCommand(Command):
                     '--volid',      self.args.volid,
                     '--iso-name',   self.args.iso_name,
                     '--releasever', self.args.releasever,
-                    '--title',      self.args.title_long,
+                    '--title',      self.args.title,
                     '--logfile',    self.args.logfile
                 ]
 
