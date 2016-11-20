@@ -1,5 +1,5 @@
 Name:           canvas
-Version:        0.5
+Version:        0.5.1
 Release:        1%{?dist}
 Summary:        User level profile and system management
 
@@ -50,6 +50,9 @@ rm -rf %{buildroot}
 
 
 %changelog
+* Fri Nov 21 2016 Ian Firns <firnsy@kororaproject.org> - 0.5.1-1
+- Latest upstream version
+
 * Fri Sep 23 2016 Ian Firns <firnsy@kororaproject.org> - 0.5-1
 - Latest upstream version
 

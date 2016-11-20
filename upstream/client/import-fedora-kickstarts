@@ -1,0 +1,108 @@
+#!/usr/bin/python3
+
+import os
+import re
+import subprocess
+import sys
+import tempfile
+
+KS_FILES = {}
+
+def get_includes(ks_path, ks_file):
+    global KS_FILES
+
+    if ks_file in KS_FILES:
+        return
+
+    path = os.path.join(ks_path, ks_file)
+
+    print("Collecting includes for: {0}".format(ks_file))
+
+    includes = []
+
+    with open(path, 'r') as f:
+        for line in f:
+            l = line.rstrip('\n')
+            if l.startswith('%include'):
+                params = re.split(' ', l)
+                includes.append(params[1])
+
+    KS_FILES[ks_file] = includes
+
+    for i in includes:
+        get_includes(ks_path, i)
+
+def map_canvas_name(ks_file, version=None):
+
+    name = ks_file[:-3]
+
+    if name == 'fedora-live-workstation':
+        name = 'fedora-live-gnome'
+
+    if version is not None:
+        return "kororaproject:{0}@{1}".format(name, version)
+
+    return "kororaproject:{0}".format(name)
+
+def run_canvas(args):
+    args.insert(0, 'canvas')
+    cmd = ' '.join(args)
+    print(cmd)
+    return os.system(cmd)
+    #return subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2 or not os.path.exists(sys.argv[1]):
+        print("Must enter path to fedora kickstart directory.")
+        exit(1)
+
+    proc = run_canvas(['template', 'list'])
+    if proc != 0:
+        exit(1)
+
+    ks_path = sys.argv[1]
+
+    ks_files = [f for f in os.listdir(ks_path) if f.startswith('fedora-live') and os.path.isfile(os.path.join(ks_path, f))]
+
+    # pre-process and map all necessary includes
+    for k in ks_files:
+        get_includes(ks_path, k)
+
+    print()
+
+    # import each kickstart
+    for ks, includes in sorted(KS_FILES.items()):
+        print("Processing: {0}".format(ks))
+
+        k_mapped = map_canvas_name(ks)
+        i_mapped = [map_canvas_name(i) for i in includes]
+
+        # update includes (also checks existence)
+        proc = run_canvas(['template', 'update', k_mapped, '--includes "{0}"'.format(','.join(i_mapped))])
+        if proc != 0:
+            print("Adding new template: {0}".format(k_mapped))
+
+            proc = run_canvas(['template', 'add', k_mapped, '--name', ks, '--includes', ','.join(i_mapped), '--public', 'true'])
+            if proc != 0:
+                exit(1)
+
+        path = os.path.join(ks_path, ks)
+
+        # build filtered kickstart
+        fp = open('/tmp/foo.ks', 'w')
+        with open(path, 'r') as f:
+            for l in f:
+                if not l.startswith('%include'):
+                    fp.write(l)
+        fp.close()
+
+        proc = run_canvas(['template', 'push', k_mapped, '--clean', '--kickstart', fp.name])
+        if proc != 0:
+            exit(1)
+
+        print()
+
+
+
+
