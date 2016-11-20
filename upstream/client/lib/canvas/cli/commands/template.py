@@ -315,19 +315,19 @@ class TemplateCommand(Command):
             l.padding_witdth = 1
 
             for r in repos:
-                if r.cost is None:
-                    r.cost = '-'
+                cost = r.cost
+                if cost is None:
+                    cost = '-'
 
-                if r.priority is None:
-                    r.priority = '-'
+                priority = r.priority
+                if priority is None:
+                    priority = '-'
 
+                enabled = 'N'
                 if r.enabled:
-                    r.enabled = 'Y'
+                    enabled = 'Y'
 
-                else:
-                    r.enabled = 'N'
-
-                l.add_row([r.stub, r.name, r.priority, r.cost, r.enabled])
+                l.add_row([r.stub, r.name, priority, cost, enabled])
 
             print(l)
             print()
