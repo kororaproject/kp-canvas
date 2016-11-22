@@ -48,8 +48,7 @@ def run_canvas(args):
     args.insert(0, 'canvas')
     cmd = ' '.join(args)
     print(cmd)
-    return os.system(cmd)
-    #return subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
+    return subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=30)
 
 
 if __name__ == "__main__":
@@ -58,7 +57,9 @@ if __name__ == "__main__":
         exit(1)
 
     proc = run_canvas(['template', 'list'])
-    if proc != 0:
+    if proc.returncode != 0:
+        print(proc.stdout)
+        print(proc.stderr)
         exit(1)
 
     ks_path = sys.argv[1]
@@ -79,27 +80,37 @@ if __name__ == "__main__":
         i_mapped = [map_canvas_name(i) for i in includes]
 
         # update includes (also checks existence)
-        proc = run_canvas(['template', 'update', k_mapped, '--includes "{0}"'.format(','.join(i_mapped))])
-        if proc != 0:
-            print("Adding new template: {0}".format(k_mapped))
+        proc = run_canvas(['template', 'dump', k_mapped, '--no-resolve-includes'])
+        if proc.returncode != 0:
+            print(proc)
 
+            print("Adding new template: {0}".format(k_mapped))
             proc = run_canvas(['template', 'add', k_mapped, '--name', ks, '--includes', ','.join(i_mapped), '--public', 'true'])
-            if proc != 0:
+            if proc.returncode != 0:
+                print(proc)
                 exit(1)
 
         path = os.path.join(ks_path, ks)
 
         # build filtered kickstart
         fp = open('/tmp/foo.ks', 'w')
+
         with open(path, 'r') as f:
             for l in f:
                 if not l.startswith('%include'):
                     fp.write(l)
         fp.close()
 
+
         proc = run_canvas(['template', 'push', k_mapped, '--clean', '--kickstart', fp.name])
-        if proc != 0:
+        if proc.returncode != 0:
+            print(proc)
             exit(1)
+
+        # update includes (also checks existence)
+        proc = run_canvas(['template', 'update', k_mapped, '--includes "{0}"'.format(','.join(i_mapped))])
+        if proc.returncode != 0:
+            print(proc)
 
         print()
 
