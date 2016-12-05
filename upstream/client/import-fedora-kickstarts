@@ -56,6 +56,9 @@ if __name__ == "__main__":
         print("Must enter path to fedora kickstart directory.")
         exit(1)
 
+    version = None
+
+    print("Testing canvas connection ...")
     proc = run_canvas(['template', 'list'])
     if proc.returncode != 0:
         print(proc.stdout)
@@ -63,6 +66,8 @@ if __name__ == "__main__":
         exit(1)
 
     ks_path = sys.argv[1]
+    if len(sys.argv) > 2:
+        version = int(sys.argv[2])
 
     ks_files = [f for f in os.listdir(ks_path) if f.startswith('fedora-live') and os.path.isfile(os.path.join(ks_path, f))]
 
@@ -76,8 +81,8 @@ if __name__ == "__main__":
     for ks, includes in sorted(KS_FILES.items()):
         print("Processing: {0}".format(ks))
 
-        k_mapped = map_canvas_name(ks)
-        i_mapped = [map_canvas_name(i) for i in includes]
+        k_mapped = map_canvas_name(ks, version)
+        i_mapped = [map_canvas_name(i, version) for i in includes]
 
         # update includes (also checks existence)
         proc = run_canvas(['template', 'dump', k_mapped, '--no-resolve-includes'])
@@ -93,7 +98,8 @@ if __name__ == "__main__":
         path = os.path.join(ks_path, ks)
 
         # build filtered kickstart
-        fp = open('/tmp/foo.ks', 'w')
+        ks_path_tmp = '/tmp/canvas-fedora-import.ks'
+        fp = open(ks_path_tmp, 'w')
 
         with open(path, 'r') as f:
             for l in f:
@@ -101,11 +107,13 @@ if __name__ == "__main__":
                     fp.write(l)
         fp.close()
 
-
+        # push filtered (includes) kickstart
         proc = run_canvas(['template', 'push', k_mapped, '--clean', '--kickstart', fp.name])
         if proc.returncode != 0:
             print(proc)
             exit(1)
+
+        os.unlink(ks_path_tmp)
 
         # update includes (also checks existence)
         proc = run_canvas(['template', 'update', k_mapped, '--includes "{0}"'.format(','.join(i_mapped))])
