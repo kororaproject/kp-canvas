@@ -737,7 +737,6 @@ class Template(object):
                         self._uuid, self._name, self._user, self._title, self._description
                     )
 
-
         # populate repos (technically commands)
         # since repos commands have writePriority 0 we'll put them up top
         if len(_repos):
@@ -776,7 +775,7 @@ class Template(object):
                 template += o.to_kickstart() + "\n"
 
         # process packages
-        if len(self._packages):
+        if len(_packages) > 0:
             package_header = "%packages"
 
             mp = self._meta.get('kickstart', {}).get('packages', None)
@@ -799,6 +798,7 @@ class Template(object):
 
                 #if 'handle_missing' in mp:
                 #    package_header += ' --handlemissing'
+
 
             template += package_header + "\n\n"
 
