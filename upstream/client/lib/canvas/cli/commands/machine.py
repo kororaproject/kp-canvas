@@ -19,15 +19,15 @@
 import dnf
 import json
 import logging
-import prettytable
 import yaml
 
 from canvas.cli.commands import Command
+from canvas.machine import Machine
 from canvas.package import Package
 from canvas.repository import Repository
 from canvas.service import Service, ServiceException
 from canvas.template import Template
-from canvas.machine import Machine
+from canvas.texttable import TextTable
 
 logger = logging.getLogger('canvas')
 
@@ -201,11 +201,7 @@ class MachineCommand(Command):
             return 1
 
         if len(machines):
-            l = prettytable.PrettyTable(["user:name", "title"])
-            l.hrules = prettytable.HEADER
-            l.vrules = prettytable.NONE
-            l.align = 'l'
-            l.padding_witdth = 1
+            l = TextTable(['[USER:]NAME', 'TITLE'])
 
             # add table items and print
             for m in machines:

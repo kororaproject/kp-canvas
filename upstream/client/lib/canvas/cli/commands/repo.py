@@ -18,12 +18,12 @@
 
 import getpass
 import logging
-import prettytable
 
 from canvas.cli.commands import Command
 from canvas.repository import Repository
 from canvas.service import Service, ServiceException
 from canvas.template import Template
+from canvas.texttable import TextTable
 
 logger = logging.getLogger('canvas')
 
@@ -224,11 +224,7 @@ class RepoCommand(Command):
         repos.sort(key=lambda x: x.stub)
 
         if len(repos):
-            l = prettytable.PrettyTable(['repo', 'name', 'priority', 'cost', 'enabled'])
-            l.hrules = prettytable.HEADER
-            l.vrules = prettytable.NONE
-            l.align = 'l'
-            l.padding_witdth = 1
+            l = TextTable(header=['REPO', 'NAME', 'PRIORITY', 'COST', 'ENABLED'])
 
             for r in repos:
                 cost = r.cost

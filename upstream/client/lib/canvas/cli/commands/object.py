@@ -18,12 +18,12 @@
 
 import getpass
 import logging
-import prettytable
 
 from canvas.cli.commands import Command
 from canvas.object import Object, ErrorInvalidObject
 from canvas.service import Service, ServiceException
 from canvas.template import Template
+from canvas.texttable import TextTable
 
 logger = logging.getLogger('canvas')
 

@@ -21,7 +21,6 @@ import getpass
 import json
 import logging
 import os
-import prettytable
 import random
 import string
 import subprocess
@@ -34,6 +33,7 @@ from canvas.package import Package
 from canvas.repository import Repository
 from canvas.service import Service, ServiceException
 from canvas.template import Template
+from canvas.texttable import TextTable
 
 logger = logging.getLogger('canvas')
 
@@ -290,16 +290,18 @@ class TemplateCommand(Command):
             return 0
 
         # pretty general information
-        print('Name: {0} ({1})'.format(t.name, t.user))
+        print('TEMPLATE: {0} ({1})\n'.format(t.name, t.user))
 
         if t.description is not None and len(t.description):
             print('Description:\n{0}\n'.format(t.description))
 
         # pretty print includes
         if len(t.includes):
-            print('Includes:')
+            l = TextTable(header=['INCLUDE'])
             for i in t.includes:
-                print(' - {0}'.format(i))
+                l.add_row([i])
+
+            print(l)
             print()
 
         # pretty print packages
@@ -307,12 +309,7 @@ class TemplateCommand(Command):
         repos.sort(key=lambda x: x.stub)
 
         if len(repos):
-            l = prettytable.PrettyTable(['repo', 'name', 'priority', 'cost', 'enabled'])
-            l.min_table_width = 120
-            l.hrules = prettytable.HEADER
-            l.vrules = prettytable.NONE
-            l.align = 'l'
-            l.padding_witdth = 1
+            l = TextTable(header=["REPO", "NAME", "ENABLED"])
 
             for r in repos:
                 cost = r.cost
@@ -327,7 +324,8 @@ class TemplateCommand(Command):
                 if r.enabled:
                     enabled = 'Y'
 
-                l.add_row([r.stub, r.name, priority, cost, enabled])
+                #l.add_row([r.stub, r.name, priority, cost, enabled])
+                l.add_row([r.stub, r.name, enabled])
 
             print(l)
             print()
@@ -337,12 +335,7 @@ class TemplateCommand(Command):
         packages.sort(key=lambda x: x.name)
 
         if len(packages):
-            l = prettytable.PrettyTable(['package', 'action'])
-            l.min_table_width = 120
-            l.hrules = prettytable.HEADER
-            l.vrules = prettytable.NONE
-            l.align = 'l'
-            l.padding_witdth = 1
+            l = TextTable(header=["PACKAGE", "ACTION"])
 
             for p in packages:
                 if p.included:
@@ -488,11 +481,7 @@ class TemplateCommand(Command):
             return 1
 
         if len(templates):
-            l = prettytable.PrettyTable(["user:name", "title"])
-            l.hrules = prettytable.HEADER
-            l.vrules = prettytable.NONE
-            l.align = 'l'
-            l.padding_witdth = 1
+            l = TextTable(header=["[USER:]NAME", "TITLE"])
 
             # add table items and print
             for t in templates:

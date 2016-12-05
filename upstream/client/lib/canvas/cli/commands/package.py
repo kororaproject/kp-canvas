@@ -18,12 +18,12 @@
 
 import getpass
 import logging
-import prettytable
 
 from canvas.cli.commands import Command
 from canvas.package import Package
 from canvas.service import Service, ServiceException
 from canvas.template import Template
+from canvas.texttable import TextTable
 
 logger = logging.getLogger('canvas')
 
@@ -165,11 +165,7 @@ class PackageCommand(Command):
         packages.sort(key=lambda x: x.name)
 
         if len(packages):
-            l = prettytable.PrettyTable(['package', 'epoch', 'version', 'release', 'arch', 'action'])
-            l.hrules = prettytable.HEADER
-            l.vrules = prettytable.NONE
-            l.align = 'l'
-            l.padding_witdth = 1
+            l = TextTable(header=['PACKAGE', 'EPOCH', 'VERSION', 'RELEASE', 'ARCH', 'ACTION'])
 
             for p in packages:
                 if p.epoch is None:
