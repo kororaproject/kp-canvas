@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('canvas')
 
 PROG_VERSION = '1.0'
@@ -41,6 +42,7 @@ class ArgumentParserError(Exception):
 class ErrorRaisingArgumentParser(argparse.ArgumentParser):
     def error(self, message):
         print(message)
+        print()
         raise ArgumentParserError(message)
 
 

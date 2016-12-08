@@ -169,7 +169,7 @@ class TemplateCommand(Command):
             return 1
 
         if not command:
-            print('error: action is not reachable.')
+            logging.error('Action is not reachable.')
             return
 
         return command()
@@ -194,10 +194,10 @@ class TemplateCommand(Command):
             res = self.cs.template_create(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
-        print('info: template added.')
+        logging.info('Template added.')
         return 0
 
     def run_copy(self):
@@ -207,7 +207,7 @@ class TemplateCommand(Command):
             t = self.cs.template_get(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
         # reparse for template destination
@@ -217,10 +217,10 @@ class TemplateCommand(Command):
             res = self.cs.template_create(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
-        print('info: template copied.')
+        logging.info('Template copied.')
         return 0
 
     def run_diff(self):
@@ -231,7 +231,7 @@ class TemplateCommand(Command):
             t = self.cs.template_get(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
         # fetch template to compare to
@@ -242,7 +242,7 @@ class TemplateCommand(Command):
                 ts = self.cs.template_get(ts)
 
             except ServiceException as e:
-                print(e)
+                logging.exception(e)
                 return 1
 
         # otherwise build from system
@@ -274,7 +274,7 @@ class TemplateCommand(Command):
             t = self.cs.template_get(t, resolve_includes=not self.args.no_resolve_includes)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
         if self.args.kickstart:
@@ -359,7 +359,7 @@ class TemplateCommand(Command):
             t = self.cs.template_get(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
         # calculate name and title for use if not specified
@@ -422,7 +422,7 @@ class TemplateCommand(Command):
                 f.write(t.to_kickstart(resolved=True))
 
         except IOError as e:
-            print('need root privileges to build iso at this location.')
+            logging.error('You need root privileges to build iso at this location.')
             return 1
 
         env = os.environ.copy()
@@ -477,7 +477,7 @@ class TemplateCommand(Command):
             )
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
         if len(templates):
@@ -498,7 +498,7 @@ class TemplateCommand(Command):
     def run_pull(self):
         # am i effectively root
         if os.geteuid() != 0:
-            print('You need to have root privileges to modify the system.')
+            logging.error('You need to have root privileges to modify the system.')
             return 0
 
         t = Template(self.args.template, user=self.args.username)
@@ -507,7 +507,7 @@ class TemplateCommand(Command):
             t = self.cs.template_get(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
         t.system_prepare(clean=self.args.pull_clean)
@@ -538,7 +538,7 @@ class TemplateCommand(Command):
             else:
                 print('No system changes required.')
 
-            print('No action peformed during this dry-run.')
+            logging.info('No action peformed during this dry-run.')
             return 0
 
         t.system_apply()
@@ -551,19 +551,19 @@ class TemplateCommand(Command):
             t = self.cs.template_get(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
         if self.args.push_clean:
             t.clear()
 
         if self.args.kickstart is not None:
-            print('info: parsing kickstart ...')
+            logging.info('Parsing kickstart ...')
             t.from_kickstart(self.args.kickstart)
 
         else:
             # prepare dnf
-            print('info: analysing system ...')
+            logging.info('Analysing system ...')
             db = dnf.Base()
             db.read_all_repos()
             db.read_comps()
@@ -621,11 +621,11 @@ class TemplateCommand(Command):
             else:
                 print('No template changes required.')
 
-            print('No action peformed during this dry-run.')
+            logging.info('No action peformed during this dry-run.')
             return 0
 
         if self.args.kickstart is None and not len(packages) and not len(repos):
-            print('info: no changes detected, template up to date.')
+            logging.info('No changes detected, template up to date.')
             return 0
 
         # push our updated template
@@ -633,10 +633,10 @@ class TemplateCommand(Command):
             res = self.cs.template_update(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
-        print('info: template pushed.')
+        logging.info('Template pushed.')
         return 0
 
     def run_rm(self):
@@ -646,10 +646,10 @@ class TemplateCommand(Command):
             res = self.cs.template_delete(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
-        print('info: template removed.')
+        logging.info('Template removed.')
         return 0
 
     def run_update(self):
@@ -659,7 +659,7 @@ class TemplateCommand(Command):
             t = self.cs.template_get(t, resolve_includes=False)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
         # add template bits that are specified for update
@@ -679,8 +679,8 @@ class TemplateCommand(Command):
             res = self.cs.template_update(t)
 
         except ServiceException as e:
-            print(e)
+            logging.exception(e)
             return 1
 
-        print('info: template updated.')
+        logging.info('Template updated.')
         return 0

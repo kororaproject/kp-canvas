@@ -625,7 +625,7 @@ class Template(object):
 
     def system_prepare(self, clean=False, db=dnf.Base()):
         """
-        Prepares the system for template application.
+        Prepares the system for applying template configuration.
 
         Args:
           db: dnf.Base object to use for preparation.
