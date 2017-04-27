@@ -186,6 +186,7 @@ class Store(object):
             db = dnf.Base()
             conf = db.conf.substitutions
             evr += '{0}-{1}.fc{2}'.format(self.version, self.release, conf['releasever'])
+
         elif self.version is not None:
             evr += self.version
 

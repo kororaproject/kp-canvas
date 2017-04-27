@@ -94,7 +94,7 @@ class TextTable(object):
         return aligned_columns
 
     def _get_header(self, headline, column_widths):
-        """Creates the table header depending on the chosen theme"""
+        """Creates the table header"""
         header = []
         header_underline = []
         header_widths = map(len, headline)

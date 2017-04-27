@@ -22,8 +22,12 @@ import logging
 import os
 import sys
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger('canvas')
+# set default log level
+if os.environ.get('CANVAS_DEBUG', '0').lower() in ('1', 'true'):
+    logging.basicConfig(level=logging.DEBUG)
+
+else:
+    logging.basicConfig(level=logging.INFO)
 
 PROG_VERSION = '1.0'
 PROG_NAME = 'Canvas'
@@ -45,6 +49,13 @@ class ErrorRaisingArgumentParser(argparse.ArgumentParser):
         print()
         raise ArgumentParserError(message)
 
+
+class LogFormatter(logging.Formatter):
+    def format(self, record):
+        if record.levelno in (logging.WARNING, logging.ERROR, logging.CRITICAL):
+            record.msg = '[%s] %s' % (record.levelname, record.msg)
+
+        return super(LogFormatter, self).format(record)
 
 def buildCommandLineParser(config):
     parser = ErrorRaisingArgumentParser(prog='canvas', add_help=False)
@@ -376,7 +387,7 @@ def parseCommandLine(config):
 
 
 def general_usage(prog_name='canvas'):
-    print("usage: {0} [--version] [--help] [--verbose] <command> [<args>]\n"
+    print("Usage: {0} [--version] [--help] [--verbose] <command> [<args>]\n"
           "\n"
           "The available canvas commands are:\n"
           "  template  List, create or delete templates\n"

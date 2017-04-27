@@ -497,7 +497,7 @@ class TemplateCommand(Command):
 
     def run_pull(self):
         # am i effectively root
-        if os.geteuid() != 0:
+        if not self.args.dry_run and os.geteuid() != 0:
             logging.error('You need to have root privileges to modify the system.')
             return 0
 
@@ -532,7 +532,13 @@ class TemplateCommand(Command):
 
                 print()
                 print('Summary:')
-                print('  - Package(s): %d' % (len(packages_install)+len(packages_remove)))
+
+                if len(packages_install):
+                    print('  - %d package(s) installed' % (len(packages_install)))
+
+                if len(packages_remove):
+                    print('  - %d package(s) removed' % (len(packages_remove)))
+
                 print()
 
             else:

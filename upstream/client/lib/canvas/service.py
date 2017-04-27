@@ -26,8 +26,6 @@ import urllib.request, urllib.parse, urllib.error
 from canvas.template import Template
 from canvas.machine import Machine
 
-logger = logging.getLogger('canvas')
-
 
 class ServiceException(Exception):
     def __init__(self, reason, code=0):
@@ -67,6 +65,8 @@ class Service(object):
 
         r = urllib.request.Request('%s/api/templates.json?%s' % (self._urlbase, urllib.parse.urlencode(query)))
 
+        logging.debug('Fetching template from {0}'.format(r.full_url))
+
         try:
             u = self._opener.open(r)
             template_summary = json.loads(u.read().decode('utf-8'))
@@ -91,12 +91,12 @@ class Service(object):
 
         except urllib.error.URLError as e:
             # TODO: clean up error message
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
         except urllib.error.HTTPError as e:
             # TODO: clean up error message
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
     def _template_resolve_includes(self, template_src):
@@ -115,7 +115,7 @@ class Service(object):
         return template_src
 
     def authenticate(self, username=None, password=None, prompt=None, force=False):
-        # print('debug: authenticating to {0}'.format(self._urlbase))
+        logging.debug('Authenticating to {0}'.format(self._urlbase))
 
         if self._authenticated and not force:
             return self._authenticated
@@ -180,9 +180,9 @@ class Service(object):
             u = self._opener.open(r)
 
         except urllib.error.URLError as e:
-            print(e)
+            logging.debug(e)
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
 
         #
         self._authenticated = False
@@ -210,7 +210,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e.fp.read())
+            logging.debug(e.fp.read())
             raise ServiceException('unknown service response')
 
         raise ServiceException('unable to add machine.')
@@ -243,7 +243,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
         raise ServiceException('unable to delete machine.')
@@ -288,7 +288,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
     def machine_list(self, user=None, name=None, description=None):
@@ -316,7 +316,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
         return []
@@ -353,7 +353,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
         raise ServiceException('unable to update machine.')
@@ -378,7 +378,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
         raise ServiceException('unable to update machine.')
@@ -404,7 +404,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e.fp.read())
+            logging.debug(e.fp.read())
             raise ServiceException('unknown service response')
 
         raise ServiceException('unable to add template.')
@@ -436,7 +436,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
         raise ServiceException('unable to delete template.')
@@ -469,7 +469,6 @@ class Service(object):
             self.authenticate()
 
         params = urllib.parse.urlencode({k: v for k, v in params.items() if v != None})
-        print(params)
 
         try:
             r = urllib.request.Request('{0}/api/templates.json?{1}'.format(self._urlbase, params))
@@ -484,7 +483,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
         return []
@@ -509,7 +508,7 @@ class Service(object):
             raise ServiceException('{0}'.format(res.get('error', 'unknown')))
 
         except urllib.error.HTTPError as e:
-            print(e)
+            logging.debug(e)
             raise ServiceException('unknown service response')
 
         raise ServiceException('unable to update template.')

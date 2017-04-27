@@ -151,7 +151,7 @@ class Repository(object):
 
             elif arg.startswith('baseurl='):
                 baseurl = cls._parse_str_arg(arg, 'baseurl=')
-                repo['baseurl'] = list (filter(None, baseurl.split(',')))
+                repo['baseurl'] = list(filter(None, baseurl.split(',')))
 
             elif arg.startswith('mirrorlist='):
 
@@ -393,24 +393,31 @@ class Repository(object):
         # only build with non-None values
         return {k: v for k, v in o.items() if v != None}
 
-    def to_repo(self, cache_dir=None):
-        if cache_dir is None:
-            cli_cache = dnf.conf.CliCache('/var/tmp')
-            cache_dir = cli_cache.cachedir
+    def to_repo(self, conf=None):
+        if conf is None:
+            db = dnf.Base()
+            conf = db.conf
+            conf.cachedir = '/var/tmp'
 
-        r = dnf.repo.Repo('canvas_{0}'.format(self._stub), cache_dir)
+        def _varSub(option, subs=conf.substitutions):
+            for (k, v) in subs.items():
+                option = option.replace('${0}'.format(k), v)
+
+            return option
+
+        r = dnf.repo.Repo('canvas-{0}'.format(self._stub), conf.cachedir)
 
         if self._name is not None:
             r.name = self._name
 
         if self._baseurl is not None:
-            r.baseurl = self._baseurl
+            r.baseurl = [_varSub(u) for u in self._baseurl]
 
         if self._mirrorlist is not None:
-            r.mirrorlist = self._mirrorlist
+            r.mirrorlist = _varSub(self._mirrorlist)
 
         if self._metalink is not None:
-            r.metalink = self._metalink
+            r.metalink = _varSub(self._metalink)
 
         if self._gpgcheck is not None:
             r.gpgcheck = self._gpgcheck

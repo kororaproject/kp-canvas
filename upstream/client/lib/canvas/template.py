@@ -19,6 +19,7 @@
 import dnf
 import hashlib
 import json
+import logging
 import re
 import sys
 import yaml
@@ -130,11 +131,11 @@ class Template(object):
             ksparser.readKickstart(path)
 
         except IOError as msg:
-            print("Failed to read kickstart file '{0}' : {1}".format(path, msg))
+            logging.error("Failed to read kickstart file '{0}' : {1}".format(path, msg))
             return
 
         except pykickstart.errors.KickstartError as e:
-            print("Failed to parse kickstart file '{0}' : {1}".format(path, msg))
+            logging.error("Failed to parse kickstart file '{0}' : {1}".format(path, msg))
             return
 
         handler = ksparser.handler
@@ -590,14 +591,14 @@ class Template(object):
 
         if db.transaction is not None and \
             (len(db.transaction.install_set) or len(db.transaction.remove_set)):
-            print('info: downloading packages ...')
+            logging.info('Downloading packages ...')
             db.download_packages(list(db.transaction.install_set), progress=MultiFileProgressMeter())
 
-            print('info: performing package transaction ...')
+            logging.info('Performing package transaction ...')
             db.do_transaction()
 
         if len(self.packages_all):
-            print('info: syncing history ...')
+            logging.info('Syncing history ...')
 
             for p in self.packages_all:
                 if p.included:
@@ -611,16 +612,16 @@ class Template(object):
             external_sources = [o for o in self.objects_all if o.source != 'raw']
 
             if len(external_sources):
-                print('info: downloading objects ...')
+                logging.info('Downloading objects ...')
 
             for o in external_sources:
-                print('downloading: {0}'.format(o.source))
+                logging.info('Downloading: {0}'.format(o.source))
                 o.download()
 
 
             # apply non-ks actions only
             for o in self.objects_all:
-                print('applying: {0}'.format(o.source))
+                logging.info('Applying: {0}'.format(o.source))
                 o.apply_actions()
 
     def system_prepare(self, clean=False, db=dnf.Base()):
@@ -642,19 +643,18 @@ class Template(object):
             self._db.reset(goal=True, repos=True)
 
         # prepare dnf
-        print('info: analysing system ...')
+        logging.info('Analysing system ...')
 
         # install repos from template
         if len(self.repos_all):
             for r in self.repos_all:
-                dr = r.to_repo()
+                dr = r.to_repo(conf=self._db.conf)
                 dr.set_progress_bar(dnf.cli.progress.MultiFileProgressMeter())
-                dr.load()
                 db.repos.add(dr)
 
         # indicate we're using sytem repos if we're mangling packages
         elif len(self.packages_all):
-            print('No template repos specified, using available system repos.')
+            logging.info('No template repos specified, using available system repos.')
             db.read_all_repos()
 
         db.read_comps()
@@ -665,25 +665,61 @@ class Template(object):
         except OSError as e:
             pass
 
-        if len(self.packages_all):
-            multilib_policy = db.conf.multilib_policy
-            clean_deps = db.conf.clean_requirements_on_remove
+        q_installed = db.sack.query().installed()
 
-            print('info: preparing package transaction ...')
-            # process all packages in template
-            for p in self.packages_all:
+        # check we have packages to assess
+        if len(self.packages_all) == 0:
+            return
+
+        multilib_policy = db.conf.multilib_policy
+        clean_deps = db.conf.clean_requirements_on_remove
+
+        logging.info('Preparing package transaction ...')
+        # process all packages in template
+        for p in self.packages_all:
+            # handle package groups
+            if p.is_group:
                 if p.included:
                     try:
-                        db.install(p.to_pkg_spec())
+                        db.group_install(p.name, 'default')
+
                     except:
-                        print ("error: Package does not exist " + str(p))
-                        pass
+                        logging.error('Package group does not exist {0}'.format(str(p)))
+
+                elif p.excluded:
+                    try:
+                        db.group_remove(p.name)
+
+                    except:
+                        logging.debug('Package not installed: {0}'.format(str(p)))
+
+            # handle packages
+            else:
+                p_spec = p.to_pkg_spec()
+
+                # TODO: improve matching on all p_spec params (not just name)
+                p_installed = list(q_installed.filter(name__glob=p_spec))
+
+                if p.included and len(p_installed) == 0:
+                    try:
+                        db.install(p_spec)
+
+                    except:
+                        logging.error('Package does not exist {0}'.format(str(p)))
+
+                elif p.excluded and len(p_installed) > 0:
+                    try:
+                        for pi in p_installed:
+                            db.remove(pi)
+
+                    except:
+                        logging.debug('Package not installed: {0}'.format(str(p)))
 
                 else:
-                    db.remove(p.to_pkg_spec())
+                    pass
 
-            print('info: resolving package actions ...')
-            db.resolve(allow_erasing=True)
+        logging.info('Resolving package actions ...')
+        db.resolve(allow_erasing=True)
 
     def system_transaction(self):
         """
