@@ -355,6 +355,20 @@ class TemplateCommand(Command):
 
         t = Template(self.args.template, user=self.args.username)
 
+        if self.args.use_livecd_creator:
+            iso_creator = 'livecd-creator'
+            install_package = 'livecd-tools'
+        else:
+            iso_creator = 'livemedia-creator'
+            install_package = 'lorax'
+
+        # check for required software
+        try:
+            subprocess.run([iso_creator, "--help"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except FileNotFoundError:
+            logging.error('You need to install the "{0}" package to create ISOs using {1}.'.format(install_package, iso_creator))
+            return 1
+
         try:
             t = self.cs.template_get(t)
 
@@ -430,7 +444,7 @@ class TemplateCommand(Command):
         # livecd-creator
         if self.args.use_livecd_creator:
             args = [
-                    'livecd-creator',
+                    iso_creator,
                     '--verbose',
                     '--config',     ks_path,
                     '--fslabel',    name_long.lower(),
@@ -446,7 +460,7 @@ class TemplateCommand(Command):
         # livemedia-creator
         else:
             args = [
-                    'livemedia-creator',
+                    iso_creator,
                     '--no-virt',
                     '--make-iso',
                     '--iso-only',
