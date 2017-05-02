@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import getpass
+import sys
 import logging
 
 from canvas.cli.commands import Command
@@ -29,7 +29,11 @@ logger = logging.getLogger('canvas')
 
 
 class ObjectCommand(Command):
-    def configure(self, config, args, args_extra):
+    def configure(self, config, args, args_extra, parsers):
+        if args.action == None:
+            parsers.object.print_help()
+            sys.exit(1)
+
         # store loaded config
         self.config = config
 
@@ -38,31 +42,6 @@ class ObjectCommand(Command):
 
         # store args for additional processing
         self.args = args
-
-        # return false if any error, help, or usage needs to be shown
-        return not args.help
-
-    def help(self):
-        # check for action specific help first
-        if self.args.action is not None:
-            try:
-                command = getattr(self, 'help_{0}'.format(self.args.action))
-
-                # show action specific if available
-                if command:
-                    return command()
-
-            except:
-                pass
-
-        # fall back to general usage
-        print("General usage: {0} [--version] [--help] [--verbose] object [<args>]\n"
-              "\n"
-              "Specific usage:\n"
-              "{0} object add [user:]template[@version] [store:]object_name --data=|--data-file=|--source= --action= [--action= ...]\n"
-              "{0} object list [user:]template[@version] [--filter-store=...] [--filter-name=...]\n"
-              "{0} object rm [user:]template[@version] [store1:]object_name1 [store2:]object_name2 ... [storeN:]object_nameN\n"
-              "\n".format(self.prog_name))
 
     def help_add(self):
         print("Usage: {0} object add [user:]template[@version]\n"

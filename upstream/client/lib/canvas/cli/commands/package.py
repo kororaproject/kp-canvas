@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import getpass
 import logging
+import sys
 
 from canvas.cli.commands import Command
 from canvas.package import Package
@@ -29,7 +29,11 @@ logger = logging.getLogger('canvas')
 
 
 class PackageCommand(Command):
-    def configure(self, config, args, args_extra):
+    def configure(self, config, args, args_extra, parsers):
+        if args.action == None:
+            parsers.package.print_help()
+            sys.exit(1)
+
         # store loaded config
         self.config = config
 
@@ -38,9 +42,6 @@ class PackageCommand(Command):
 
         # store args for additional processing
         self.args = args
-
-        # return false if any error, help, or usage needs to be shown
-        return not args.help
 
     def help(self):
         # check for action specific help first

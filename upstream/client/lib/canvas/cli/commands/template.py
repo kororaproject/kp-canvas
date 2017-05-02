@@ -21,6 +21,7 @@ import getpass
 import json
 import logging
 import os
+import sys
 import random
 import string
 import subprocess
@@ -39,7 +40,11 @@ logger = logging.getLogger('canvas')
 
 
 class TemplateCommand(Command):
-    def configure(self, config, args, args_extra):
+    def configure(self, config, args, args_extra, parsers):
+        if args.action == None:
+            parsers.template.print_help()
+            sys.exit(1)
+
         # store loaded config
         self.config = config
 
@@ -62,100 +67,6 @@ class TemplateCommand(Command):
 
         # store args for additional processing
         self.args = args
-
-        # return false if any error, help, or usage needs to be shown
-        return not args.help
-
-    def help(self):
-        # check for action specific help first
-        if self.args.action is not None:
-            try:
-                command = getattr(self, 'help_{0}'.format(self.args.action))
-
-                # show action specific if available
-                if command:
-                    return command()
-
-            except:
-                pass
-
-        # fall back to general usage
-        print("General usage: {0} [--version] [--help] [--verbose] template [<args>]\n"
-              "\n"
-              "Specific usage:\n"
-              "{0} template add [user:]template[@version] [--title] [--description] [--includes] [--public]\n"
-              "{0} template update [user:]template[@version] [--title] [--description] [--includes] [--public]\n"
-              "{0} template rm [user:]template[@version]\n"
-              "{0} template push [user:]template[@version] [--all]\n"
-              "{0} template pull [user:]template[@version] [--clean]\n"
-              "{0} template diff [user:]template[@version]\n"
-              "{0} template copy [user_from:]template_from[@version] [[user_to:]template_to[@version]]\n"
-              "{0} template list [--public-only]\n"
-              "{0} template dump [user:]template[@version] [--json|--kickstart|--yaml] [--no-resolve-includes]\n"
-              "{0} template iso [user:]template[@version] [--releasever] [--livecd-creator]\n"
-              "\n".format(self.prog_name))
-
-    def help_add(self):
-        print("Usage: {0} template add [user:]template[@version] [--title] [--description]\n"
-              "                           [--includes] [--public]\n"
-              "\n"
-              "Options:\n"
-              "  --title        TITLE     Define the pretty TITLE of template\n"
-              "  --description  TEXT      Define descriptive TEXT of the template\n"
-              "  --includes     TEMPLATE  Comma separated list of TEMPLATEs to include\n"
-              "\n"
-              "\n".format(self.prog_name))
-
-    def help_copy(self):
-        print("Usage: {0} template copy [user_from:]template_from[@version] [user_to:]template_to[@version]\n"
-              "\n"
-              "\n".format(self.prog_name))
-
-    def help_diff(self):
-        print("Usage: {0} template diff [user:]template[@version]\n"
-              "\n"
-              "\n".format(self.prog_name))
-
-    def help_dump(self):
-        print("Usage: {0} template dump [user:]template[@version] [--json|--kickstart|--yaml] [--no-resolve-includes]\n"
-              "\n"
-              "Options:\n"
-              "  --json                   Output the template in JSON format\n"
-              "  --kickstart              Output the template in kickstart format\n"
-              "  --yaml                   Output the template in YAML format\n"
-              "  --no-resolve-includes    Do not resolve any template includes\n"
-              "\n".format(self.prog_name))
-
-    def help_iso(self):
-        print("Usage: {0} template iso [user:]template[@version] [--releasever] [--livecd-creator]\n"
-              "\n"
-              "\n".format(self.prog_name))
-
-    def help_list(self):
-        print("Usage: {0} template list [--public-only]\n"
-              "\n"
-              "\n".format(self.prog_name))
-
-    def help_pull(self):
-        print("Usage: {0} template pull [user:]template[@version] [--clean]\n"
-              "\n"
-              "\n".format(self.prog_name))
-
-    def help_push(self):
-        print("Usage: {0} template push [user:]template[@version] [--all]\n"
-              "\n"
-              "\n".format(self.prog_name))
-
-    def help_update(self):
-        print("Usage: {0} template update [user:]template[@version] [--title] [--description]\n"
-              "                           [--includes] [--public]\n"
-              "\n"
-              "Options:\n"
-              "  --title        TITLE     Define the pretty TITLE of template\n"
-              "  --description  TEXT      Define descriptive TEXT of the template\n"
-              "  --includes     TEMPLATE  Comma separated list of TEMPLATEs to include\n"
-              "\n"
-              "\n".format(self.prog_name))
 
     def run(self):
         command = None
