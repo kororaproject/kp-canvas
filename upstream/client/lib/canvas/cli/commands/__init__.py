@@ -22,6 +22,15 @@ import logging
 import os
 import sys
 
+import canvas.cli.commands.argparsers.root
+import canvas.cli.commands.argparsers.config
+import canvas.cli.commands.argparsers.template
+import canvas.cli.commands.argparsers.store
+import canvas.cli.commands.argparsers.object
+import canvas.cli.commands.argparsers.package
+import canvas.cli.commands.argparsers.repo
+import canvas.cli.commands.argparsers.machine
+
 # set default log level
 if os.environ.get('CANVAS_DEBUG', '0').lower() in ('1', 'true'):
     logging.basicConfig(level=logging.DEBUG)
@@ -29,26 +38,14 @@ if os.environ.get('CANVAS_DEBUG', '0').lower() in ('1', 'true'):
 else:
     logging.basicConfig(level=logging.INFO)
 
-PROG_VERSION = '1.0'
-PROG_NAME = 'Canvas'
+#PROG_VERSION = '1.0'
+#PROG_NAME = 'Canvas'
 
 CANVAS_HOST = 'https://canvas.kororaproject.org'
 # CANVAS_HOST='http://localhost:3000'
 
 # establish invoking user
 CANVAS_USER = os.environ.get('SUDO_USER', os.getlogin())
-
-
-class ArgumentParserError(Exception):
-    pass
-
-
-class ErrorRaisingArgumentParser(argparse.ArgumentParser):
-    def error(self, message):
-        print(message)
-        print()
-        raise ArgumentParserError(message)
-
 
 class LogFormatter(logging.Formatter):
     def format(self, record):
@@ -58,335 +55,163 @@ class LogFormatter(logging.Formatter):
         return super(LogFormatter, self).format(record)
 
 def buildCommandLineParser(config):
-    parser = ErrorRaisingArgumentParser(prog='canvas', add_help=False)
-    subparsers = parser.add_subparsers(dest='command')
-
-    # root anchored
-    parser.add_argument('-U', '--user', type=str, dest='username', default=config.get('user', 'name', CANVAS_USER))
-    parser.add_argument('-H', '--host', type=str, dest='host', default=config.get('core', 'host', CANVAS_HOST))
-    parser.add_argument('-V', '--version', action='version', version='{0} - {1}'.format(PROG_NAME, PROG_VERSION))
-
-    # general arguments
-    general_parser = argparse.ArgumentParser(add_help=False)
-    general_parser.add_argument('-h', '--help', '-?', action='store_true', dest='help')
-    general_parser.add_argument('-v', '--verbose', action='store_true', dest='verbose')
+    parsers = argparse.Namespace()
 
     #
+    # Args that are seen more than once are generated here and given
+    # as parents to each subparser as required. This ensures that args
+    # usage is consistent across all commands
+    #
+    # N.B. Common is defined as having the same name or flags and help values.
+    #
+
+    connection_overrides = argparse.ArgumentParser(add_help=False)
+    connection_overrides.add_argument(
+        '-U', '--user',
+        dest='username',
+        metavar='ID',
+        default=config.get('user', 'name', CANVAS_USER),
+        help='username used to authenticate to the canvas server'
+    )
+    connection_overrides.add_argument(
+        '-H', '--host',
+        default=config.get('core', 'host', CANVAS_HOST),
+        help='url of the canvas server'
+    )
+
+    verbose = argparse.ArgumentParser(add_help=False)
+    verbose.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help='more verbose output'
+    )
+
+    template = argparse.ArgumentParser(add_help=False)
+    template.add_argument(
+        'template',
+        # For nicer output it would be useful to set metavar but it causes an
+        # assertion error when the help string is being generated, due to
+        # special handling of '[' and ']'
+        #metavar='[user]:template[@version]',
+        help='template identifier in the form [user:]template[@version]'
+    )
+
+    dry_run = argparse.ArgumentParser(add_help=False)
+    dry_run.add_argument(
+        '-n', '--dry-run',
+        action='store_true',
+        help='do not make any actual changes'
+    )
+
+    output = argparse.ArgumentParser(add_help=False)
+    output.add_argument(
+        '--output',
+        metavar='PATH',
+        help=(
+            'save the output to a file in the specified path. '
+            'If the file already exists, it will be replaced'
+        )
+    )
+
+    #
+    # ROOT
+    #
+    parsers.main = canvas.cli.commands.argparsers.root.build(
+        config,
+        connection_overrides=connection_overrides
+    )
+
+    # SUB COMMANDS
+    subparsers = parsers.main.add_subparsers(
+        dest='command',
+        description=(
+            'The Canvas cli provides a number of subcommands '
+            'used to manage and manipulate templates'
+        )
+    )
+
     # CONFIG COMMANDS
-    #
+    parsers.config = canvas.cli.commands.argparsers.config.build(
+        subparsers,
+        
+    )
 
-    config_parser = subparsers.add_parser('config', add_help=False, parents=[general_parser])
-    config_parser.add_argument('--unset', action='store_true', dest='unset')
-    config_parser.add_argument('name')
-    config_parser.add_argument('value', nargs='?')
-
-    #
     # TEMPLATE COMMANDS
-    #
+    parsers.template = canvas.cli.commands.argparsers.template.build(
+        subparsers,
+        output=output,
+        dry_run=dry_run,
+        verbose=verbose,
+        template=template,
+        connection_overrides=connection_overrides
+    )
 
-    template_parser = subparsers.add_parser('template', add_help=False, parents=[general_parser])
-    subparsers_template = template_parser.add_subparsers(dest='action')
-
-    template_parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run')
-
-    # template add arguments
-    template_add_parser = subparsers_template.add_parser('add', add_help=False, parents=[general_parser])
-    template_add_parser.add_argument('template', type=str)
-    template_add_parser.add_argument('--title', type=str)
-    template_add_parser.add_argument('--description', type=str)
-    template_add_parser.add_argument('--includes', type=str)
-    template_add_parser.add_argument('--public', type=str, choices=['0', '1', 'false', 'true'])
-
-    # template update arguments
-    template_update_parser = subparsers_template.add_parser('update', add_help=False, parents=[general_parser])
-    template_update_parser.add_argument('template', type=str)
-    template_update_parser.add_argument('--title', type=str)
-    template_update_parser.add_argument('--description', type=str)
-    template_update_parser.add_argument('--includes', type=str)
-    template_update_parser.add_argument('--public', type=str, choices=['0', '1', 'false', 'true'])
-
-    # template list arguments
-    template_list_parser = subparsers_template.add_parser('list', add_help=False, parents=[general_parser])
-    template_list_parser.add_argument('filter_user', type=str, nargs='?')
-    template_list_parser.add_argument('--public', action='store_true', dest='public_only')
-    template_list_parser.add_argument('--filter-name', type=str, dest='filter_name')
-    template_list_parser.add_argument('--filter-description', type=str, dest='filter_description')
-
-    # template remove arguments
-    template_remove_parser = subparsers_template.add_parser('rm', add_help=False, parents=[general_parser])
-    template_remove_parser.add_argument('template', type=str)
-
-    # template pull arguments
-    template_pull_parser = subparsers_template.add_parser('pull', add_help=False, parents=[general_parser])
-    template_pull_parser.add_argument('template', type=str)
-    template_pull_parser.add_argument('--clean', action='store_true', dest='pull_clean')
-
-    # template push arguments
-    template_push_parser = subparsers_template.add_parser('push', add_help=False, parents=[general_parser])
-    template_push_parser.add_argument('template', type=str)
-    template_push_parser.add_argument('--all', action='store_true', dest='push_all')
-    template_push_parser.add_argument('--clean', action='store_true', dest='push_clean')
-    template_push_parser.add_argument('--kickstart', type=str)
-
-    # template diff arguments
-    template_diff_parser = subparsers_template.add_parser('diff', add_help=False, parents=[general_parser])
-    template_diff_parser.add_argument('template_from', type=str)
-    template_diff_parser.add_argument('template_to', type=str, nargs='?')
-    template_diff_parser.add_argument('--output', type=str)
-
-    # template copy arguments
-    template_copy_parser = subparsers_template.add_parser('copy', add_help=False, parents=[general_parser])
-    template_copy_parser.add_argument('template_from', type=str)
-    template_copy_parser.add_argument('template_to', type=str, nargs='?')
-
-    # template dump arguments
-    template_dump_parser = subparsers_template.add_parser('dump', add_help=False, parents=[general_parser])
-    template_dump_parser.add_argument('template', type=str)
-    template_dump_parser.add_argument('--json', action='store_true')
-    template_dump_parser.add_argument('--yaml', action='store_true')
-    template_dump_parser.add_argument('--kickstart', action='store_true')
-    template_dump_parser.add_argument('--no-resolve-includes', action='store_true', dest='no_resolve_includes')
-
-    # template iso arguments
-    template_iso_parser = subparsers_template.add_parser('iso', add_help=False, parents=[general_parser])
-    template_iso_parser.add_argument('template', type=str)
-    template_iso_parser.add_argument('--project', type=str)
-    template_iso_parser.add_argument('--volid', type=str)
-    template_iso_parser.add_argument('--logfile', type=str)
-    template_iso_parser.add_argument('--iso-name', type=str, dest='iso_name')
-    template_iso_parser.add_argument('--releasever', type=str)
-    template_iso_parser.add_argument('--title', type=str)
-    template_iso_parser.add_argument('--resultdir', type=str)
-    template_iso_parser.add_argument('--livecd-creator', action="store_true", dest='use_livecd_creator')
-
-    #
     # STORE COMMANDS
-    #
+    parsers.store = canvas.cli.commands.argparsers.store.build(
+        subparsers,
+        dry_run=dry_run,
+        verbose=verbose,
+        template=template,
+        connection_overrides=connection_overrides
+    )
 
-    store_parser = subparsers.add_parser('store', add_help=False, parents=[general_parser])
-    subparsers_store = store_parser.add_subparsers(dest='action', title='store Commands')
-
-    store_parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run')
-
-    # store add arguments
-    store_add_parser = subparsers_store.add_parser('add', add_help=False, parents=[general_parser])
-    store_add_parser.add_argument('template', type=str)
-    store_add_parser.add_argument('store', type=str, nargs='+')
-    store_add_parser.add_argument('--with-deps', type=str)
-
-    store_update_parser = subparsers_store.add_parser('update', add_help=False, parents=[general_parser])
-    store_update_parser.add_argument('template', type=str)
-    store_update_parser.add_argument('store', type=str, nargs='+')
-
-    # store list arguments
-    store_list_parser = subparsers_store.add_parser('list', add_help=False, parents=[general_parser])
-    store_list_parser.add_argument('template', type=str)
-    store_list_parser.add_argument('--output', type=str)
-
-    # store remove arguments
-    store_remove_parser = subparsers_store.add_parser('rm', add_help=False, parents=[general_parser])
-    store_remove_parser.add_argument('template', type=str)
-    store_remove_parser.add_argument('store', type=str, nargs='+')
-
-    #
     # OBJECT COMMANDS
-    #
+    parsers.object = canvas.cli.commands.argparsers.object.build(
+        subparsers,
+        output=output,
+        dry_run=dry_run,
+        verbose=verbose,
+        template=template,
+        connection_overrides=connection_overrides
+    )
 
-    object_parser = subparsers.add_parser('object', add_help=False, parents=[general_parser])
-    subparsers_object = object_parser.add_subparsers(dest='action', title='object Commands')
-
-    object_parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run')
-
-    # object add arguments
-    object_add_parser = subparsers_object.add_parser('add', add_help=False, parents=[general_parser])
-    object_add_parser.add_argument('template', type=str)
-    object_add_parser.add_argument('object', type=str)
-
-    object_add_parser.add_argument('--source', type=str)
-    object_add_parser.add_argument('--data', type=str)
-    object_add_parser.add_argument('--data-file', type=str)
-
-    object_add_parser.add_argument('--xsum', type=str)
-    object_add_parser.add_argument('--action', dest='actions', type=str, action='append')
-
-    # object update arguments
-    object_update_parser = subparsers_object.add_parser('update', add_help=False, parents=[general_parser])
-    object_update_parser.add_argument('template', type=str)
-    object_update_parser.add_argument('object', type=str, nargs='+')
-
-    # object list arguments
-    object_list_parser = subparsers_object.add_parser('list', add_help=False, parents=[general_parser])
-    object_list_parser.add_argument('template', type=str)
-    object_list_parser.add_argument('--output', type=str)
-
-    # object remove arguments
-    object_remove_parser = subparsers_object.add_parser('rm', add_help=False, parents=[general_parser])
-    object_remove_parser.add_argument('template', type=str)
-    object_remove_parser.add_argument('objects', type=str, nargs='+')
-
-    #
     # PACKAGE COMMANDS
-    #
+    parsers.package = canvas.cli.commands.argparsers.package.build(
+        subparsers,
+        output=output,
+        dry_run=dry_run,
+        verbose=verbose,
+        template=template,
+        connection_overrides=connection_overrides
+    )
 
-    package_parser = subparsers.add_parser('package', add_help=False, parents=[general_parser])
-    subparsers_package = package_parser.add_subparsers(dest='action', title='Package Commands')
-
-    package_parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run')
-
-    # package add arguments
-    package_add_parser = subparsers_package.add_parser('add', add_help=False, parents=[general_parser])
-    package_add_parser.add_argument('template', type=str)
-    package_add_parser.add_argument('package', type=str, nargs='+')
-    package_add_parser.add_argument('--with-deps', type=str)
-
-    package_update_parser = subparsers_package.add_parser('update', add_help=False, parents=[general_parser])
-    package_update_parser.add_argument('template', type=str)
-    package_update_parser.add_argument('package', type=str, nargs='+')
-
-    # package list arguments
-    package_list_parser = subparsers_package.add_parser('list', add_help=False, parents=[general_parser])
-    package_list_parser.add_argument('template', type=str)
-    package_list_parser.add_argument('--output', type=str)
-
-    # package remove arguments
-    package_remove_parser = subparsers_package.add_parser('rm', add_help=False, parents=[general_parser])
-    package_remove_parser.add_argument('template', type=str)
-    package_remove_parser.add_argument('package', type=str, nargs='+')
-
-    #
     # REPO COMMANDS
-    #
+    parsers.repo = canvas.cli.commands.argparsers.repo.build(
+        subparsers,
+        output=output,
+        dry_run=dry_run,
+        verbose=verbose,
+        template=template,
+        connection_overrides=connection_overrides
+    )
 
-    repo_parser = subparsers.add_parser('repo', add_help=False, parents=[general_parser])
-    subparsers_repo = repo_parser.add_subparsers(dest='action', title='repo Commands')
-
-    repo_parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run')
-
-    # repo add arguments
-    repo_add_parser = subparsers_repo.add_parser('add', add_help=False, parents=[general_parser])
-    repo_add_parser.add_argument('template', type=str)
-    repo_add_parser.add_argument('repo', type=str)
-    repo_add_parser.add_argument('--name', type=str)
-    repo_add_parser.add_argument('--cost', type=int)
-    repo_add_parser.add_argument('--baseurl', type=str, nargs='+')
-    repo_add_parser.add_argument('--enabled', type=str, choices=['0', '1', 'false', 'true'])
-    repo_add_parser.add_argument('--gpgkey', type=str, nargs='+')
-    repo_add_parser.add_argument('--metalink', type=str, nargs='+')
-    repo_add_parser.add_argument('--mirrorlist', type=str, nargs='+')
-    repo_add_parser.add_argument('--gpgcheck', type=bool)
-    repo_add_parser.add_argument('--priority', type=int)
-    repo_add_parser.add_argument('--exclude', type=str, nargs='+')
-    repo_add_parser.add_argument('--skip-if-unavailable', type=bool, dest='skip')
-
-    # repo update arguments
-    repo_update_parser = subparsers_repo.add_parser('update', add_help=False, parents=[general_parser])
-    repo_update_parser.add_argument('template', type=str)
-    repo_update_parser.add_argument('repo', type=str)
-    repo_update_parser.add_argument('--name', type=str)
-    repo_update_parser.add_argument('--cost', type=int)
-    repo_update_parser.add_argument('--baseurl', type=str, nargs='+')
-    repo_update_parser.add_argument('--enabled', type=str, choices=['0', '1', 'false', 'true'])
-    repo_update_parser.add_argument('--gpgkey', type=str, nargs='+')
-    repo_update_parser.add_argument('--metalink', type=str, nargs='+')
-    repo_update_parser.add_argument('--mirrorlist', type=str, nargs='+')
-    repo_update_parser.add_argument('--gpgcheck', type=bool)
-    repo_update_parser.add_argument('--priority', type=int)
-    repo_update_parser.add_argument('--exclude', type=str, nargs='+')
-    repo_update_parser.add_argument('--skip-if-unavailable', type=bool, dest='skip')
-
-    # repo list arguments
-    repo_list_parser = subparsers_repo.add_parser('list', add_help=False, parents=[general_parser])
-    repo_list_parser.add_argument('template', type=str)
-
-    # repo remove arguments
-    repo_remove_parser = subparsers_repo.add_parser('rm', add_help=False, parents=[general_parser])
-    repo_remove_parser.add_argument('template', type=str)
-    repo_remove_parser.add_argument('repo', type=str, nargs='+')
-
-    #
     # MACHINE COMMANDS
-    #
+    parsers.machine = canvas.cli.commands.argparsers.machine.build(
+        subparsers,
+        output=output,
+        dry_run=dry_run,
+        verbose=verbose,
+        template=template,
+        connection_overrides=connection_overrides
+    )
 
-    #
-    # machine general arguments
-    machine_parser = subparsers.add_parser('machine', add_help=False, parents=[general_parser], usage='')
-    subparsers_machine = machine_parser.add_subparsers(dest='action', title='Machine Commands')
-
-    machine_parser.add_argument('-n', '--dry-run', action="store_true", dest='dry_run')
-
-    # machine add arguments
-    machine_add_parser = subparsers_machine.add_parser('add', add_help=False, parents=[general_parser])
-    machine_add_parser.add_argument('machine', type=str)
-    machine_add_parser.add_argument('template', type=str)
-    machine_add_parser.add_argument('--title', type=str)
-    machine_add_parser.add_argument('--description', type=str)
-
-    # machine update arguments
-    machine_update_parser = subparsers_machine.add_parser('update', add_help=False, parents=[general_parser])
-    machine_update_parser.add_argument('machine', type=str)
-    machine_update_parser.add_argument('--name', type=str)
-    machine_update_parser.add_argument('--title', type=str)
-    machine_update_parser.add_argument('--description', type=str)
-    machine_update_parser.add_argument('--template', type=str)
-
-    # machine list arguments
-    machine_list_parser = subparsers_machine.add_parser('list', add_help=False, parents=[general_parser])
-    machine_list_parser.add_argument('filter_user', type=str, nargs='?')
-    machine_list_parser.add_argument('--public', action='store_true', dest='public_only')
-    machine_list_parser.add_argument('--filter-name', type=str, dest='filter_name')
-    machine_list_parser.add_argument('--filter-description', type=str, dest='filter_description')
-
-    # machine remove arguments
-    machine_remove_parser = subparsers_machine.add_parser('rm', add_help=False, parents=[general_parser])
-    machine_remove_parser.add_argument('machine', type=str)
-
-    # machine diff arguments
-    machine_diff_parser = subparsers_machine.add_parser('diff', add_help=False, parents=[general_parser])
-
-    # machine sync arguments
-    machine_sync_parser = subparsers_machine.add_parser('sync', add_help=False, parents=[general_parser])
-    machine_sync_parser_group = machine_sync_parser.add_mutually_exclusive_group()
-    machine_sync_parser_group.add_argument('pull', type=str, nargs='?')
-    machine_sync_parser_group.add_argument('push', type=str, nargs='?')
-
-    # machine command arguments
-    machine_command_parser = subparsers_machine.add_parser('cmd', add_help=False, parents=[general_parser])
-    machine_command_parser.add_argument('machine', type=str)
-    machine_command_parser.add_argument('cmd', type=str)
-    machine_command_parser.add_argument('args', type=str, nargs='*')
-
-    return parser
+    return parsers
 
 
 def parseCommandLine(config):
-    parser = buildCommandLineParser(config)
+    parsers = buildCommandLineParser(config)
 
     args = None
     args_extra = None
 
-    # parse known commands printing general usage on any error
-    try:
-        argcomplete.autocomplete(parser)
-        args, args_extra = parser.parse_known_args()
+    argcomplete.autocomplete(parsers.main)
+    args, args_extra = parsers.main.parse_known_args()
 
-    except:
-        # TODO: determine best help instead of general
-        args = argparse.Namespace()
-
-        if len(sys.argv) > 1:
-            args.command = sys.argv[1]
-
-        if len(sys.argv) > 2:
-            args.action = sys.argv[2]
-
-        args.host = config.get('core', 'host', CANVAS_HOST)
-        args.username = config.get('user', 'name', CANVAS_USER)
-        args.help = True
-
-    return (args, args_extra)
+    return (parsers, args, args_extra)
 
 
 def general_usage(prog_name='canvas'):
+    return
     print("Usage: {0} [--version] [--help] [--verbose] <command> [<args>]\n"
           "\n"
           "The available canvas commands are:\n"

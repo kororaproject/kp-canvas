@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import sys
 import logging
 
 from canvas.cli.commands import Command
@@ -23,34 +24,11 @@ from canvas.cli.commands import Command
 logger = logging.getLogger('canvas')
 
 
-class ConfigCommand(Command):
+class StoreCommand(Command):
     def configure(self, config, args, args_extra, parsers):
-        # store loaded config
-        self.config = config
-
-        # store args for additional processing
-        self.args = args
+        if args.action == None:
+            parsers.store.print_help()
+            sys.exit(1)
 
     def run(self):
-        parts = self.args.name.split('.')
-
-        # one part indicates a key without section
-        if len(parts) == 1:
-            print("error: key does not contain a section: {0}".format(parts[0]))
-            return 1
-
-        if self.args.unset:
-            # save if key was unset
-            if self.config.unset(parts[0], parts[1]):
-                self.config.save()
-
-        elif self.args.value is not None:
-            self.config.set(parts[0], parts[1], self.args.value)
-            self.config.save()
-
-        else:
-            value = self.config.get(parts[0], parts[1])
-            if value is not None:
-                print(value)
-
-        return 0
+        raise NotImplementedError('store command not implemented')

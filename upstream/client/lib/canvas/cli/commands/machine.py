@@ -20,6 +20,7 @@ import dnf
 import json
 import logging
 import yaml
+import sys
 
 from canvas.cli.commands import Command
 from canvas.machine import Machine
@@ -33,7 +34,11 @@ logger = logging.getLogger('canvas')
 
 
 class MachineCommand(Command):
-    def configure(self, config, args, args_extra):
+    def configure(self, config, args, args_extra, parsers):
+        if args.action == None:
+            parsers.machine.print_help()
+            sys.exit(1)
+
         # store loaded config
         self.config = config
 
@@ -42,9 +47,6 @@ class MachineCommand(Command):
 
         # store args for additional processing
         self.args = args
-
-        # return false if any error, help, or usage needs to be shown
-        return not args.help
 
     def help(self):
         # check for action specific help first

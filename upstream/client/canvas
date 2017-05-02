@@ -29,13 +29,14 @@ logger = logging.getLogger('canvas')
 sys.path.append('./lib')
 
 import canvas.config
-import canvas.cli.commands
+#import canvas.cli.commands
 import canvas.cli.commands.config
 import canvas.cli.commands.machine
 import canvas.cli.commands.object
 import canvas.cli.commands.package
 import canvas.cli.commands.repo
 import canvas.cli.commands.template
+import canvas.cli.commands.store
 
 
 def signal_handler(signal, frame):
@@ -50,8 +51,10 @@ if __name__ == '__main__':
     # read config file
     config = canvas.config.Config()
 
-    args, args_extra = canvas.cli.commands.parseCommandLine(config)
-
+    parsers, args, args_extra = canvas.cli.commands.parseCommandLine(config)
+    if args.command == None:
+        parsers.main.print_help()
+        sys.exit(1)
     cli = None
 
     # processCommandLine
@@ -73,13 +76,18 @@ if __name__ == '__main__':
     elif args.command == 'machine':
         cli = canvas.cli.commands.machine.MachineCommand()
 
-    # print general usage if no command found
-    if cli is None:
-        canvas.cli.commands.general_usage()
-        sys.exit(1)
+    elif args.command == 'store':
+        cli = canvas.cli.commands.store.StoreCommand()
 
-    if not cli.configure(config, args, args_extra):
-        cli.help()
-        sys.exit(1)
+    cli.configure(config, args, args_extra, parsers)
 
-    sys.exit(cli.run())
+    try:
+        sys.exit(cli.run())
+    except NotImplementedError:
+        print(
+            "Command '%s', action '%s' not implemented yet" % (
+                args.command,
+                args.action
+            ),
+            file=sys.stderr
+        )
