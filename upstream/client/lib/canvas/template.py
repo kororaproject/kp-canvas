@@ -86,7 +86,7 @@ class Template(object):
             self._includes_packages.update(t.packages_all)
 
         # iterate the includes in normal order for objects
-        for t in self._includes_resolved:
+        for t in reversed(self._includes_resolved):
             self._includes_objects.update(t.objects_all)
 
     def _parse_kickstart(self, path):
@@ -785,8 +785,7 @@ class Template(object):
 
         # first kickstart command seen has highest priority
         ks_commands = {}
-        ks_commands_append = []
-        ks_commands_prepend = ['part', 'partition']
+        ks_commands_append = ['part', 'partition']
 
         # populate objects (ie ks specific commands)
         # first build a map of commands considering those that can be defined
@@ -797,9 +796,6 @@ class Template(object):
                 if cmd in ks_commands_append:
                     ks_commands.setdefault(cmd, []).append(o)
 
-                elif cmd in ks_commands_prepend:
-                    ks_commands.setdefault(cmd, []).insert(0, o)
-
                 else:
                     ks_commands[cmd] = [o]
 
@@ -808,8 +804,7 @@ class Template(object):
             for o in oo:
                 template += o.to_kickstart() + "\n"
 
-
-        # populate objects (ie ks specific scripts)
+        # populate objects (ie ks-specific scripts)
         for o in _objects:
             if o.is_ks_script():
                 template += o.to_kickstart() + "\n"

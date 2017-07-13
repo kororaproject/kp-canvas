@@ -197,6 +197,7 @@ def build(subparsers, **kwargs):
     )
     template_iso_parser.add_argument(
         '--resultdir',
+        dest='result_dir',
         help='directory to the resulting images and iso into'
     )
     template_iso_parser.add_argument(
@@ -209,6 +210,11 @@ def build(subparsers, **kwargs):
         '--builddir',
         dest='build_dir',
         help='set the build dir (defaults to /var/tmp/canvas)'
+    )
+    template_iso_parser.add_argument(
+        '--cachedir',
+        dest='cache_dir',
+        help='set the cache directory.'
     )
 
     # LIST ARGUMENTS
