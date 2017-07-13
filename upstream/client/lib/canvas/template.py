@@ -785,7 +785,8 @@ class Template(object):
 
         # first kickstart command seen has highest priority
         ks_commands = {}
-        ks_commands_append = ['part', 'partition']
+        ks_commands_append = []
+        ks_commands_prepend = ['part', 'partition']
 
         # populate objects (ie ks specific commands)
         # first build a map of commands considering those that can be defined
@@ -795,6 +796,9 @@ class Template(object):
                 cmd = o.get_ks_command()
                 if cmd in ks_commands_append:
                     ks_commands.setdefault(cmd, []).append(o)
+
+                elif cmd in ks_commands_prepend:
+                    ks_commands.setdefault(cmd, []).insert(0, o)
 
                 else:
                     ks_commands[cmd] = [o]
