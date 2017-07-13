@@ -37,7 +37,7 @@ use Time::Piece;
 sub index_get {
   my $c = shift;
 
-  $c->render_steps('canvas/template', sub {
+  $c->render_steps('template', sub {
     my $delay = shift;
 
     # get total count
@@ -64,7 +64,7 @@ sub detail_get {
   my $username      = $c->param('user');
   my $template_name = $c->param('name');
 
-  $c->render_steps('canvas/template-detail', sub {
+  $c->render_steps('template-detail', sub {
     my $delay = shift;
 
     # get total count

@@ -32,6 +32,7 @@ use Mojo::ByteStream;
 use Mojo::JSON;
 use Mojo::Pg;
 use Mojolicious::Plugin::Authentication;
+use Mojolicious::Plugin::RenderSteps;
 
 use POSIX qw(floor);
 use Time::Piece;
@@ -58,9 +59,7 @@ sub startup {
 
   #
   # CONFIGURATION
-  my $config = $self->plugin('JSONConfig' => {
-    file => './canvas.conf',
-  });
+  my $config = $self->plugin('JSONConfig' => {file => './canvas.conf'});
 
   # set the secret
   die "Ensure secrets are specified in config." unless ref $config->{secret} eq 'ARRAY';
@@ -76,6 +75,7 @@ sub startup {
   #
   # OAUTH
   $self->plugin('OAuth2' => $config->{oauth2} // {});
+  $self->plugin('RenderSteps');
 
   #
   # AUTHENTICATION

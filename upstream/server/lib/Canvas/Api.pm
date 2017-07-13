@@ -173,7 +173,7 @@ sub templates_get {
     sub {
       my ($err, $templates) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+      return $c->render(status => 500, json => {error => $err}) if $err;
 
       $c->render(status  => 200, json => $templates->to_array);
     }
@@ -198,7 +198,7 @@ sub templates_post {
 
   unless ($c->users->is_active) {
     my $msg = 'not authenticated.';
-    return $c->render(status => 403, text => $msg, json => {error => $msg});
+    return $c->render(status => 403, json => {error => $msg});
   };
 
   # get auth'd user
@@ -214,9 +214,9 @@ sub templates_post {
     sub {
       my ($err, $uuid) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+      return $c->render(status => 500, json => {error => $err}) if $err;
 
-      $c->render(status => 200, text => "uuid: $uuid", json => {uuid => $uuid});
+      $c->render(status => 200, json => {uuid => $uuid});
     }
   );
 };
@@ -251,11 +251,11 @@ sub template_get {
     sub {
       my ($err, $templates) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+      return $c->render(status => 500, json => {error => $err}) if $err;
 
       if ($templates->size != 1) {
         $err = 'too many template found.';
-        return $c->render(status => 500, text => $err, json => {error => $err});
+        return $c->render(status => 500, json => {error => $err});
       }
 
       # only expect one template
@@ -286,7 +286,7 @@ sub template_update {
 
   unless ($c->users->is_active) {
     my $msg = 'not authenticated.';
-    return $c->render(status => 403, text => $msg, json => {error => $msg});
+    return $c->render(status => 403, json => {error => $msg});
   };
 
   my $template = $c->req->json;
@@ -303,8 +303,8 @@ sub template_update {
     sub {
       my ($err, $uuid) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
-      $c->render(status => 200, text => "uuid: $uuid", json => {uuid => $uuid});
+      return $c->render(status => 500, json => {error => $err}) if $err;
+      $c->render(status => 200, json => {uuid => $uuid});
     }
   );
 }
@@ -325,7 +325,7 @@ sub template_del {
 
   unless ($c->users->is_active) {
     my $msg = 'not authenticated.';
-    return $c->render(status => 403, text => $msg, json => {error => $msg});
+    return $c->render(status => 403, json => {error => $msg});
   };
 
   my $template = $c->req->json;
@@ -341,8 +341,8 @@ sub template_del {
     sub {
       my ($err, $uuid) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
-      $c->render(status => 200, text => "uuid: $uuid", json => {uuid => $uuid});
+      return $c->render(status => 500, json => {error => $err}) if $err;
+      $c->render(status => 200, json => {uuid => $uuid});
     }
   );
 }
@@ -380,9 +380,9 @@ sub machines_get {
     sub {
       my ($err, $machines) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+      return $c->render(status => 500, json => {error => $err}) if $err;
 
-      $c->render(status  => 200, json => $machines->to_array);
+      $c->render(status => 200, json => $machines->to_array);
     }
   );
 };
@@ -405,7 +405,7 @@ sub machines_post {
 
   unless ($c->users->is_active) {
     my $msg = 'not authenticated.';
-    return $c->render(status => 403, text => $msg, json => {error => $msg});
+    return $c->render(status => 403, json => {error => $msg});
   };
 
   # get auth'd user
@@ -421,9 +421,9 @@ sub machines_post {
     sub {
       my ($err, $uuid, $key) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+      return $c->render(status => 500, json => {error => $err}) if $err;
 
-      $c->render(status => 200, text => "uuid: $uuid, key: $key", json => {uuid => $uuid, key => $key});
+      $c->render(status => 200, json => {uuid => $uuid, key => $key});
     }
   );
 };
@@ -458,11 +458,11 @@ sub machine_get {
     sub {
       my ($err, $machines) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+      return $c->render(status => 500, json => {error => $err}) if $err;
 
       if ($machines->size != 1) {
         $err = 'too many machine found.';
-        return $c->render(status => 500, text => $err, json => {error => $err});
+        return $c->render(status => 500, json => {error => $err});
       }
 
       # only expect one machine
@@ -485,7 +485,7 @@ sub machine_sync {
 
   unless ($uuid eq $uuid2) {
     my $err = 'internal server error.';
-    return $c->render(status => 500, text => $err, json => {error => $err});
+    return $c->render(status => 500, json => {error => $err});
   }
 
   # get auth'd user
@@ -508,7 +508,7 @@ sub machine_sync {
     sub {
       my ($d, $err, $machine) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+      return $c->render(status => 500, json => {error => $err}) if $err;
 
       $d->data(machine => $machine);
 
@@ -521,7 +521,7 @@ sub machine_sync {
     sub {
       my ($d, $err, $template) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
+      return $c->render(status => 500, json => {error => $err}) if $err;
 
       $c->render(json => {machine => $d->data('machine'), template => $template});
     }
@@ -548,7 +548,7 @@ sub machine_update {
 
   unless ($c->users->is_active) {
     my $msg = 'not authenticated.';
-    return $c->render(status => 403, text => $msg, json => {error => $msg});
+    return $c->render(status => 403, json => {error => $msg});
   };
 
   my $machine = $c->req->json;
@@ -565,8 +565,8 @@ sub machine_update {
     sub {
       my ($err, $uuid) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
-      $c->render(status => 200, text => "uuid: $uuid", json => {uuid => $uuid});
+      return $c->render(status => 500, json => {error => $err}) if $err;
+      $c->render(status => 200, json => {uuid => $uuid});
     }
   );
 }
@@ -587,7 +587,7 @@ sub machine_del {
 
   unless ($c->users->is_active) {
     my $msg = 'not authenticated.';
-    return $c->render(status => 403, text => $msg, json => {error => $msg});
+    return $c->render(status => 403, json => {error => $msg});
   };
 
   my $machine = $c->req->json;
@@ -603,8 +603,8 @@ sub machine_del {
     sub {
       my ($err, $uuid) = @_;
 
-      return $c->render(status => 500, text => $err, json => {error => $err}) if $err;
-      $c->render(status => 200, text => "uuid: $uuid", json => {uuid => $uuid});
+      return $c->render(status => 500, json => {error => $err}) if $err;
+      $c->render(status => 200, json => {uuid => $uuid});
     }
   );
 }
