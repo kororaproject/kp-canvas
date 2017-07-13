@@ -289,6 +289,7 @@ class TemplateCommand(Command):
             logging.exception(e)
             return 1
 
+
         # calculate name and title for use if not specified
         arch = os.uname()[4]
 
@@ -317,8 +318,11 @@ class TemplateCommand(Command):
         title_pretty_long = "{0} - {1} - {2}".format(t.title, self.args.releasever, arch_pretty_long)
 
         # build missing strings
+        if self.args.build_dir is None:
+            self.args.build_dir = '/var/tmp/canvas'
+
         if self.args.resultdir is None:
-            self.args.resultdir = "/var/tmp/canvas/isos/{0}-{1}".format(name_long.lower(), ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8)))
+            self.args.resultdir = os.path.join(self.args.build_dir, "isos/{0}-{1}".format(name_long.lower(), t.uuid))
 
         if self.args.iso_name is None:
             self.args.iso_name = "{0}.iso".format(name_long.lower())
@@ -333,14 +337,14 @@ class TemplateCommand(Command):
             self.args.title = title_pretty_long
 
         if self.args.logfile is None:
-            self.args.logfile = "/var/tmp/canvas/{0}.log".format(name_long.lower())
+            self.args.logfile = os.path.join(self.args.build_dir, "{0}.log".format(name_long.lower()))
+
 
         # build kickstart file
         ks_file = "canvas-{0}.ks".format(t.uuid)
-        ks_path = os.path.join("/var/tmp/canvas/ks", ks_file)
+        ks_path = os.path.join(self.args.build_dir, "ks", ks_file)
 
         try:
-
             # ensure our resultdir exists
             if not os.path.exists(os.path.dirname(ks_path)):
                 os.makedirs(os.path.dirname(ks_path))
@@ -354,8 +358,17 @@ class TemplateCommand(Command):
 
         env = os.environ.copy()
 
+        logging.info('Build directory: {0}'.format(self.args.build_dir))
+        logging.info('Log file:        {0}'.format(self.args.logfile))
+        logging.info('ISO name:        {0}'.format(self.args.iso_name))
+
+        logging.info('Project:         {0}'.format(self.args.project))
+        logging.info('Title:           {0}'.format(self.args.title))
+        logging.info('Volumne ID:      {0}'.format(self.args.volid))
+
         # livecd-creator
         if self.args.use_livecd_creator:
+            logging.info('Building via livecd-creator ...')
             args = [
                     iso_creator,
                     '--verbose',
@@ -372,6 +385,7 @@ class TemplateCommand(Command):
 
         # livemedia-creator
         else:
+            logging.info('Building via livemedia-creator ...')
             args = [
                     iso_creator,
                     '--no-virt',
@@ -388,6 +402,7 @@ class TemplateCommand(Command):
                     '--logfile',    self.args.logfile
                 ]
 
+        logging.debug('Build args:', args)
         subprocess.run(args, env=env)
 
         return 0

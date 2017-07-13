@@ -205,6 +205,11 @@ def build(subparsers, **kwargs):
         dest='use_livecd_creator',
         help='use livecd-creator instead of default livemedia-creator'
     )
+    template_iso_parser.add_argument(
+        '--builddir',
+        dest='build_dir',
+        help='set the build dir (defaults to /var/tmp/canvas)'
+    )
 
     # LIST ARGUMENTS
     template_list_parser = subparsers_template.add_parser(
