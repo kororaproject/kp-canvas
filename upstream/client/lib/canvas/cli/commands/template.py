@@ -252,8 +252,15 @@ class TemplateCommand(Command):
                 if p.included:
                     p.action = '+'
 
-                else:
+                elif p.excluded:
                     p.action = '-'
+
+                elif p.ignored:
+                    p.action = '!'
+
+                else:
+                    p.action = '?'
+
 
                 l.add_row([p.name, p.action])
 
@@ -411,6 +418,11 @@ class TemplateCommand(Command):
                 ]
 
         logging.debug('Build args:', args)
+
+        # ensure working directory exists if set
+        if working_dir is not None:
+            os.makedirs(working_dir, exist_ok=True)
+
         subprocess.run(args, cwd=working_dir, env=env)
 
         return 0

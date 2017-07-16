@@ -30,14 +30,15 @@ class Package(object):
     """ A Canvas object that represents an installable Package. """
 
     # name[[#epoch]@version-release][:arch]
-    RE_PACKAGE = re.compile(r"^([+~])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))?(?::(\w+))?$")
-    RE_GROUP = re.compile(r"^([+~])?(@[\w ]+)$")
+    RE_PACKAGE = re.compile(r"^([+~!])?([^#@:\s]+)(?:(?:#(\d+))?@([^\s-]+)-([^:\s-]+))?(?::(\w+))?$")
+    RE_GROUP = re.compile(r"^([+~!])?(@[\w ]+)$")
 
     # CONSTANTS
     ACTION_PIN              = 0x80
     ACTION_GROUP_OPTIONAL   = 0x40
     ACTION_GROUP_NODEFAULTS = 0x20
     ACTION_GROUP            = 0x10
+    ACTION_IGNORE           = 0x04
     ACTION_EXCLUDE          = 0x02 # Should we remove a package if it is installed
     ACTION_INCLUDE          = 0x01 # Should we install a package if it is missing
     # NOTE: Valid combinations of EXCLUDE and INCLUDE are as follows
@@ -70,6 +71,10 @@ class Package(object):
         if (self.version and not self.release) or \
             (not self.version and self.release):
             raise ValueError("Both version and release must be specified")
+
+        # fix all exclude actions of value 0
+        if self.action == 0:
+            self.action = self.ACTION_EXCLUDE
 
         # detect group packages
         if self.name.startswith('@'):
@@ -114,6 +119,11 @@ class Package(object):
     def excluded(self):
         """ Is the package excluded from a template """
         return self.action & (self.ACTION_EXCLUDE) == self.ACTION_EXCLUDE
+
+    @property
+    def ignored(self):
+        """ Is the package ignored """
+        return self.action & (self.ACTION_IGNORE) == self.ACTION_IGNORE
 
     @property
     def included(self):
@@ -186,6 +196,8 @@ class Package(object):
 
         if regex.group(1) == '~':
             action = cls.ACTION_EXCLUDE
+        elif regex.group(1) == '!':
+            action = cls.ACTION_IGNORE
 
         name = regex.group(2)
 
@@ -216,8 +228,10 @@ class Package(object):
         if self.included:
             return self.name
 
-        else:
+        elif self.excluded:
             return "-" + self.name
+
+        return ''
 
     def to_json(self):
         """ Return a json representation of the package object """

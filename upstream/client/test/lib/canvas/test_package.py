@@ -210,6 +210,7 @@ class PackageTestCase(TestCase):
         p2 = Package("~foo:x86_64")
         p3 = Package("bar@2.1.4-0")
         p4 = Package("baz#1@2.1-3:x86_64")
+        p5 = Package("!foo:x86_64")
 
         self.assertEqual("foo", p1.name)
         self.assertEqual(Package.ACTION_INCLUDE, p1.action)
@@ -238,6 +239,13 @@ class PackageTestCase(TestCase):
         self.assertEqual("2.1", p4.version)
         self.assertEqual("3", p4.release)
         self.assertEqual("x86_64", p4.arch)
+
+        self.assertEqual("foo", p2.name)
+        self.assertEqual(Package.ACTION_IGNORE, p2.action)
+        self.assertEqual(None, p2.epoch)
+        self.assertEqual(None, p2.version)
+        self.assertEqual(None, p2.release)
+        self.assertEqual("x86_64", p2.arch)
 
     def test_package_excluded(self):
         # Release is required
