@@ -184,8 +184,14 @@ class PackageCommand(Command):
                 if p.included:
                     p.action = '+'
 
-                else:
+                elif p.excluded:
                     p.action = '-'
+
+                elif p.ignored:
+                    p.action = '!'
+
+                else:
+                    p.action = '?'
 
                 l.add_row([p.name, p.epoch, p.version, p.release, p.arch, p.action])
 
