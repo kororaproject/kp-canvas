@@ -74,11 +74,12 @@ class Object(object):
         self._cache_dir = os.getenv('CANVAS_CACHE_DIR', '/var/cache/canvas')
 
         if kwargs:
-            self._name    = kwargs.get('name', self._name)
-            self._xsum    = kwargs.get('xsum', self._xsum)
-            self._source  = kwargs.get('source', self._source)
-            self._data    = kwargs.get('data', self._data)
-            self._actions = kwargs.get('actions', self._actions)
+            self._name     = kwargs.get('name', self._name)
+            self._xsum     = kwargs.get('xsum', self._xsum)
+            self._source   = kwargs.get('source', self._source)
+            self._data     = kwargs.get('data', self._data)
+            self._actions  = kwargs.get('actions', self._actions)
+            self._template = kwargs.get('template', None)
 
             # check if we've got a data_file to read data from
             if kwargs.get('data_file', None) is not None:
@@ -107,11 +108,12 @@ class Object(object):
             # parse the dict form, the most common form and directly
             # relates to the json structures returned by canvas server
             elif (isinstance(args[0], dict)):
-                self._name    = args[0].get('name', self._name)
-                self._xsum    = args[0].get('checksum', {}).get('sha256', None)
-                self._actions = args[0].get('actions', self._actions)
-                self._source  = args[0].get('source', self._source)
-                self._data    = args[0].get('data', self._data)
+                self._name     = args[0].get('name', self._name)
+                self._xsum     = args[0].get('checksum', {}).get('sha256', None)
+                self._actions  = args[0].get('actions', self._actions)
+                self._source   = args[0].get('source', self._source)
+                self._data     = args[0].get('data', self._data)
+                self._template = args[0].get('template', None)
 
         # calculate checksum if not defined
         if self._xsum is None:
@@ -239,6 +241,10 @@ class Object(object):
 
         if source != 'raw':
             self._data = None
+
+    @property
+    def template(self):
+        return self._template
 
     @property
     def xsum(self):

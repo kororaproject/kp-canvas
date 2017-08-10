@@ -28,13 +28,13 @@ class Repository(object):
     ACTION_EXCLUDE          = 0x02
     ACTION_INCLUDE          = 0x01
 
-    def __init__(self, repository):
+    def __init__(self, repository, template=None):
 
         if isinstance(repository, str):
-            repository = Repository.parse_str(repository)
+            repository = Repository.parse_str(repository, template=template)
 
         elif isinstance(repository, dnf.repo.Repo):
-            repository = Repository.parse_dnf(repository)
+            repository = Repository.parse_dnf(repository, template=template)
 
         if not isinstance(repository, dict):
             raise TypeError("Repository must be a dict")
@@ -62,6 +62,8 @@ class Repository(object):
         self._priority   = repository.get('priority', None)
 
         self._meta_expired = repository.get('meta_expired', repository.get('me', None))
+
+        self._template = repository.get('template', repository.get('t', template))
 
         self._action   = repository.get('action', repository.get('z', self.ACTION_INCLUDE))
 
@@ -309,6 +311,10 @@ class Repository(object):
     @property
     def stub(self):
         return self._stub
+
+    @property
+    def template(self):
+        return self._template
 
     #
     # PUBLIC METHODS

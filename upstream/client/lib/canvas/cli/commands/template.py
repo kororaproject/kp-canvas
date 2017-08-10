@@ -220,7 +220,7 @@ class TemplateCommand(Command):
         repos.sort(key=lambda x: x.stub)
 
         if len(repos):
-            l = TextTable(header=["REPO", "NAME", "ENABLED"])
+            l = TextTable(header=["REPO", "NAME", "ENABLED", "TEMPLATE"])
 
             for r in repos:
                 cost = r.cost
@@ -235,8 +235,12 @@ class TemplateCommand(Command):
                 if r.enabled:
                     enabled = 'Y'
 
+                template = r.template
+                if template == t.unv:
+                    template = ''
+
                 #l.add_row([r.stub, r.name, priority, cost, enabled])
-                l.add_row([r.stub, r.name, enabled])
+                l.add_row([r.stub, r.name, enabled, template])
 
             print(l)
             print()
