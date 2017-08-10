@@ -326,13 +326,15 @@ class TemplateCommand(Command):
 
         # build missing strings
         if self.args.build_dir is None:
-            self.args.build_dir = '/var/tmp/canvas'
+            self.args.build_dir = "/var/tmp/canvas/{0}-{1}".format(name_long.lower(), t.uuid)
+
+        tmp_dir = os.path.join(self.args.build_dir, 'tmp')
 
         if self.args.result_dir is None:
-            self.args.result_dir = os.path.join(self.args.build_dir, "isos/{0}-{1}".format(name_long.lower(), t.uuid))
+            self.args.result_dir = os.path.join(self.args.build_dir, 'iso')
 
         if self.args.cache_dir is None:
-            self.args.cache_dir = os.path.join(self.args.build_dir, "cache/{0}-{1}".format(name_long.lower(), t.uuid))
+            self.args.cache_dir = os.path.join(self.args.build_dir, 'cache')
 
         if self.args.iso_name is None:
             self.args.iso_name = "{0}.iso".format(name_long.lower())
@@ -368,14 +370,15 @@ class TemplateCommand(Command):
 
         env = os.environ.copy()
 
-        logging.info('Build directory: {0}'.format(self.args.build_dir))
-        logging.info('Cache directory: {0}'.format(self.args.cache_dir))
-        logging.info('Log file:        {0}'.format(self.args.logfile))
-        logging.info('ISO name:        {0}'.format(self.args.iso_name))
+        logging.info('Build directory:  {0}'.format(self.args.build_dir))
+        logging.info('Cache directory:  {0}'.format(self.args.cache_dir))
+        logging.info('Result directory: {0}'.format(self.args.result_dir))
+        logging.info('Log file:         {0}'.format(self.args.logfile))
+        logging.info('ISO name:         {0}'.format(self.args.iso_name))
 
-        logging.info('Project:         {0}'.format(self.args.project))
-        logging.info('Title:           {0}'.format(self.args.title))
-        logging.info('Volumne ID:      {0}'.format(self.args.volid))
+        logging.info('Project:          {0}'.format(self.args.project))
+        logging.info('Title:            {0}'.format(self.args.title))
+        logging.info('Volumne ID:       {0}'.format(self.args.volid))
 
         working_dir = None
 
@@ -393,6 +396,7 @@ class TemplateCommand(Command):
                     '--releasever', self.args.releasever,
                     '--product',    self.args.project,
                     '--cache',      self.args.cache_dir,
+                    '--tmpdir',     tmp_dir,
                     '--logfile',    self.args.logfile
                 ]
 
