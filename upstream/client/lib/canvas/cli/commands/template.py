@@ -246,7 +246,7 @@ class TemplateCommand(Command):
         packages.sort(key=lambda x: x.name)
 
         if len(packages):
-            l = TextTable(header=["PACKAGE", "ACTION"])
+            l = TextTable(header=["PACKAGE", "ACTION", "TEMPLATE"])
 
             for p in packages:
                 if p.included:
@@ -261,8 +261,11 @@ class TemplateCommand(Command):
                 else:
                     p.action = '?'
 
+                # no template specified indicates it's part of this template
+                if p.template == t.unv:
+                    p.template = ''
 
-                l.add_row([p.name, p.action])
+                l.add_row([p.name, p.action, p.template])
 
             print(l)
             print()

@@ -48,22 +48,23 @@ class Package(object):
     #    F    |    F
 
 
-    def __init__(self, package, evr=True):
+    def __init__(self, package, evr=True, template=None):
         if isinstance(package, dnf.package.Package) or \
                 isinstance(package, hawkey.Package):
-            package = Package.parse_dnf(package)
+            package = Package.parse_dnf(package, template=template)
         elif isinstance(package, str):
-            package = Package.parse_str(package)
+            package = Package.parse_str(package, template=template)
 
         if not isinstance(package, dict):
             raise TypeError("Package must be a dict")
 
-        self.name    = package.get('n', None)
-        self.epoch   = package.get('e', None)
-        self.version = package.get('v', None)
-        self.release = package.get('r', None)
-        self.arch    = package.get('a', None)
-        self.action  = package.get('z', self.ACTION_INCLUDE)
+        self.name     = package.get('n', None)
+        self.epoch    = package.get('e', None)
+        self.version  = package.get('v', None)
+        self.release  = package.get('r', None)
+        self.arch     = package.get('a', None)
+        self.action   = package.get('z', self.ACTION_INCLUDE)
+        self.template = package.get('t', template)
 
         if not self.name:
             raise ValueError("Name cannot be None")
@@ -134,7 +135,7 @@ class Package(object):
         return self.name[0] == '@'
 
     @classmethod
-    def parse_dnf(cls, pkg):
+    def parse_dnf(cls, pkg, template=None):
         """ Generate a Package dictionary from a dnf package
 
         Note: String cannot support the pkg_spec format:
@@ -155,11 +156,12 @@ class Package(object):
             raise TypeError("Pkg needs to be a DNF or hawkey package object")
 
         return {
-            'n' : pkg.name,
-            'e' : pkg.epoch,
-            'v' : pkg.version,
-            'r' : pkg.release,
-            'a' : pkg.arch
+            'n': pkg.name,
+            'e': pkg.epoch,
+            'v': pkg.version,
+            'r': pkg.release,
+            'a': pkg.arch,
+            't': template
         }
 
     @classmethod
@@ -180,7 +182,7 @@ class Package(object):
             ValueError: If string does not match either the Package or groups formats
 
         """
-        if not isinstance(package, str):
+        if not isinstance(package, str, template=None):
             raise TypeError("Package needs to be a string")
 
         pkg_match = cls.RE_PACKAGE.match(package)
@@ -196,6 +198,7 @@ class Package(object):
 
         if regex.group(1) == '~':
             action = cls.ACTION_EXCLUDE
+
         elif regex.group(1) == '!':
             action = cls.ACTION_IGNORE
 
@@ -208,15 +211,16 @@ class Package(object):
             arch    = regex.group(6)
 
             return {
-                'n' : name,
-                'e' : epoch,
-                'v' : version,
-                'r' : release,
-                'a' : arch,
-                'z' : action
+                'n': name,
+                'e': epoch,
+                'v': version,
+                'r': release,
+                'a': arch,
+                'z': action,
+                't': template
             }
 
-        return {'n': name, 'z': action}
+        return {'n': name, 'z': action, 't': template}
 
     @property
     def pinned(self):

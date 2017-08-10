@@ -193,22 +193,22 @@ class Template(object):
             grps = packages.groupList
             grps.sort()
             for g in grps:
-                self.add_package(Package({'n': g.__str__(), 'z': 1}))
+                self.add_package(Package({'n': g.__str__(), 'z': 1}, template=self.unv))
 
             pkgs = packages.packageList
             pkgs.sort()
             for p in pkgs:
-                self.add_package(Package({'n': p.__str__(), 'z': 1}))
+                self.add_package(Package({'n': p.__str__(), 'z': 1}, template=self.unv))
 
             grps = packages.excludedGroupList
             grps.sort()
             for g in grps:
-                self.add_package(Package({'n': g.__str__(), 'z': 0}))
+                self.add_package(Package({'n': g.__str__(), 'z': 0}, template=self.unv))
 
             pkgs = packages.excludedList
             pkgs.sort()
             for p in pkgs:
-                self.add_package(Package({'n': p.__str__(), 'z': 0}))
+                self.add_package(Package({'n': p.__str__(), 'z': 0}, template=self.unv))
 
         self._meta['kickstart'] = meta
 
@@ -245,7 +245,7 @@ class Template(object):
             self._includes = template.get('includes', [])
 
             self._repos    = RepoSet(Repository(r) for r in template.get('repos', []))
-            self._packages = PackageSet(Package(p) for p in template.get('packages', []))
+            self._packages = PackageSet(Package(p, template=self.unv) for p in template.get('packages', []))
 
             self._stores   = template.get('stores', [])
             self._objects  = ObjectSet(Object(o) for o in template.get('objects', []))
