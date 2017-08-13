@@ -248,7 +248,7 @@ class Template(object):
             self._packages = PackageSet(Package(p, template=self.unv) for p in template.get('packages', []))
 
             self._stores   = template.get('stores', [])
-            self._objects  = ObjectSet(Object(o, template=self.unv) for o in template.get('objects', []))
+            self._objects  = ObjectSet(Object(o) for o in template.get('objects', []))
 
             self._meta = template.get('meta', {})
 
