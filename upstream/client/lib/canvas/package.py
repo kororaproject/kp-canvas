@@ -165,7 +165,7 @@ class Package(object):
         }
 
     @classmethod
-    def parse_str(cls, package):
+    def parse_str(cls, package, template=None):
         """ Generate a Package dictionary from a Package string.
 
         Note: String cannot support the pkg_spec format:
@@ -182,7 +182,7 @@ class Package(object):
             ValueError: If string does not match either the Package or groups formats
 
         """
-        if not isinstance(package, str, template=None):
+        if not isinstance(package, str):
             raise TypeError("Package needs to be a string")
 
         pkg_match = cls.RE_PACKAGE.match(package)
