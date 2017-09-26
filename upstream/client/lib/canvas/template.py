@@ -869,6 +869,7 @@ class Template(object):
             'uuid':        self._uuid,
             'name':        self._name,
             'user':        self._user,
+            'version':     self._version,
             'title':       self._title,
             'description': self._description,
             'includes':    self._includes,
