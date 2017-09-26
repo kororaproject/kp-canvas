@@ -102,7 +102,7 @@ class Repository(object):
         return string
 
     @classmethod
-    def parse_str(cls, repository):
+    def parse_str(cls, repository, template=None):
         """ Generate a repo dictionary from a kickstart formated repository string.
 
         Note: Kickstart documentation can be found here:
@@ -128,7 +128,9 @@ class Repository(object):
 
         repo = {
             'enabled': True,
-            'action': cls.ACTION_INCLUDE
+            'action': cls.ACTION_INCLUDE,
+
+            'template': template
         }
 
         # TODO: Do we need to support this here?
@@ -192,10 +194,11 @@ class Repository(object):
         return repo
 
     @classmethod
-    def parse_dnf(cls, repository):
+    def parse_dnf(cls, repository, template=None):
 
         if not isinstance(repository, dnf.repo.Repo):
             raise TypeError("Repository must be a dnf.repo.Repo")
+
 
         return {
             'name': repository.name,
@@ -216,6 +219,8 @@ class Repository(object):
             # 'meta_expired': repository.meta_expired,
 
             'action': cls.ACTION_INCLUDE,
+
+            'template': template
         }
 
     #
