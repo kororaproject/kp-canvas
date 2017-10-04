@@ -454,11 +454,23 @@ class TemplateCommand(Command):
             return 1
 
         if len(templates):
-            l = TextTable(header=["[USER:]NAME", "TITLE"])
+            l = TextTable(header=["[USER:]NAME", "TITLE", "VERSIONS"])
+
+            # compress versions
+            template_versions = {}
+
+            for t in templates:
+                un = "{0}:{1}".format(t['username'], t['stub'])
+
+                a = template_versions.get(un, {'name': t['username'], 'versions': []})
+                a['versions'].append(t['version'])
+
+                template_versions[un] = a
+
 
             # add table items and print
-            for t in templates:
-                l.add_row(["{0}:{1}".format(t['username'], t['stub']), t['name']])
+            for k, v in template_versions.items():
+                l.add_row([k, v['name'], ', '.join([x if x is not '' else '*' for x in sorted(v['versions'])])])
 
             print(l)
 
