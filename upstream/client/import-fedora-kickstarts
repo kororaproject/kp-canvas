@@ -1,4 +1,10 @@
 #!/usr/bin/python3
+#
+# Import all Fedora kickstarts prefixed with 'fedora-live'.
+#
+# All includes will be preprocessed and also included as part
+# of the import procedure.
+#
 
 import os
 import re
@@ -84,13 +90,17 @@ if __name__ == "__main__":
         k_mapped = map_canvas_name(ks, version)
         i_mapped = [map_canvas_name(i, version) for i in includes]
 
+        i_args = ''
+        if len(i_mapped):
+            i_args = " --includes '{0}'".format(','.join(i_mapped))
+
         # update includes (also checks existence)
         proc = run_canvas(['template', 'dump', k_mapped, '--no-resolve-includes'])
         if proc.returncode != 0:
             print(proc)
 
             print("Adding new template: {0}".format(k_mapped))
-            proc = run_canvas(['template', 'add', k_mapped, '--name', ks, '--includes', ','.join(i_mapped), '--public', 'true'])
+            proc = run_canvas(['template', 'add', k_mapped, '--name', ks, i_args, '--public', 'true'])
             if proc.returncode != 0:
                 print(proc)
                 exit(1)
@@ -116,12 +126,8 @@ if __name__ == "__main__":
         os.unlink(ks_path_tmp)
 
         # update includes (also checks existence)
-        proc = run_canvas(['template', 'update', k_mapped, '--includes "{0}"'.format(','.join(i_mapped))])
+        proc = run_canvas(['template', 'update', k_mapped, i_args])
         if proc.returncode != 0:
             print(proc)
 
         print()
-
-
-
-
