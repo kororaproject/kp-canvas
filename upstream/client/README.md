@@ -3,7 +3,7 @@
 Canvas is a Korora Project initiative to simplify the composition, distribution and management of customised Korora (and Fedora) systems. Canvas draws inspiration from a number of existing solutions that provide OS customisation and building including:
 
 * [openSUSE Build Service](https://build.opensuse.org/)
-* [Revisor](https://fedorahosted.org/revisor/), and
+* [Revisor](https://pagure.io/revisor/), and
 * [Spacewalk](https://fedorahosted.org/spacewalk/)
 
 Some fundamental goals of the Canvas project include:
