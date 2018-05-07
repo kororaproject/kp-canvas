@@ -20,6 +20,7 @@ import argcomplete
 import argparse
 import logging
 import os
+import pwd
 import sys
 
 import canvas.cli.commands.argparsers.root
@@ -45,7 +46,7 @@ CANVAS_HOST = 'https://canvas.kororaproject.org'
 # CANVAS_HOST='http://localhost:3000'
 
 # establish invoking user
-CANVAS_USER = os.environ.get('SUDO_USER', os.getlogin())
+CANVAS_USER = os.environ.get('SUDO_USER', pwd.getpwuid(os.getuid())[0])
 
 class LogFormatter(logging.Formatter):
     def format(self, record):
@@ -133,7 +134,7 @@ def buildCommandLineParser(config):
     # CONFIG COMMANDS
     parsers.config = canvas.cli.commands.argparsers.config.build(
         subparsers,
-        
+
     )
 
     # TEMPLATE COMMANDS
